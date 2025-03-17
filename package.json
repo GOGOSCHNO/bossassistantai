@@ -1,0 +1,27 @@
+{
+  "name": "assistant",
+  "version": "1.0.0",
+  "description": "Un exemple de description pour votre projet.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Votre Nom",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.17.1",
+    "express-session": "^1.18.0",
+    "googleapis": "^146.0.0",
+    "http-proxy-middleware": "^3.0.3",
+    "mongodb": "^4.1.0",
+    "mongoose": "^8.3.3",
+    "openai": "^4.38.3",
+    "twilio": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=16.x"
+  }
+}
