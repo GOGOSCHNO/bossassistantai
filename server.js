@@ -663,25 +663,33 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
         const data = req.body;
         const archivo = req.file;  // 📌 Fichier uploadé
 
+        // 📌 Vérification si data.email est bien défini
+        if (!data.email) {
+            console.error("❌ Erreur : l'adresse e-mail du destinataire est manquante !");
+            return res.status(400).json({ error: "L'adresse e-mail est requise." });
+        }
+
+        console.log("📧 Tentative d'envoi d'email à :", data.email);
+
         // 📌 Enregistrer les informations en base de données
         const trialRequests = db.collection("trial_requests");
         await trialRequests.insertOne({
             ...data,
-            archivoNombre: archivo ? archivo.originalname : null, // Nom du fichier
+            archivoNombre: archivo ? archivo.originalname : null,
             estado: "pending",
             created_at: new Date()
         });
 
         // 📌 Configurer l'email avec fichier attaché (si présent)
         const mailOptions = {
-            from: `"AssistantAI" <${process.env.EMAIL_USER}>`,
-            to: data.email,
+            from: `"AssistantAI" <assistantai@assistantai.site>`, // Remplace par ton email
+            to: data.email, // Vérification si `data.email` est bien défini
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
                    <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`,
             attachments: archivo ? [{
                 filename: archivo.originalname,
-                content: archivo.buffer  // 📌 Attacher le fichier en mémoire
+                content: archivo.buffer
             }] : []
         };
 
@@ -694,8 +702,8 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
         res.status(200).json({ message: "Solicitud procesada con éxito!" });
 
     } catch (error) {
-        console.error("Erreur :", error);
-        res.status(500).json({ error: "Hubo un error al procesar la solicitud" });
+        console.error("❌ Erreur lors de l'envoi de l'e-mail :", error);
+        res.status(500).json({ error: "Hubo un error al procesar la solicitud." });
     }
 });
 
