@@ -10,8 +10,6 @@ const OpenAI = require("openai");
 const { MongoClient } = require('mongodb');
 const twilio = require('twilio');
 const axios = require('axios');
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,24 +31,6 @@ if (!mongoUri) {
 }
 
 let db;  // Variable pour stocker la connexion à MongoDB
-
-// 📌 Configuration de Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// 📌 Configuration de Multer pour stocker sur Cloudinary
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: "assistantAI_uploads", // 📌 Nom du dossier Cloudinary
-        format: async (req, file) => "pdf", // 📌 Change selon le type de fichiers autorisés
-        public_id: (req, file) => Date.now() + "-" + file.originalname
-    }
-});
-const upload = multer({ storage: storage });
 
 async function connectToMongoDB() {
   try {
