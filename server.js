@@ -10,6 +10,8 @@ const OpenAI = require("openai");
 const { MongoClient } = require('mongodb');
 const twilio = require('twilio');
 const axios = require('axios');
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +33,24 @@ if (!mongoUri) {
 }
 
 let db;  // Variable pour stocker la connexion à MongoDB
+
+// 📌 Configuration de Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// 📌 Configuration de Multer pour stocker sur Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: "assistantAI_uploads", // 📌 Nom du dossier Cloudinary
+        format: async (req, file) => "pdf", // 📌 Change selon le type de fichiers autorisés
+        public_id: (req, file) => Date.now() + "-" + file.originalname
+    }
+});
+const upload = multer({ storage: storage });
 
 async function connectToMongoDB() {
   try {
@@ -654,22 +674,19 @@ app.post('/whatsapp', async (req, res) => {
   }
 });
 
-// 📌 Route API pour gérer les essais gratuits en utilisant `db`
 app.post("/api/trial", upload.single("archivo"), async (req, res) => {
     try {
         const data = req.body;
-        const archivoPath = req.file ? req.file.path : null;
+        const archivoUrl = req.file ? req.file.path : null;  // 📌 Stocke l’URL Cloudinary
 
-        // 📌 Utiliser `db` pour insérer les données dans MongoDB
         const trialRequests = db.collection("trial_requests");
         await trialRequests.insertOne({
             ...data,
-            archivo: archivoPath,
+            archivo: archivoUrl,
             estado: "pending",
             created_at: new Date()
         });
 
-        // Envoyer un email de confirmation
         await transporter.sendMail({
             from: '"AssistantAI" <' + process.env.EMAIL_USER + '>',
             to: data.email,
@@ -678,10 +695,9 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
                    <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`
         });
 
-        // Envoyer un message WhatsApp via Meta API
         await enviarWhatsAppMeta(data.whatsapp, data.nombre_comercio);
 
-        res.status(200).json({ message: "Solicitud procesada con éxito!" });
+        res.status(200).json({ message: "Solicitud procesada con éxito!", archivo: archivoUrl });
 
     } catch (error) {
         console.error("Erreur :", error);
