@@ -98,23 +98,21 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
             return;
         }
         console.log("Nombre del comercio a enviar:", nombreComercio);
-
         const data = {
             messaging_product: "whatsapp",
-            to: numero,  // Numéro du client
+            to: numero,
             type: "template",
             template: {
-                name: "trial_confirmation",  // Nom du modèle WhatsApp
-                language: { code: "es_CO" },  // Langue espagnole Colombie
-                components: [{
-                    type: "body",
-                    parameters: [
-                        {
-                            type: "text",
-                            text: nombreComercio || "Cliente"  // Valeur par défaut si vide
-                        }
-                    ]
-                }]
+                name: "trial_confirmation",
+                language: { code: "es_CO" },
+                components: [
+                    {
+                        type: "body",
+                        parameters: [
+                            { type: "text", text: nombreComercio }
+                        ]
+                    }
+                ]
             }
         };
 
