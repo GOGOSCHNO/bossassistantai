@@ -69,10 +69,21 @@ let calendar;
 
 // 📌 Configurer Nodemailer pour l’envoi des emails
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtpout.secureserver.net", // SMTP de GoDaddy
+    port: 465, // Port sécurisé SSL
+    secure: true, // SSL activé
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: "assistantai@assistantai.site", // Ton adresse email GoDaddy
+        pass: process.env.EMAIL_PASS // Mot de passe stocké en variable d'environnement
+    }
+});
+
+// 📌 Vérifier la connexion SMTP
+transporter.verify(function(error, success) {
+    if (error) {
+        console.error("Erreur SMTP :", error);
+    } else {
+        console.log("✅ SMTP prêt à envoyer des emails !");
     }
 });
 
