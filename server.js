@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
+const multer = require("multer");
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const nodemailer = require("nodemailer");
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const OpenAI = require("openai");
@@ -60,6 +62,16 @@ module.exports = { db };
 
 const { google } = require('googleapis');
 let calendar;
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "uploads/");
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+const upload = multer({ storage: storage });
 
 async function initGoogleCalendarClient() {
   try {
