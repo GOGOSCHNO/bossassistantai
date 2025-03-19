@@ -92,19 +92,27 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
     try {
         const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
+        // Vérification que nombreComercio est bien défini
+        if (!nombreComercio) {
+            console.error("❌ Erreur : 'nombreComercio' est indéfini !");
+            return;
+        }
+
         const data = {
             messaging_product: "whatsapp",
             to: numero,  // Numéro du client
             type: "template",
             template: {
-                name: "trial_confirmation",  // Nom du modèle créé
-                language: { code: "es_CO" },  // Code de langue (Espagnol Colombie)
+                name: "trial_confirmation",  // Nom du modèle WhatsApp
+                language: { code: "es_CO" },  // Langue espagnole Colombie
                 components: [{
                     type: "body",
-                    parameters: [{
-                        type: "text",
-                        text: nombreComercio  // Remplace `{{customer_name}}` par la vraie valeur
-                    }]
+                    parameters: [
+                        {
+                            type: "text",
+                            text: nombreComercio || "Cliente"  // Valeur par défaut si vide
+                        }
+                    ]
                 }]
             }
         };
@@ -115,9 +123,9 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
         };
 
         const response = await axios.post(url, data, { headers });
-        console.log("Mensaje enviado vía Meta API:", response.data);
+        console.log("✅ Mensaje enviado vía Meta API:", response.data);
     } catch (error) {
-        console.error("Error al enviar mensaje WhatsApp via Meta:", error.response ? error.response.data : error);
+        console.error("❌ Error al enviar mensaje WhatsApp via Meta:", error.response ? error.response.data : error);
     }
 }
 
