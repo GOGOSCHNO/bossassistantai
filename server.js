@@ -14,6 +14,10 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 📌 Configuration de multer pour gérer l'upload sans stockage sur Heroku
+const storage = multer.memoryStorage(); // Stocker temporairement en mémoire
+const upload = multer({ storage: storage });
+
 // Configuration OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -646,27 +650,37 @@ app.post('/whatsapp', async (req, res) => {
 app.post("/api/trial", upload.single("archivo"), async (req, res) => {
     try {
         const data = req.body;
-        const archivoUrl = req.file ? req.file.path : null;  // 📌 Stocke l’URL Cloudinary
+        const archivo = req.file;  // 📌 Fichier uploadé
 
+        // 📌 Enregistrer les informations en base de données
         const trialRequests = db.collection("trial_requests");
         await trialRequests.insertOne({
             ...data,
-            archivo: archivoUrl,
+            archivoNombre: archivo ? archivo.originalname : null, // Nom du fichier
             estado: "pending",
             created_at: new Date()
         });
 
-        await transporter.sendMail({
-            from: '"AssistantAI" <' + process.env.EMAIL_USER + '>',
+        // 📌 Configurer l'email avec fichier attaché (si présent)
+        const mailOptions = {
+            from: `"AssistantAI" <${process.env.EMAIL_USER}>`,
             to: data.email,
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
-                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`
-        });
+                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`,
+            attachments: archivo ? [{
+                filename: archivo.originalname,
+                content: archivo.buffer  // 📌 Attacher le fichier en mémoire
+            }] : []
+        };
 
+        // 📌 Envoyer l'email
+        await transporter.sendMail(mailOptions);
+
+        // 📌 Envoyer un message WhatsApp de confirmation
         await enviarWhatsAppMeta(data.whatsapp, data.nombre_comercio);
 
-        res.status(200).json({ message: "Solicitud procesada con éxito!", archivo: archivoUrl });
+        res.status(200).json({ message: "Solicitud procesada con éxito!" });
 
     } catch (error) {
         console.error("Erreur :", error);
