@@ -63,6 +63,7 @@ module.exports = { db };
 const { google } = require('googleapis');
 let calendar;
 
+// 📌 Configurer Multer pour gérer l’upload des fichiers
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, "uploads/");
@@ -72,6 +73,41 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+
+// 📌 Configurer Nodemailer pour l’envoi des emails
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// 📌 Fonction pour envoyer un message WhatsApp via Meta API
+async function enviarWhatsAppMeta(numero, nombreComercio) {
+    try {
+        const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+        const data = {
+            messaging_product: "whatsapp",
+            to: numero,  // Numéro du client
+            type: "text",
+            text: {
+                body: `Hola ${nombreComercio}, gracias por registrarte en AssistantAI! 🤖\nTu prueba gratuita está en proceso. 🚀 Te avisaremos cuando tu asistente esté listo.`
+            }
+        };
+
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`
+        };
+
+        const response = await axios.post(url, data, { headers });
+        console.log("Mensaje enviado vía Meta API:", response.data);
+    } catch (error) {
+        console.error("Error al enviar mensaje WhatsApp via Meta:", error.response ? error.response.data : error);
+    }
+}
 
 async function initGoogleCalendarClient() {
   try {
@@ -618,6 +654,40 @@ app.post('/whatsapp', async (req, res) => {
   }
 });
 
+// 📌 Route API pour gérer les essais gratuits en utilisant `db`
+app.post("/api/trial", upload.single("archivo"), async (req, res) => {
+    try {
+        const data = req.body;
+        const archivoPath = req.file ? req.file.path : null;
+
+        // 📌 Utiliser `db` pour insérer les données dans MongoDB
+        const trialRequests = db.collection("trial_requests");
+        await trialRequests.insertOne({
+            ...data,
+            archivo: archivoPath,
+            estado: "pending",
+            created_at: new Date()
+        });
+
+        // Envoyer un email de confirmation
+        await transporter.sendMail({
+            from: '"AssistantAI" <' + process.env.EMAIL_USER + '>',
+            to: data.email,
+            subject: "Tu prueba gratuita está en proceso 🚀",
+            html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
+                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`
+        });
+
+        // Envoyer un message WhatsApp via Meta API
+        await enviarWhatsAppMeta(data.whatsapp, data.nombre_comercio);
+
+        res.status(200).json({ message: "Solicitud procesada con éxito!" });
+
+    } catch (error) {
+        console.error("Erreur :", error);
+        res.status(500).json({ error: "Hubo un error al procesar la solicitud" });
+    }
+});
 
 app.get('/whatsapp', (req, res) => {
   // Récupère les paramètres que Meta envoie
