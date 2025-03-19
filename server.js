@@ -103,13 +103,13 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
             to: numero,
             type: "template",
             template: {
-                name: "trial_confirmation", // Nom du modèle WhatsApp
-                language: { code: "es_CO" }, // Langue espagnole Colombie
+                name: "trial_confirmation",
+                language: { code: "es_CO" },
                 components: [
                     {
                         type: "body",
                         parameters: [
-                            { type: "text", text: nombreComercio }
+                            { type: "text", text: `${nombreComercio || "Cliente"}` }
                         ]
                     }
                 ]
