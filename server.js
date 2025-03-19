@@ -11,7 +11,7 @@ const { MongoClient } = require('mongodb');
 const twilio = require('twilio');
 const axios = require('axios');
 const cloudinary = require("cloudinary").v2;
-const CloudinaryStorage = require("multer-storage-cloudinary").CloudinaryStorage;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
