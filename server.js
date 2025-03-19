@@ -677,7 +677,7 @@ app.post('/whatsapp', async (req, res) => {
 app.post("/api/trial", upload.single("archivo"), async (req, res) => {
     try {
         const data = req.body;
-        const archivo = req.file;  // 📌 Fichier uploadé
+        const archivo = req.file;
 
         // 📌 Vérification si data.email est bien défini
         if (!data.email) {
@@ -698,10 +698,10 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
 
         // 📌 Configurer l'email avec fichier attaché (si présent)
         const mailOptions = {
-            from: `"AssistantAI" <assistantai@assistantai.site>`, // Remplace par ton email
-            to: data.email, // Vérification si `data.email` est bien défini
+            from: `"AssistantAI" <assistantai@assistantai.site>`,
+            to: data.email,
             subject: "Tu prueba gratuita está en proceso 🚀",
-            html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
+            html: `<p>Hola, <strong>${data.nombre_comercio || "Cliente"}</strong>!</p>
                    <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`,
             attachments: archivo ? [{
                 filename: archivo.originalname,
@@ -712,8 +712,9 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
         // 📌 Envoyer l'email
         await transporter.sendMail(mailOptions);
 
-        // 📌 Envoyer un message WhatsApp de confirmation
-        await enviarWhatsAppMeta(data.whatsapp, data.nombre_comercio);
+        // 📌 Correction ici : Assurer que `nombreComercio` est bien défini
+        const nombreComercio = data.nombre_comercio || "Cliente"; // Valeur par défaut
+        await enviarWhatsAppMeta(data.whatsapp, nombreComercio);
 
         res.status(200).json({ message: "Solicitud procesada con éxito!" });
 
