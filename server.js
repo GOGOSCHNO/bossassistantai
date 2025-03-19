@@ -83,17 +83,6 @@ module.exports = { db };
 const { google } = require('googleapis');
 let calendar;
 
-// 📌 Configurer Multer pour gérer l’upload des fichiers
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/");
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + "-" + file.originalname);
-    }
-});
-const upload = multer({ storage: storage });
-
 // 📌 Configurer Nodemailer pour l’envoi des emails
 const transporter = nodemailer.createTransport({
     service: "gmail",
