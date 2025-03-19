@@ -104,7 +104,7 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
             type: "template",
             template: {
                 name: "trial_confirmation",  // Nom du modèle WhatsApp
-                language: { code: "COL" },  // Langue espagnole Colombie
+                language: { code: "es_CO" },  // Langue espagnole Colombie
                 components: [{
                     type: "body",
                     parameters: [
