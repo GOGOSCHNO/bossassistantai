@@ -10,6 +10,7 @@ const OpenAI = require("openai");
 const { MongoClient } = require('mongodb');
 const twilio = require('twilio');
 const axios = require('axios');
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,6 +83,12 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS
     }
 });
+
+// 📌 Créer le dossier uploads/ si inexistant
+const uploadDir = "uploads";
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
 // 📌 Fonction pour envoyer un message WhatsApp via Meta API
 async function enviarWhatsAppMeta(numero, nombreComercio) {
