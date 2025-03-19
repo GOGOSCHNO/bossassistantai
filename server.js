@@ -95,9 +95,17 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
         const data = {
             messaging_product: "whatsapp",
             to: numero,  // Numéro du client
-            type: "text",
-            text: {
-                body: `Hola ${nombreComercio}, gracias por registrarte en AssistantAI! 🤖\nTu prueba gratuita está en proceso. 🚀 Te avisaremos cuando tu asistente esté listo.`
+            type: "template",
+            template: {
+                name: "trial_confirmation",  // Nom du modèle créé
+                language: { code: "es_CO" },  // Code de langue (Espagnol Colombie)
+                components: [{
+                    type: "body",
+                    parameters: [{
+                        type: "text",
+                        text: nombreComercio  // Remplace `{{customer_name}}` par la vraie valeur
+                    }]
+                }]
             }
         };
 
