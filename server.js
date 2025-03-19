@@ -97,6 +97,7 @@ async function enviarWhatsAppMeta(numero, nombreComercio) {
             console.error("❌ Erreur : 'nombreComercio' est indéfini !");
             return;
         }
+        console.log("Nombre del comercio a enviar:", nombreComercio);
 
         const data = {
             messaging_product: "whatsapp",
