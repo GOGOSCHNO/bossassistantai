@@ -637,57 +637,57 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
         const data = req.body;
         const archivo = req.file;
 
-        console.log("📥 Données reçues du formulaire:", data);
+        console.log("📥 Datos recibidos del formulario:", data);
 
-        // 📌 Vérification des champs obligatoires
+        // 📌 Verificación de campos obligatorios
         if (!data.email || !data.whatsapp || !data.nombre_comercio) {
-            console.error("❌ Erreur : Informations obligatoires manquantes !");
-            return res.status(400).json({ error: "L'email, le numéro WhatsApp et le nom du commerce sont requis." });
+            console.error("❌ Error: ¡Faltan datos obligatorios!");
+            return res.status(400).json({ error: "El correo electrónico, el número de WhatsApp y el nombre del negocio son obligatorios." });
         }
 
-        console.log("📧 Tentative d'envoi d'email à :", data.email);
+        console.log("📧 Intentando enviar correo a:", data.email);
 
-        // 📌 Enregistrer la demande en base de données
+        // 📌 Guardar la solicitud en la base de datos
         const trialRequests = db.collection("trial_requests");
         await trialRequests.insertOne({
             ...data,
             archivoNombre: archivo ? archivo.originalname : null,
-            estado: "pending",
+            estado: "pendiente",
             created_at: new Date()
         });
 
-        // 📌 Construire le récapitulatif des informations du formulaire
-        const recapitulatif = `
-            <p><strong>Nom du commerce :</strong> ${data.nombre_comercio}</p>
-            <p><strong>WhatsApp :</strong> ${data.whatsapp}</p>
-            <p><strong>Email :</strong> ${data.email}</p>
-            <p><strong>Sector :</strong> ${data.sector || "Non spécifié"}</p>
-            <p><strong>Produits/Services :</strong> ${data.productosServicios || "Non spécifié"}</p>
-            <p><strong>Objectif :</strong> ${data.objetivo || "Non spécifié"}</p>
-            <p><strong>Message additionnel :</strong> ${data.mensajeAdicional || "Non spécifié"}</p>
+        // 📌 Construcción del resumen de inscripción
+        const resumenInscripcion = `
+            <p><strong>📌 Nombre del negocio:</strong> ${data.nombre_comercio}</p>
+            <p><strong>📞 WhatsApp:</strong> ${data.whatsapp}</p>
+            <p><strong>📧 Correo electrónico:</strong> ${data.email}</p>
+            <p><strong>🏢 Sector:</strong> ${data.sector || "No especificado"}</p>
+            <p><strong>🛍️ Productos/Servicios:</strong> ${data.productosServicios || "No especificado"}</p>
+            <p><strong>🎯 Objetivo:</strong> ${data.objetivo || "No especificado"}</p>
+            <p><strong>📝 Mensaje adicional:</strong> ${data.mensajeAdicional || "No especificado"}</p>
         `;
 
-        // 📌 Configuration de l'email avec fichier attaché (si présent)
+        // 📌 Configurar el correo con archivo adjunto (si lo hay)
         const mailOptions = {
             from: `"AssistantAI" <assistantai@assistantai.site>`,
-            to: [data.email, "assistantai@assistantai.site"], // 📌 Envoi au client + assistantai@assistantai.site
+            to: [data.email, "assistantai@assistantai.site"], // 📌 Enviar al cliente + AssistantAI
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
-                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>
-                   <h3>📄 Récapitulatif de votre inscription :</h3>
-                   ${recapitulatif}`,
+                   <p>Gracias por registrarte en AssistantAI. Estamos preparando tu asistente personalizado.</p>
+                   <h3>📄 Resumen de tu inscripción:</h3>
+                   ${resumenInscripcion}`,
             attachments: archivo ? [{
                 filename: archivo.originalname,
                 content: archivo.buffer
             }] : []
         };
 
-        // 📌 Envoyer l'email
+        // 📌 Enviar el correo electrónico
         await transporter.sendMail(mailOptions);
 
-        console.log("✅ Email envoyé avec succès !");
+        console.log("✅ ¡Correo enviado con éxito!");
 
-        // 📌 Envoi du message via le modèle WhatsApp
+        // 📌 Envío del mensaje a WhatsApp mediante plantilla de Meta
         const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
         const headers = {
             "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
@@ -700,10 +700,10 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
             to: data.whatsapp,
             type: "template",
             template: {
-                name: "site", // Ton modèle validé par Meta
+                name: "site", // Nombre de la plantilla en Meta
                 language: {
                     policy: "deterministic",
-                    code: "es" // Langue espagnol
+                    code: "es" // Español
                 },
                 components: [
                     {
@@ -716,16 +716,16 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
             }
         };
 
-        console.log("📤 Données envoyées à Meta:", JSON.stringify(messageData, null, 2));
+        console.log("📤 Datos enviados a Meta:", JSON.stringify(messageData, null, 2));
 
         const response = await axios.post(apiUrl, messageData, { headers });
-        console.log("✅ Message envoyé via Meta API:", response.data);
+        console.log("✅ ¡Mensaje de WhatsApp enviado con éxito!");
 
-        res.status(200).json({ message: "Inscription traitée avec succès et message WhatsApp envoyé !" });
+        res.status(200).json({ message: "¡Inscripción procesada con éxito y mensaje de WhatsApp enviado!" });
 
     } catch (error) {
-        console.error("❌ Erreur lors du traitement de l'inscription :", error);
-        res.status(500).json({ error: "Erreur interne lors du traitement de l'inscription." });
+        console.error("❌ Error al procesar la inscripción:", error);
+        res.status(500).json({ error: "Error interno al procesar la inscripción." });
     }
 });
 
