@@ -87,50 +87,6 @@ transporter.verify(function(error, success) {
     }
 });
 
-// 📌 Fonction pour envoyer un message WhatsApp via Meta API
-async function enviarWhatsAppMeta(numero, nombreComercio) {
-    try {
-        const url = `https://graph.facebook.com/v17.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-        if (!nombreComercio) {
-            console.error("❌ Erreur : 'nombreComercio' est indéfini !");
-            return;
-        }
-        console.log("Nombre del comercio a enviar:", nombreComercio);
-
-        const data = {
-            messaging_product: "whatsapp",
-            to: numero,
-            type: "template",
-            template: {
-                name: "trial_confirmation",
-                language: { code: "es_CO" },
-                components: [
-                    {
-                        type: "body",
-                        parameters: [
-                            { type: "text", text: `${nombreComercio || "Cliente"}` }
-                        ]
-                    }
-                ]
-            }
-        };
-
-        // 📌 🔥 Ajout du log avant l'envoi à l'API
-        console.log("📤 Données envoyées à WhatsApp API:", JSON.stringify(data, null, 2));
-
-        const headers = {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`
-        };
-
-        const response = await axios.post(url, data, { headers });
-        console.log("✅ Message envoyé via Meta API:", response.data);
-    } catch (error) {
-        console.error("❌ Error al enviar mensaje WhatsApp via Meta:", error.response ? error.response.data : error);
-    }
-}
-
 async function initGoogleCalendarClient() {
   try {
     const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY; 
@@ -718,45 +674,41 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
 
         console.log("✅ Email envoyé avec succès !");
 
-        // 📌 Construire le message pour l'assistant IA
-        const userMessage = `Inscripción para prueba gratis - Comercio: ${data.nombre_comercio}`;
-
-        // 📌 Envoyer le message à l'assistant IA
-        const assistantResponse = await interactWithAssistant(userMessage, data.whatsapp);
-        const { text, images } = assistantResponse;
-
-        // 📌 Envoyer la réponse du chatbot via WhatsApp
-        const apiUrl = `https://graph.facebook.com/v16.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+        // 📌 Envoi du message via le modèle WhatsApp
+        const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
         const headers = {
             "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
             "Content-Type": "application/json"
         };
 
-        // Envoi du texte si disponible
-        if (text) {
-            await axios.post(apiUrl, {
-                messaging_product: "whatsapp",
-                to: data.whatsapp,
-                text: { body: text }
-            }, { headers });
-        }
-
-        // Envoi des images si disponibles
-        if (images && images.length > 0) {
-            for (const url of images) {
-                if (url) {
-                    await axios.post(apiUrl, {
-                        messaging_product: "whatsapp",
-                        to: data.whatsapp,
-                        type: "image",
-                        image: { link: url }
-                    }, { headers });
-                }
+        const messageData = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: data.whatsapp,
+            type: "template",
+            template: {
+                name: "site", // Ton modèle validé par Meta
+                language: {
+                    policy: "deterministic",
+                    code: "es" // Langue espagnol
+                },
+                components: [
+                    {
+                        type: "body",
+                        parameters: [
+                            { type: "text", text: data.nombre_comercio }
+                        ]
+                    }
+                ]
             }
-        }
+        };
 
-        console.log("✅ Message WhatsApp envoyé avec succès !");
-        res.status(200).json({ message: "Inscription traitée avec succès !" });
+        console.log("📤 Données envoyées à Meta:", JSON.stringify(messageData, null, 2));
+
+        const response = await axios.post(apiUrl, messageData, { headers });
+        console.log("✅ Message envoyé via Meta API:", response.data);
+
+        res.status(200).json({ message: "Inscription traitée avec succès et message WhatsApp envoyé !" });
 
     } catch (error) {
         console.error("❌ Erreur lors du traitement de l'inscription :", error);
