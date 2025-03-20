@@ -679,6 +679,7 @@ app.post('/whatsapp', async (req, res) => {
 app.post("/api/trial", upload.single("archivo"), async (req, res) => {
     try {
         const data = req.body;
+        console.log("📥 Données reçues du formulaire:", data);
         const archivo = req.file;
 
         // 📌 Vérification si data.email est bien défini
