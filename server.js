@@ -656,13 +656,26 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
             created_at: new Date()
         });
 
-        // 📌 Configurer l'email avec fichier attaché (si présent)
+        // 📌 Construire le récapitulatif des informations du formulaire
+        const recapitulatif = `
+            <p><strong>Nom du commerce :</strong> ${data.nombre_comercio}</p>
+            <p><strong>WhatsApp :</strong> ${data.whatsapp}</p>
+            <p><strong>Email :</strong> ${data.email}</p>
+            <p><strong>Sector :</strong> ${data.sector || "Non spécifié"}</p>
+            <p><strong>Produits/Services :</strong> ${data.productosServicios || "Non spécifié"}</p>
+            <p><strong>Objectif :</strong> ${data.objetivo || "Non spécifié"}</p>
+            <p><strong>Message additionnel :</strong> ${data.mensajeAdicional || "Non spécifié"}</p>
+        `;
+
+        // 📌 Configuration de l'email avec fichier attaché (si présent)
         const mailOptions = {
             from: `"AssistantAI" <assistantai@assistantai.site>`,
-            to: data.email,
+            to: [data.email, "assistantai@assistantai.site"], // 📌 Envoi au client + assistantai@assistantai.site
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
-                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`,
+                   <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>
+                   <h3>📄 Récapitulatif de votre inscription :</h3>
+                   ${recapitulatif}`,
             attachments: archivo ? [{
                 filename: archivo.originalname,
                 content: archivo.buffer
