@@ -676,21 +676,22 @@ app.post('/whatsapp', async (req, res) => {
   }
 });
 
-app.post("/api/trial", upload.single("archivo"), async (req, res) => {
+app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
     try {
         const data = req.body;
-        console.log("📥 Données reçues du formulaire:", data);
         const archivo = req.file;
 
-        // 📌 Vérification si data.email est bien défini
-        if (!data.email) {
-            console.error("❌ Erreur : l'adresse e-mail du destinataire est manquante !");
-            return res.status(400).json({ error: "L'adresse e-mail est requise." });
+        console.log("📥 Données reçues du formulaire:", data);
+
+        // 📌 Vérification des champs obligatoires
+        if (!data.email || !data.whatsapp || !data.nombre_comercio) {
+            console.error("❌ Erreur : Informations obligatoires manquantes !");
+            return res.status(400).json({ error: "L'email, le numéro WhatsApp et le nom du commerce sont requis." });
         }
 
         console.log("📧 Tentative d'envoi d'email à :", data.email);
 
-        // 📌 Enregistrer les informations en base de données
+        // 📌 Enregistrer la demande en base de données
         const trialRequests = db.collection("trial_requests");
         await trialRequests.insertOne({
             ...data,
@@ -704,7 +705,7 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
             from: `"AssistantAI" <assistantai@assistantai.site>`,
             to: data.email,
             subject: "Tu prueba gratuita está en proceso 🚀",
-            html: `<p>Hola, <strong>${data.nombre_comercio || "Cliente"}</strong>!</p>
+            html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
                    <p>Gracias por registrarte en AssistantAI. Estamos creando tu asistente personalizado.</p>`,
             attachments: archivo ? [{
                 filename: archivo.originalname,
@@ -715,15 +716,51 @@ app.post("/api/trial", upload.single("archivo"), async (req, res) => {
         // 📌 Envoyer l'email
         await transporter.sendMail(mailOptions);
 
-        // 📌 Correction ici : Assurer que `nombreComercio` est bien défini
-        const nombreComercio = data.nombre_comercio || "Cliente"; // Valeur par défaut
-        await enviarWhatsAppMeta(data.whatsapp, nombreComercio);
+        console.log("✅ Email envoyé avec succès !");
 
-        res.status(200).json({ message: "Solicitud procesada con éxito!" });
+        // 📌 Construire le message pour l'assistant IA
+        const userMessage = `Inscripción para prueba gratis - Comercio: ${data.nombre_comercio}`;
+
+        // 📌 Envoyer le message à l'assistant IA
+        const assistantResponse = await interactWithAssistant(userMessage, data.whatsapp);
+        const { text, images } = assistantResponse;
+
+        // 📌 Envoyer la réponse du chatbot via WhatsApp
+        const apiUrl = `https://graph.facebook.com/v16.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+        const headers = {
+            "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
+            "Content-Type": "application/json"
+        };
+
+        // Envoi du texte si disponible
+        if (text) {
+            await axios.post(apiUrl, {
+                messaging_product: "whatsapp",
+                to: data.whatsapp,
+                text: { body: text }
+            }, { headers });
+        }
+
+        // Envoi des images si disponibles
+        if (images && images.length > 0) {
+            for (const url of images) {
+                if (url) {
+                    await axios.post(apiUrl, {
+                        messaging_product: "whatsapp",
+                        to: data.whatsapp,
+                        type: "image",
+                        image: { link: url }
+                    }, { headers });
+                }
+            }
+        }
+
+        console.log("✅ Message WhatsApp envoyé avec succès !");
+        res.status(200).json({ message: "Inscription traitée avec succès !" });
 
     } catch (error) {
-        console.error("❌ Erreur lors de l'envoi de l'e-mail :", error);
-        res.status(500).json({ error: "Hubo un error al procesar la solicitud." });
+        console.error("❌ Erreur lors du traitement de l'inscription :", error);
+        res.status(500).json({ error: "Erreur interne lors du traitement de l'inscription." });
     }
 });
 
