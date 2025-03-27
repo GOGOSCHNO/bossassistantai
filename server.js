@@ -670,7 +670,7 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
         // 📌 Configurar el correo con archivo adjunto (si lo hay)
         const mailOptions = {
             from: `"AssistantAI" <assistantai@assistantai.site>`,
-            to: [data.email, "assistantai@assistantai.site"], // 📌 Enviar al cliente + AssistantAI
+            to: [data.email, "assistantai@assistantai.site"],
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
                    <p>Gracias por registrarte en AssistantAI. Estamos preparando tu asistente personalizado.</p>
@@ -684,10 +684,9 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
 
         // 📌 Enviar el correo electrónico
         await transporter.sendMail(mailOptions);
-
         console.log("✅ ¡Correo enviado con éxito!");
 
-        // 📌 Envío del mensaje a WhatsApp mediante plantilla de Meta
+        // 📌 Envío del mensaje a WhatsApp usando el nuevo modelo "teste"
         const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
         const headers = {
             "Authorization": `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
@@ -700,16 +699,17 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
             to: data.whatsapp,
             type: "template",
             template: {
-                name: "site", // Nombre de la plantilla en Meta
+                name: "teste",
                 language: {
                     policy: "deterministic",
-                    code: "es" // Español
+                    code: "es"
                 },
                 components: [
                     {
                         type: "body",
                         parameters: [
-                            { type: "text", text: data.nombre_comercio }
+                            { type: "text", text: data.nombre_comercio }, // {{1}}
+                            { type: "text", text: data.email }            // {{2}}
                         ]
                     }
                 ]
