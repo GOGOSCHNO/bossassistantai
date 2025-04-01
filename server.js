@@ -57,7 +57,7 @@ connectToMongoDB();
 
 // Middleware
 app.use(cors({
-  origin: 'https://www.puravivecoach.com', // Remplace par l'URL de ton front-end si nécessaire
+  origin: 'https://assistantai.site', // Remplace par l'URL de ton front-end si nécessaire
   credentials: true
 }));
 app.use(bodyParser.urlencoded({ extended: true }));
