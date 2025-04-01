@@ -805,7 +805,11 @@ app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login.html' }),
   (req, res) => {
     // Générer un token JWT et le stocker dans un cookie HTTP-only
-    const token = jwt.sign({ email: req.user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(
+      { email: req.user.email, name: req.user.name }, // ajoute name ici
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.cookie('token', token, {
       httpOnly: true,
