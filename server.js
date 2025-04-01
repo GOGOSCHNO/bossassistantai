@@ -817,3 +817,19 @@ app.get('/auth/google/callback',
     res.redirect("https://assistantai.site/index.html"); // à adapter selon ta page d’accueil après connexion
   }
 );
+app.get('/api/me', async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection('users').findOne({ email: decoded.email });
+
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    res.json({ name: user.name, email: user.email });
+  } catch (err) {
+    console.error("Error en /api/me", err);
+    res.status(403).json({ error: "Token inválido" });
+  }
+});
