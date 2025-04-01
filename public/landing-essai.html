@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prueba Gratis - AssistantAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .overlay {
+      background: rgba(0, 0, 0, 0.7);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    p {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    .form-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 500px;
+    }
+    .form-container label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-weight: bold;
+    }
+    .form-container input, .form-container textarea, .form-container select {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 4px;
+    }
+    .cta-button {
+      display: block;
+      width: 100%;
+      background: #4A90E2;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.75rem;
+      border-radius: 4px;
+      text-align: center;
+      transition: background 0.3s ease;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .cta-button:hover {
+      background: #3b78b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <header>
+      <h1>¡Prueba gratis tu asistente WhatsApp!</h1>
+      <p>Automatiza la atención al cliente con AssistantAI y revoluciona tu negocio.</p>
+    </header>
+    <div class="form-container">
+      <form action="#" method="POST">
+        <label for="nombre_comercio">Nombre del comercio:</label>
+        <input type="text" id="nombre_comercio" name="nombre_comercio" required>
+        
+        <label for="sector">Sector del negocio:</label>
+        <select id="sector" name="sector">
+          <option value="belleza">Belleza</option>
+          <option value="salud">Salud</option>
+          <option value="restaurantes">Restaurantes</option>
+          <option value="ecommerce">E-commerce</option>
+          <option value="otros">Otros</option>
+        </select>
+        
+        <label for="whatsapp">Número de WhatsApp:</label>
+        <input type="tel" id="whatsapp" name="whatsapp" required>
+        
+        <label for="email">Correo electrónico:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="servicios">Servicios o productos que ofreces:</label>
+        <textarea id="servicios" name="servicios" rows="3" required></textarea>
+        
+        <label for="objetivo">¿Qué esperas de AssistantAI?</label>
+        <select id="objetivo" name="objetivo">
+          <option value="responder_preguntas">Responder preguntas frecuentes</option>
+          <option value="recomendar_productos">Recomendar productos o servicios</option>
+        </select>
+        
+        <label for="comentarios">¿Algo más que debamos saber?</label>
+        <textarea id="comentarios" name="comentarios" rows="3"></textarea>
+        
+        <button type="submit" class="cta-button">Crear mi asistente gratis 🚀</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

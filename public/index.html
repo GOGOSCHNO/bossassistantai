@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>AssistantAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Favicon -->
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <link rel="shortcut icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+
+  <style>
+    /* Réinitialisation globale */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+    }
+    /* Conteneur avec overlay uniforme */
+    .overlay {
+      background: rgba(0, 0, 0, 0.6);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header, main, footer {
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    /* Le header garde sa structure mais avec un fond transparent pour se fondre dans l'overlay */
+    header {
+      background: transparent;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+    main {
+      margin-top: 10%;
+      flex: 1;
+    }
+    main h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    main p {
+      font-size: 1.1rem;
+      max-width: 800px;
+      margin: 0 auto 1.5rem auto;
+      line-height: 1.5;
+    }
+    .cta-button {
+      display: inline-block;
+      background: #4A90E2;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      transition: background 0.3s ease;
+      font-size: 1rem;
+    }
+    .cta-button:hover {
+      background: #3b78b9;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    a {
+      color: #fff;
+    }
+    /* 📌 Amélioration du style du formulaire */
+    #pruebaGratisForm {
+        max-width: 500px;
+        margin: 20px auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        text-align: left;
+        color: #333;
+    }
+    
+    #pruebaGratisForm h2 {
+        text-align: center;
+        color: #4A90E2;
+        margin-bottom: 15px;
+    }
+    
+    /* 📌 Espacement des labels et inputs */
+    #pruebaGratisForm label {
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+    
+    #pruebaGratisForm input,
+    #pruebaGratisForm select,
+    #pruebaGratisForm textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    
+    /* 📌 Champs en ligne pour indicatif et téléphone */
+    .whatsapp-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .whatsapp-container input {
+        flex: 1;
+    }
+    /* 📌 Liste déroulante pour l'indicatif */
+    #indicativo {
+        width: 80px !important;
+        padding: 8px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 5px !important;
+    }
+    
+    /* 📌 Champ manuel pour l'indicatif (caché par défaut) */
+    #manualIndicativo {
+        width: 60px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    
+    /* 📌 Champ pour le numéro */
+    #numero {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    /* 📌 Bouton stylisé */
+    #pruebaGratisForm button {
+        background: #4A90E2;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 5px;
+        width: 100%;
+        margin-top: 15px;
+        transition: background 0.3s ease;
+    }
+    
+    #pruebaGratisForm button:hover {
+        background: #3b78b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <header>
+      <a href="index.html">
+        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
+             alt="AssistantAI Logo" 
+             style="max-width: 100%; height: auto; cursor: pointer;">
+      </a>
+      <p>Chatbots & Soluciones de IA para tu negocio</p>
+      <div id="user-name" style="font-weight: bold; color: #4A90E2; margin-top: 10px;"></div>
+    </header>
+    <main>
+      <h2>Mejora la interacción con tus clientes</h2>
+      <p>Desarrollamos agentes conversacionales para automatizar la atención al cliente y ofrecer una experiencia fácil. Benefíciate de una solución rápida, adaptada a tus necesidades y escalable gracias a la inteligencia artificial.</p>
+
+    <!-- Formulario de Prueba Gratis -->
+    <div id="pruebaGratisForm" style="display: none;">
+        <h2>Prueba Gratis de AssistantAI 🚀</h2>
+        <p style="text-align: center;">Descubre cómo un asistente WhatsApp puede mejorar la atención al cliente en tu negocio.</p>
+        <form id="formularioPrueba">
+            <label for="nombre_comercio">Nombre del comercio</label>
+            <input type="text" id="nombre_comercio" name="nombre_comercio" required>
+    
+            <label for="sector">Sector de actividad</label>
+            <select id="sector" name="sector" required>
+                <option value="">Selecciona un sector</option>
+                <option value="Belleza">Belleza</option>
+                <option value="Salud">Salud</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Restaurantes">Restaurantes</option>
+                <option value="Servicios">Servicios</option>
+                <option value="Otro">Otro</option>
+            </select>
+    
+            <label for="whatsapp">Número de WhatsApp:</label>
+            <div class="whatsapp-container">
+              <select id="indicativo" name="indicativo">
+                  <option value="+57" selected>🇨🇴 +57</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                  <option value="+55">🇧🇷 +55</option>
+                  <option value="manual">Otro (Ingresar manualmente)</option>
+              </select>
+              <input type="text" id="manualIndicativo" name="manualIndicativo" placeholder="+XX" style="display: none; width: 60px;">
+              <input type="text" id="numero" name="numero" placeholder="Ej: 3009016472" required>
+            </div>
+    
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" name="email" required>
+    
+            <label for="productosServicios">¿Qué productos o servicios ofreces?</label>
+            <textarea id="productosServicios" name="productosServicios" rows="3" required></textarea>
+    
+            <label for="objetivo">¿Para qué necesitas el asistente?</label>
+            <select id="objetivo" name="objetivo" required>
+                <option value="">Selecciona una opción</option>
+                <option value="Automatizar respuestas a clientes">Automatizar respuestas a clientes</option>
+                <option value="Recomendar productos o servicios">Recomendar productos o servicios</option>
+                <option value="Gestionar consultas frecuentes">Gestionar consultas frecuentes</option>
+            </select>
+    
+            <label for="mensajeAdicional">¿Algo más que debamos saber?</label>
+            <textarea id="mensajeAdicional" name="mensajeAdicional" rows="3"></textarea>
+    
+            <label for="archivo">Adjunta un archivo (opcional)</label>
+            <input type="file" id="archivo" name="archivo">
+    
+            <button type="submit">Crear mi asistente gratuito 🚀</button>
+        </form>
+    </div>
+    <a href="#" id="probarGratisBtn" class="cta-button" style="margin-top: 10px;">Probar Gratis 🚀</a>
+    </main>
+    <footer>
+      &copy; 2025 AssistantAI – Todos los derechos reservados.
+      <a href="contacto.html" class="cta-button">Contáctanos</a>
+      <br/>
+      <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+    </footer>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 📌 Récupération des éléments HTML
+        const btnProbarGratis = document.getElementById("probarGratisBtn");
+        const formContainer = document.getElementById("pruebaGratisForm");
+        const selectIndicativo = document.getElementById("indicativo");
+        const manualIndicativo = document.getElementById("manualIndicativo");
+        const numeroInput = document.getElementById("numero");
+  
+        // 📌 Initialisation du formulaire caché avec animation fluide
+        formContainer.style.display = "none";
+        formContainer.style.opacity = "0";
+        formContainer.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+        formContainer.style.transform = "translateY(-20px)";
+  
+        // 📌 Gestion du bouton pour afficher le formulaire en douceur
+        btnProbarGratis.addEventListener("click", function () {
+            if (formContainer.style.display === "none") {
+                formContainer.style.display = "block";
+                setTimeout(() => {
+                    formContainer.style.opacity = "1";
+                    formContainer.style.transform = "translateY(0px)";
+                }, 50);
+  
+                // 📌 Faire défiler l'écran jusqu'au formulaire
+                formContainer.scrollIntoView({ behavior: "smooth" });
+  
+                // 📌 Cacher le bouton après ouverture
+                btnProbarGratis.style.display = "none";
+            }
+        });
+  
+        // 📌 Afficher le champ manuel si l'utilisateur choisit "Otro"
+        selectIndicativo.addEventListener("change", function () {
+            if (this.value === "manual") {
+                manualIndicativo.style.display = "block";
+                manualIndicativo.focus();
+            } else {
+                manualIndicativo.style.display = "none";
+                manualIndicativo.value = "";
+            }
+        });
+  
+        // 📌 Gestion de la soumission du formulaire
+        document.getElementById("formularioPrueba").addEventListener("submit", async function (event) {
+            event.preventDefault();
+  
+            const formData = new FormData(this);
+  
+            // 📌 Récupérer l'indicatif et le numéro
+            let indicativoSeleccionado = selectIndicativo.value;
+            if (indicativoSeleccionado === "manual" && manualIndicativo.value.trim() !== "") {
+                indicativoSeleccionado = manualIndicativo.value.trim();
+            }
+  
+            let numero = numeroInput.value.trim();
+  
+            // 📌 Vérifier si l'indicatif commence par "+"
+            if (!indicativoSeleccionado.startsWith("+")) {
+                indicativoSeleccionado = "+" + indicativoSeleccionado;
+            }
+  
+            // 📌 Fusionner l'indicatif et le numéro
+            const numeroCompleto = indicativoSeleccionado + numero;
+            formData.set("whatsapp", numeroCompleto);
+            formData.delete("manualIndicativo"); // Supprimer le champ inutile
+  
+            console.log("📞 Número enviado al backend:", numeroCompleto);
+  
+            // 📌 Masquer immédiatement le formulaire avec effet
+            formContainer.style.opacity = "0";
+            formContainer.style.transform = "translateY(-20px)";
+            setTimeout(() => {
+                formContainer.style.display = "none";
+            }, 500);
+  
+            // 📌 Affichage du message de confirmation
+            const mensajeFelicitacion = document.createElement("div");
+            mensajeFelicitacion.innerHTML = `
+                <h2>🎉 ¡Felicidades, ${formData.get("nombre_comercio")}! 🚀</h2>
+                <p>Tu asistente está en proceso de creación. Te contactaremos pronto.</p>
+                <p>📩 Hemos enviado un mensaje de confirmación a:</p>
+                <p><strong>Email:</strong> ${formData.get("email")}</p>
+                <p><strong>WhatsApp:</strong> ${numeroCompleto}</p>
+                <p>Si cometiste un error en los datos, por favor vuelve a intentarlo.</p>
+            `;
+            mensajeFelicitacion.style.textAlign = "center";
+            mensajeFelicitacion.style.marginTop = "20px";
+            mensajeFelicitacion.style.padding = "20px";
+            mensajeFelicitacion.style.background = "rgba(255,255,255,0.9)";
+            mensajeFelicitacion.style.color = "#000";
+            mensajeFelicitacion.style.borderRadius = "8px";
+            mensajeFelicitacion.style.maxWidth = "500px";
+            mensajeFelicitacion.style.margin = "20px auto";
+  
+            document.querySelector("main").appendChild(mensajeFelicitacion);
+  
+            // 📌 Envoyer les données au backend sans attendre la réponse
+            fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
+                method: "POST",
+                body: formData
+            }).catch(error => {
+                console.error("❌ Error al enviar la solicitud:", error);
+            });
+        });
+    });
+        async function loadUserName() {
+          try {
+            const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
+              credentials: "include"
+            });
+            const data = await res.json();
+            if (res.ok) {
+              document.getElementById("user-name").textContent = `👋 Hola, ${data.name}`;
+            }
+          } catch (err) {
+            console.error("No se pudo cargar el usuario:", err);
+          }
+        }
+      
+        loadUserName();
+  </script>
+</body>
+</html>

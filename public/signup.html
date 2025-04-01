@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Crear una cuenta | NAYSA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <link rel="shortcut icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+
+  <!-- Style intégré -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4A90E2;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #4A90E2;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #3b78b9;
+    }
+
+    .google-btn {
+      background-color: #db4437;
+      margin-top: 10px;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .link a {
+      color: #4A90E2;
+      text-decoration: none;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html">
+        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
+              alt="AssistantAI Logo" 
+              style="max-width: 100%; height: auto; cursor: pointer;">
+    </a>
+  </header>
+  <main>
+    <div class="form-container">
+      <h2>Crear una cuenta</h2>
+      <form id="signup-form">
+        <label for="name">Nombre completo</label>
+        <input type="text" id="name" name="name" required />
+  
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" required />
+  
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" required />
+  
+        <button type="submit" class="btn">Crear cuenta</button>
+      </form>
+  
+      <button onclick="location.href='https://bossassistantai-439c88409c33.herokuapp.com/auth/google'" class="btn google-btn">Registrarse con Google</button>
+  
+      <div class="link">
+        ¿Ya tienes una cuenta? <a href="login.html">Inicia sesión</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("signup-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const formData = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value.trim()
+      };
+
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          alert("✅ Cuenta creada exitosamente. Serás redirigido.");
+          window.location.href = "/dashboard"; // à adapter
+        } else {
+          alert("❌ Error: " + data.error);
+        }
+      } catch (err) {
+        console.error("❌ Error de red:", err);
+        alert("Error de red al enviar el formulario.");
+      }
+    });
+  </script>
+</body>
+</html>
