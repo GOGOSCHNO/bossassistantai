@@ -814,6 +814,6 @@ app.get('/auth/google/callback',
     });
 
     // Rediriger vers la page privée
-    res.redirect('/dashboard.html'); // à adapter selon ta page d’accueil après connexion
+    res.redirect('https://assistantai.site/dashboard.html'); // à adapter selon ta page d’accueil après connexion
   }
 );
