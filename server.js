@@ -10,6 +10,10 @@ const OpenAI = require("openai");
 const { MongoClient } = require('mongodb');
 const twilio = require('twilio');
 const axios = require('axios');
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,8 +65,44 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.json()); // parse le JSON entrant de Meta
 
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Exportation de `db` pour pouvoir l'utiliser ailleurs
 module.exports = { db };
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails[0].value;
+      const name = profile.displayName;
+
+      // Optionnel : insérer l’utilisateur s’il n’existe pas
+      const existingUser = await db.collection('users').findOne({ email });
+      if (!existingUser) {
+        await db.collection('users').insertOne({ email, name, googleId: profile.id });
+      }
+
+      return done(null, { email, name });
+    } catch (err) {
+      console.error("Erreur OAuth Google :", err);
+      return done(err, null);
+    }
+  }
+));
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
 
 const { google } = require('googleapis');
 let calendar;
@@ -755,3 +795,25 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Le serveur fonctionne sur le port ${PORT}`);
 });
+// 🔗 Route de départ : redirige vers l’écran Google
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// 🔁 Route de retour (callback) depuis Google
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login.html' }),
+  (req, res) => {
+    // Générer un token JWT et le stocker dans un cookie HTTP-only
+    const token = jwt.sign({ email: req.user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,      // ⚠️ à désactiver si tu testes en HTTP local
+      sameSite: 'Lax'
+    });
+
+    // Rediriger vers la page privée
+    res.redirect('/dashboard.html'); // à adapter selon ta page d’accueil après connexion
+  }
+);
