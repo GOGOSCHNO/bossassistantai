@@ -814,7 +814,7 @@ app.get('/auth/google/callback',
     res.cookie('token', token, {
       httpOnly: true,
       secure: true,      // ⚠️ à désactiver si tu testes en HTTP local
-      sameSite: 'Lax'
+      sameSite: 'None'
     });
 
     // Rediriger vers la page privée
