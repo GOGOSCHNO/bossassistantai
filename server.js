@@ -14,6 +14,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,6 +65,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.json()); // parse le JSON entrant de Meta
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
   secret: process.env.JWT_SECRET,
