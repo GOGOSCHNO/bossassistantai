@@ -35,7 +35,10 @@
     }
     /* Le header garde sa structure mais avec un fond transparent pour se fondre dans l'overlay */
     header {
+      display: flex;
       background: transparent;
+      flex-direction: column;
+      align-items: center;
     }
     header h1 {
       font-size: 2.5rem;
@@ -44,6 +47,24 @@
     header p {
       font-size: 1.1rem;
       margin-bottom: 1.5rem;
+    }
+    #auth-buttons {
+      margin-top: 1rem;
+    }
+    .auth-btn {
+      background: #4A90E2;
+      color: white;
+      padding: 8px 16px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    
+    .auth-btn:hover {
+      background: #3b78b9;
     }
     main {
       margin-top: 10%;
@@ -180,7 +201,9 @@
              style="max-width: 100%; height: auto; cursor: pointer;">
       </a>
       <p>Chatbots & Soluciones de IA para tu negocio</p>
-      <div id="user-name" style="font-weight: bold; color: #4A90E2; margin-top: 10px;"></div>
+      <div id="auth-buttons">
+        <!-- Affichage dynamique via JS -->
+      </div>
     </header>
     <main>
       <h2>Mejora la interacción con tus clientes</h2>
@@ -357,21 +380,32 @@
             });
         });
     });
-        async function loadUserName() {
-          try {
-            const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
-              credentials: "include"
-            });
-            const data = await res.json();
-            if (res.ok) {
-              document.getElementById("user-name").textContent = `👋 Hola, ${data.name}`;
-            }
-          } catch (err) {
-            console.error("No se pudo cargar el usuario:", err);
-          }
+    async function loadUserName() {
+      const authDiv = document.getElementById("auth-buttons");
+    
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
+          credentials: "include"
+        });
+        const data = await res.json();
+    
+        if (res.ok) {
+          authDiv.innerHTML = `
+            <span style="color: #4A90E2; font-weight: bold;">👋 Hola, ${data.name}</span>
+          `;
+        } else {
+          throw new Error();
         }
-      
-        loadUserName();
+      } catch {
+        authDiv.innerHTML = `
+          <a href="signup.html" class="auth-btn">Crear cuenta</a>
+          <a href="login.html" class="auth-btn">Iniciar sesión</a>
+        `;
+      }
+    }
+    
+    // ✅ Appel automatique lors du chargement de la page
+    loadUserName();
   </script>
 </body>
 </html>
