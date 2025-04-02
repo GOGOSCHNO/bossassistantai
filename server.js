@@ -819,7 +819,7 @@ app.get('/auth/google/callback',
     });
 
     // Rediriger vers la page privée
-    res.redirect("https://assistantai.site/index.html"); // à adapter selon ta page d’accueil après connexion
+    res.redirect("https://assistantai.site"); // à adapter selon ta page d’accueil après connexion
   }
 );
 app.get('/api/me', async (req, res) => {
