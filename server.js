@@ -56,8 +56,19 @@ async function connectToMongoDB() {
 connectToMongoDB();
 
 // Middleware
+const allowedOrigins = [
+  "https://assistantai.site",
+  "https://www.assistantai.site"
+];
+
 app.use(cors({
-  origin: 'https://assistantai.site', // Remplace par l'URL de ton front-end si nécessaire
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 }));
 app.use(bodyParser.urlencoded({ extended: true }));
