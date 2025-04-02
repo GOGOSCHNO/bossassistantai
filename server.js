@@ -852,3 +852,11 @@ app.get('/api/me', async (req, res) => {
 app.get("*", (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
 });
+app.post('/api/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'None'
+  });
+  res.status(200).json({ message: "Sesión cerrada" });
+});
