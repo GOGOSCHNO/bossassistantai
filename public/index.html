@@ -34,11 +34,12 @@
       text-align: center;
     }
     /* Le header garde sa structure mais avec un fond transparent pour se fondre dans l'overlay */
-    header {
+    .header {
       display: flex;
-      background: transparent;
+      justify-content: space-between; /* espace entre les deux blocs */
       align-items: center;
-      flex-wrap: wrap;
+      padding: 1.5rem 2rem;
+      width: 100%;
     }
     header h1 {
       font-size: 2.5rem;
@@ -49,6 +50,9 @@
       margin-bottom: 1.5rem;
     }
     .branding {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -56,20 +60,21 @@
     }
     
     .branding img {
-      max-width: 180px;
+      max-width: 300px;
       height: auto;
       cursor: pointer;
     }
     
     .slogan {
-      margin-top: 0.5rem;
-      font-size: 1.1rem;
+      margin-top: 0.3rem;
+      font-size: 1rem;
       color: #fff;
     }
     
     #auth-buttons {
       display: flex;
       gap: 10px;
+      margin-left: auto;
     }
     
     .auth-btn {
