@@ -37,8 +37,8 @@
     header {
       display: flex;
       background: transparent;
-      flex-direction: column;
       align-items: center;
+      flex-wrap: wrap;
     }
     header h1 {
       font-size: 2.5rem;
@@ -48,14 +48,34 @@
       font-size: 1.1rem;
       margin-bottom: 1.5rem;
     }
-    #auth-buttons {
-      margin-top: 1rem;
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
+    
+    .branding img {
+      max-width: 180px;
+      height: auto;
+      cursor: pointer;
+    }
+    
+    .slogan {
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    
+    #auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
     .auth-btn {
       background: #4A90E2;
       color: white;
       padding: 8px 16px;
-      margin: 0 5px;
       border: none;
       border-radius: 4px;
       text-decoration: none;
@@ -194,13 +214,14 @@
 </head>
 <body>
   <div class="overlay">
-    <header>
-      <a href="index.html">
-        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
-             alt="AssistantAI Logo" 
-             style="max-width: 100%; height: auto; cursor: pointer;">
-      </a>
-      <p>Chatbots & Soluciones de IA para tu negocio</p>
+    <header class="header">
+      <div class="branding">
+        <a href="index.html">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
+               alt="AssistantAI Logo">
+        </a>
+        <p class="slogan">Chatbots & Soluciones de IA para tu negocio</p>
+      </div>
       <div id="auth-buttons">
         <!-- Affichage dynamique via JS -->
       </div>
