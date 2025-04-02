@@ -64,6 +64,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.json()); // parse le JSON entrant de Meta
+app.use(express.static("public"));
 
 app.use(session({
   secret: process.env.JWT_SECRET,
