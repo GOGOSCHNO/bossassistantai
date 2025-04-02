@@ -417,13 +417,36 @@
         const data = await res.json();
     
         if (res.ok) {
+          // Affiche le nom et prépare le bouton de logout caché
           authDiv.innerHTML = `
-            <span style="color: #4A90E2; font-weight: bold;">👋 Hola, ${data.name}</span>
+            <div id="user-info" style="cursor: pointer; color: #4A90E2; font-weight: bold;">
+              👋 Hola, ${data.name}
+            </div>
+            <button id="logout-btn" class="auth-btn" style="display: none;">Cerrar sesión</button>
           `;
+    
+          const userInfo = document.getElementById("user-info");
+          const logoutBtn = document.getElementById("logout-btn");
+    
+          // Toggle d'affichage
+          userInfo.addEventListener("click", () => {
+            logoutBtn.style.display = logoutBtn.style.display === "none" ? "inline-block" : "none";
+          });
+    
+          // Déconnexion
+          logoutBtn.addEventListener("click", async () => {
+            await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+              method: "POST",
+              credentials: "include"
+            });
+            window.location.reload(); // recharge la page sans le cookie
+          });
+    
         } else {
           throw new Error();
         }
       } catch {
+        // Si non connecté, on affiche login/signup
         authDiv.innerHTML = `
           <a href="signup.html" class="auth-btn">Crear cuenta</a>
           <a href="login.html" class="auth-btn">Iniciar sesión</a>
@@ -431,7 +454,6 @@
       }
     }
     
-    // ✅ Appel automatique lors du chargement de la page
     loadUserName();
   </script>
 </body>
