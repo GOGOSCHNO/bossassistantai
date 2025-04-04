@@ -434,18 +434,19 @@
         const data = await res.json();
     
         if (res.ok) {
-          // Affiche le nom et prépare le bouton de logout caché
+          // Affiche le nom et les boutons Dashboard + Déconnexion
           authDiv.innerHTML = `
             <div id="user-info" style="cursor: pointer; font-weight: bold;">
               👋 Hola, ${data.name}
             </div>
-            <button id="logout-btn" class="auth-btn" >Cerrar sesión</button>
+            <a href="dashboard.html" class="auth-btn" style="margin-top: 10px;">📊 Dashboard</a>
+            <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
           `;
     
           const userInfo = document.getElementById("user-info");
           const logoutBtn = document.getElementById("logout-btn");
     
-          // Toggle d'affichage
+          // Toggle d'affichage du bouton logout
           userInfo.addEventListener("click", () => {
             logoutBtn.classList.toggle("visible");
           });
@@ -456,14 +457,14 @@
               method: "POST",
               credentials: "include"
             });
-            window.location.reload(); // recharge la page sans le cookie
+            window.location.reload();
           });
     
         } else {
           throw new Error();
         }
       } catch {
-        // Si non connecté, on affiche login/signup
+        // Non connecté : afficher login/signup
         authDiv.innerHTML = `
           <a href="signup.html" class="auth-btn">Crear cuenta</a>
           <a href="login.html" class="auth-btn">Iniciar sesión</a>
