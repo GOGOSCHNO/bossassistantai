@@ -857,9 +857,6 @@ app.get('/api/me', async (req, res) => {
     res.status(403).json({ error: "Token inválido" });
   }
 });
-app.get("*", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
-});
 
 app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
