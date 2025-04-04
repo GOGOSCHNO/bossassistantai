@@ -2,21 +2,138 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel de usuario</title>
+  <title>Dashboard – AssistantAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: #f0f0f0;
-      text-align: center;
-      margin-top: 100px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
     }
-    .welcome {
-      font-size: 24px;
+
+    body {
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .overlay {
+      background: rgba(0, 0, 0, 0.7);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4A90E2;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.95);
       color: #333;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #4A90E2;
+      color: white;
+    }
+
+    td {
+      background: white;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      tr {
+        margin-bottom: 15px;
+      }
+
+      td {
+        padding-left: 50%;
+        position: relative;
+      }
+
+      td::before {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        font-weight: bold;
+      }
+
+      td:nth-child(1)::before { content: "📱 Cliente"; }
+      td:nth-child(2)::before { content: "🧠 Mensaje"; }
+      td:nth-child(3)::before { content: "🤖 Respuesta"; }
+      td:nth-child(4)::before { content: "🕒 Fecha"; }
     }
   </style>
 </head>
 <body>
-  <div class="welcome">🎉 ¡Bienvenido! Has iniciado sesión correctamente.</div>
+  <div class="overlay">
+    <h1>📊 Conversaciones de tu Asistente</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>📱 Cliente WhatsApp</th>
+          <th>🧠 Mensaje</th>
+          <th>🤖 Respuesta</th>
+          <th>🕒 Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="conversations-body"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadConversations() {
+      try {
+        const res = await fetch("/api/mes-conversations", { credentials: "include" });
+        const data = await res.json();
+        const tbody = document.getElementById("conversations-body");
+
+        if (!data.conversations || data.conversations.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
+          return;
+        }
+
+        data.conversations.forEach(conv => {
+          const userNumber = conv.userNumber;
+          conv.responses.forEach(entry => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${userNumber}</td>
+              <td>${entry.userMessage || ""}</td>
+              <td>${entry.assistantResponse?.text || ""}</td>
+              <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+      } catch (err) {
+        console.error("Error al cargar las conversaciones:", err);
+      }
+    }
+
+    loadConversations();
+  </script>
 </body>
 </html>
