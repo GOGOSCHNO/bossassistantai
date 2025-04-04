@@ -106,7 +106,7 @@
   <script>
     async function loadConversations() {
       try {
-        const res = await fetch("/api/mes-conversations", { credentials: "include" });
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", { credentials: "include" });
         const data = await res.json();
         const tbody = document.getElementById("conversations-body");
   
@@ -137,7 +137,7 @@
     }
   
     // ✅ Vérification de connexion AVANT de charger les conversations
-    fetch("/api/me", { credentials: "include" })
+    fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" })
       .then(res => {
         if (!res.ok) throw new Error("Utilisateur non connecté");
         return res.json();
