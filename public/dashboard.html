@@ -88,21 +88,40 @@
 </head>
 <body>
   <div class="overlay">
-    <h1>📊 Conversaciones de tu Asistente</h1>
-
-    <table>
-      <thead>
-        <tr>
-          <th>📱 Cliente WhatsApp</th>
-          <th>🧠 Mensaje</th>
-          <th>🤖 Respuesta</th>
-          <th>🕒 Fecha</th>
-        </tr>
-      </thead>
-      <tbody id="conversations-body"></tbody>
-    </table>
-  </div>
-
+    <header class="header">
+      <div class="branding">
+        <a href="index.html">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
+               alt="AssistantAI Logo">
+        </a>
+        <p class="slogan">Chatbots & Soluciones de IA para tu negocio</p>
+      </div>
+      <div id="auth-buttons">
+        <!-- Affichage dynamique via JS -->
+      </div>
+    </header>
+    <main>
+      <h1>📊 Conversaciones de tu Asistente</h1>
+  
+      <table>
+        <thead>
+          <tr>
+            <th>📱 Cliente WhatsApp</th>
+            <th>🧠 Mensaje</th>
+            <th>🤖 Respuesta</th>
+            <th>🕒 Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="conversations-body"></tbody>
+      </table>
+    </div>
+  </main>
+  <footer>
+    &copy; 2025 AssistantAI – Todos los derechos reservados.
+    <a href="contacto.html" class="cta-button">Contáctanos</a>
+    <br/>
+    <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+  </footer>
   <script>
     async function loadConversations() {
       try {
