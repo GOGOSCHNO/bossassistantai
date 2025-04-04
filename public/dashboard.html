@@ -109,12 +109,12 @@
         const res = await fetch("/api/mes-conversations", { credentials: "include" });
         const data = await res.json();
         const tbody = document.getElementById("conversations-body");
-
+  
         if (!data.conversations || data.conversations.length === 0) {
           tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
           return;
         }
-
+  
         data.conversations.forEach(conv => {
           const userNumber = conv.userNumber;
           conv.responses.forEach(entry => {
@@ -130,10 +130,28 @@
         });
       } catch (err) {
         console.error("Error al cargar las conversaciones:", err);
+        document.getElementById("conversations-body").innerHTML = `
+          <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
+        `;
       }
     }
-
-    loadConversations();
+  
+    // ✅ Vérification de connexion AVANT de charger les conversations
+    fetch("/api/me", { credentials: "include" })
+      .then(res => {
+        if (!res.ok) throw new Error("Utilisateur non connecté");
+        return res.json();
+      })
+      .then(data => {
+        console.log("✅ Utilisateur connecté :", data);
+        loadConversations(); // seulement si connecté
+      })
+      .catch(err => {
+        console.error("❌ Pas connecté :", err);
+        document.getElementById("conversations-body").innerHTML = `
+          <tr><td colspan="4" style="color: red;">⚠️ Vous devez être connecté pour voir les conversations.</td></tr>
+        `;
+      });
   </script>
 </body>
 </html>
