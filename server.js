@@ -90,28 +90,36 @@ app.use(passport.session());
 module.exports = { db };
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      const email = profile.emails[0].value;
-      const name = profile.displayName;
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL
+},
+async (accessToken, refreshToken, profile, done) => {
+  try {
+    const email = profile.emails[0].value;
+    const name = profile.displayName;
 
-      // Optionnel : insérer l’utilisateur s’il n’existe pas
-      const existingUser = await db.collection('users').findOne({ email });
-      if (!existingUser) {
-        await db.collection('users').insertOne({ email, name, googleId: profile.id });
-      }
+    const existingUser = await db.collection('users').findOne({ email });
 
-      return done(null, { email, name });
-    } catch (err) {
-      console.error("Erreur OAuth Google :", err);
-      return done(err, null);
+    if (!existingUser) {
+      // Génère un nom de collection unique, ex : threads_1700000000000
+      const threadsCollection = "threads_" + Date.now();
+
+      await db.collection('users').insertOne({
+        email,
+        name,
+        googleId: profile.id,
+        threadsCollection,
+        hasAssistant: false // utile pour afficher un message conditionnel plus tard
+      });
     }
+
+    return done(null, { email, name });
+  } catch (err) {
+    console.error("Erreur OAuth Google :", err);
+    return done(err, null);
   }
-));
+}));
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
