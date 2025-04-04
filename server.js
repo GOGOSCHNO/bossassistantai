@@ -860,6 +860,7 @@ app.get('/api/me', async (req, res) => {
 app.get("*", (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
 });
+
 app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
@@ -867,4 +868,26 @@ app.post('/api/logout', (req, res) => {
     sameSite: 'None'
   });
   res.status(200).json({ message: "Sesión cerrada" });
+});
+
+app.get("/api/mes-conversations", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "Non authentifié" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user || !user.threadsCollection) {
+      return res.status(404).json({ error: "Utilisateur sans assistant ou collection non définie." });
+    }
+
+    const clientThreads = db.collection(user.threadsCollection);
+    const conversations = await clientThreads.find({}).sort({ "responses.timestamp": -1 }).toArray();
+
+    res.json({ conversations });
+  } catch (err) {
+    console.error("Erreur dans /api/mes-conversations:", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
