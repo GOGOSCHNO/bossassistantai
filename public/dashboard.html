@@ -233,54 +233,63 @@
     <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
   </footer>
   <script>
-    async function loadConversations() {
-      try {
-        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", { credentials: "include" });
-        const data = await res.json();
-        const tbody = document.getElementById("conversations-body");
-  
-        if (!data.conversations || data.conversations.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
-          return;
-        }
-  
-        data.conversations.forEach(conv => {
-          const userNumber = conv.userNumber;
-          conv.responses.forEach(entry => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${userNumber}</td>
-              <td>${entry.userMessage || ""}</td>
-              <td>${entry.assistantResponse?.text || ""}</td>
-              <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
-            `;
-            tbody.appendChild(tr);
+      async function loadConversations() {
+        try {
+          const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
+            credentials: "include"
           });
-        });
-      } catch (err) {
-        console.error("Error al cargar las conversaciones:", err);
-        document.getElementById("conversations-body").innerHTML = `
-          <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
-        `;
+          const data = await res.json();
+          const tbody = document.getElementById("conversations-body");
+      
+          if (!data.conversations || data.conversations.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
+            return;
+          }
+      
+          // Groupement des conversations par userNumber
+          data.conversations.forEach(conv => {
+            const userNumber = conv.userNumber;
+            const groupRow = document.createElement("tr");
+            groupRow.innerHTML = `
+              <td colspan="4" style="background: #e3e3e3; cursor: pointer; font-weight: bold;">
+                📱 ${userNumber} <span style="float:right;">👁️ Mostrar</span>
+              </td>
+            `;
+            tbody.appendChild(groupRow);
+      
+            // Crée une section pliable (hidden par défaut)
+            const messageRows = conv.responses.map(entry => {
+              const tr = document.createElement("tr");
+              tr.style.display = "none"; // masqué au départ
+              tr.classList.add(`conv-${userNumber}`);
+              tr.innerHTML = `
+                <td>${userNumber}</td>
+                <td>${entry.userMessage || ""}</td>
+                <td>${entry.assistantResponse?.text || ""}</td>
+                <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
+              `;
+              return tr;
+            });
+      
+            messageRows.forEach(row => tbody.appendChild(row));
+      
+            // Ajoute un toggle d’affichage
+            groupRow.addEventListener("click", () => {
+              const isVisible = messageRows[0].style.display === "table-row";
+              messageRows.forEach(row => row.style.display = isVisible ? "none" : "table-row");
+      
+              const label = groupRow.querySelector("span");
+              label.textContent = isVisible ? "👁️ Mostrar" : "🙈 Ocultar";
+            });
+          });
+      
+        } catch (err) {
+          console.error("Error al cargar las conversaciones:", err);
+          document.getElementById("conversations-body").innerHTML = `
+            <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
+          `;
+        }
       }
-    }
-  
-    // ✅ Vérification de connexion AVANT de charger les conversations
-    fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" })
-      .then(res => {
-        if (!res.ok) throw new Error("Utilisateur non connecté");
-        return res.json();
-      })
-      .then(data => {
-        console.log("✅ Utilisateur connecté :", data);
-        loadConversations(); // seulement si connecté
-      })
-      .catch(err => {
-        console.error("❌ Pas connecté :", err);
-        document.getElementById("conversations-body").innerHTML = `
-          <tr><td colspan="4" style="color: red;">⚠️ Vous devez être connecté pour voir les conversations.</td></tr>
-        `;
-      });
       async function loadUserName() {
       const authDiv = document.getElementById("auth-buttons");
     
