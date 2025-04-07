@@ -324,16 +324,34 @@ async function fetchThreadMessages(threadId) {
     // Suppression des références internes 【XX:XX†nomfichier.json】
     textContent = textContent.replace(/【\d+:\d+†[^\]]+】/g, '').trim();
 
-    // Fonction de conversion Markdown OpenAI → Markdown WhatsApp
+    // ➕ Détection et extraction de la nota interna
+    let summaryNote = null;
+    let statusNote = null;
+
+    const noteStart = textContent.indexOf('--- Nota interna ---');
+    if (noteStart !== -1) {
+      const noteContent = textContent.slice(noteStart).replace(/[-]+/g, '').trim();
+
+      const resumenMatch = noteContent.match(/Resumen\s*:\s*(.+)/i);
+      const estadoMatch = noteContent.match(/Estado\s*:\s*(.+)/i);
+
+      summaryNote = resumenMatch ? resumenMatch[1].trim() : null;
+      statusNote = estadoMatch ? estadoMatch[1].trim() : null;
+
+      // Supprimer la note du texte envoyé au client
+      textContent = textContent.slice(0, noteStart).trim();
+    }
+
+    // ➕ Conversion Markdown OpenAI → Markdown WhatsApp
     function convertMarkdownToWhatsApp(text) {
       return text
-        .replace(/\*\*(.*?)\*\*/g, '*$1*')          // Gras: **texte** → *texte*
-        .replace(/\*(.*?)\*/g, '_$1_')              // Italique: *texte* → _texte_
-        .replace(/~~(.*?)~~/g, '~$1~')              // Barré: ~~texte~~ → ~texte~
-        .replace(/!\[.*?\]\((.*?)\)/g, '')          // Suppression images markdown
-        .replace(/\[(.*?)\]\((.*?)\)/g, '$1 : $2')  // Liens markdown → texte : URL
-        .replace(/^>\s?(.*)/gm, '$1')               // Citations markdown supprimées
-        .replace(/^(\d+)\.\s/gm, '- ')              // Listes numérotées → tirets
+        .replace(/\*\*(.*?)\*\*/g, '*$1*')          // Gras
+        .replace(/\*(.*?)\*/g, '_$1_')              // Italique
+        .replace(/~~(.*?)~~/g, '~$1~')              // Barré
+        .replace(/!\[.*?\]\((.*?)\)/g, '')          // Images
+        .replace(/\[(.*?)\]\((.*?)\)/g, '$1 : $2')  // Liens
+        .replace(/^>\s?(.*)/gm, '$1')               // Citations
+        .replace(/^(\d+)\.\s/gm, '- ')              // Listes
         .trim();
     }
 
@@ -352,16 +370,25 @@ async function fetchThreadMessages(threadId) {
       })
       .filter(url => url != null);
 
-    // Fusion des deux sources d'images (Markdown + Function Calling)
     const images = [...markdownImageUrls, ...toolImageUrls];
 
+    // ✅ Retour complet avec note extraite
     return {
       text: textContent,
-      images: images
+      images: images,
+      note: {
+        summary: summaryNote,
+        status: statusNote
+      }
     };
+
   } catch (error) {
     console.error("Erreur lors de la récupération des messages du thread:", error);
-    return { text: "", images: [] };
+    return {
+      text: "",
+      images: [],
+      note: null
+    };
   }
 }
 
