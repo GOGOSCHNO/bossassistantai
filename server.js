@@ -221,8 +221,8 @@ async function interactWithAssistant(userMessage, userNumber) {
 // Vérification du statut d'un run
 async function pollForCompletion(threadId, runId) {
   return new Promise((resolve, reject) => {
-    const interval = 2000; // Intervalle : 2 secondes
-    const timeoutLimit = 80000; // Timeout max : 80 secondes
+    const interval = 2000;
+    const timeoutLimit = 80000;
     let elapsedTime = 0;
 
     const checkRun = async () => {
@@ -237,120 +237,42 @@ async function pollForCompletion(threadId, runId) {
           return;
         }
 
-        else if (runStatus.status === 'requires_action') {
-          if (runStatus.required_action?.submit_tool_outputs?.tool_calls) {
-            const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
+        if (runStatus.status === 'requires_action' &&
+            runStatus.required_action?.submit_tool_outputs?.tool_calls) {
+          const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
 
-            for (const toolCall of toolCalls) {
-              let params;
-              try {
-                params = JSON.parse(toolCall.function.arguments);
-              } catch (error) {
-                console.error("❌ Erreur en parsant les arguments JSON:", error);
-                reject(error);
-                return;
-              }
-
+          for (const toolCall of toolCalls) {
+            let params;
             try {
-              switch (toolCall.function.name) {
+              params = JSON.parse(toolCall.function.arguments);
+            } catch (error) {
+              console.error("❌ Erreur en parsant les arguments JSON:", error);
+              reject(error);
+              return;
+            }
 
-                // Case existant : getAppointments
-                case "getAppointments": {
-                  const appointments = await db.collection("appointments")
-                                              .find({ date: params.date })
-                                              .toArray();
+            if (toolCall.function.name === "get_image_url") {
+              console.log("🖼️ Demande d'URL image reçue:", params);
+              const imageUrl = await getImageUrl(params.imageCode);
 
-                  const toolOutputs = [{
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify(appointments),
-                  }];
+              const toolOutputs = [{
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({ imageUrl })
+              }];
 
-                  await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                    tool_outputs: toolOutputs
-                  });
+              await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
+                tool_outputs: toolOutputs
+              });
 
-                  setTimeout(checkRun, 500);
-                  return;
-                }
-
-                // Nouveau Case : get_image_url
-                case "get_image_url": {
-                  console.log("🖼️ Demande d'URL image reçue:", params);
-                
-                  const imageUrl = await getImageUrl(params.imageCode);
-                
-                  const toolOutputs = [{
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({ imageUrl })
-                  }];
-                
-                  await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                    tool_outputs: toolOutputs
-                  });
-                
-                  setTimeout(checkRun, 500);
-                  return;
-                }
-
-                // Case existant : cancelAppointment
-                case "cancelAppointment": {
-                  const wasDeleted = await cancelAppointment(params.phoneNumber);
-                  const toolOutputs = [{
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({
-                      success: wasDeleted,
-                      message: wasDeleted
-                        ? "La cita ha sido cancelada."
-                        : "No se encontró ninguna cita para ese número."
-                    })
-                  }];
-
-                  await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                    tool_outputs: toolOutputs
-                  });
-
-                  setTimeout(checkRun, 500);
-                  return;
-                }
-
-                // Case existant : createAppointment
-                case "createAppointment": {
-                  const result = await createAppointment(params);
-                  const toolOutputs = [{
-                    tool_call_id: toolCall.id,
-                    output: JSON.stringify({
-                      success: result.success,
-                      message: result.message
-                    })
-                  }];
-
-                  await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                    tool_outputs: toolOutputs
-                  });
-
-                  setTimeout(checkRun, 500);
-                  return;
-                }
-
-                default: {
-                  console.warn(`⚠️ Fonction inconnue: ${toolCall.function.name}`);
-                  setTimeout(checkRun, 500);
-                  return;
-                }
-              }
-
-              } catch (error) {
-                console.error(`❌ Erreur dans la fonction ${toolCall.function.name}:`, error);
-                reject(error);
-                return;
-              }
+              setTimeout(checkRun, 500);
+              return;
+            } else {
+              console.warn(`⚠️ Fonction non gérée (hors MVP): ${toolCall.function.name}`);
+              setTimeout(checkRun, 500);
+              return;
             }
           }
-
-          setTimeout(checkRun, interval);
-        }
-
-        else {
+        } else {
           elapsedTime += interval;
           if (elapsedTime >= timeoutLimit) {
             console.error("⏳ Timeout (80s), annulation du run...");
@@ -368,7 +290,6 @@ async function pollForCompletion(threadId, runId) {
       }
     };
 
-    // Premier appel
     checkRun();
   });
 }
