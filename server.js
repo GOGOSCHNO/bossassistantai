@@ -202,7 +202,10 @@ async function interactWithAssistant(userMessage, userNumber) {
             $push: {
               responses: {
                 userMessage,
-                assistantResponse: messages,
+                assistantResponse: {
+                  text: messages.text,
+                  note: messages.note // ✅ ici on stocke la note !
+                },
                 timestamp: new Date()
               }
             }
