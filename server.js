@@ -124,7 +124,6 @@ async (accessToken, refreshToken, profile, done) => {
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
-const { google } = require('googleapis');
 let calendar;
 
 // 📌 Configurer Nodemailer pour l’envoi des emails
@@ -146,53 +145,6 @@ transporter.verify(function(error, success) {
         console.log("✅ SMTP prêt à envoyer des emails !");
     }
 });
-
-async function initGoogleCalendarClient() {
-  try {
-    const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY; 
-    if (!serviceAccountJson) {
-      console.error("SERVICE_ACCOUNT_KEY n'est pas défini en variable d'env.");
-      return;
-    }
-    const key = JSON.parse(serviceAccountJson);
-    console.log("Compte de service :", key.client_email);
-
-    const client = new google.auth.JWT(
-      key.client_email,
-      null,
-      key.private_key,
-      ['https://www.googleapis.com/auth/calendar']
-    );
-    
-    await client.authorize();
-    calendar = google.calendar({ version: 'v3', auth: client });
-    console.log('✅ Client Google Calendar initialisé');
-  } catch (error) {
-    console.error("❌ Erreur d'init du client Google Calendar :", error);
-  }
-}
-
-async function listCalendars() {
-  try {
-    const res = await calendar.calendarList.list();
-    console.log('Calendriers visibles par la service account :');
-    (res.data.items || []).forEach(cal => {
-      console.log(`- ID: ${cal.id}, Summary: ${cal.summary}`);
-    });
-  } catch (err) {
-    console.error("Erreur listCalendars:", err);
-  }
-}
-
-async function startCalendar() {
-  await initGoogleCalendarClient();  // on attend l'init
-  if (calendar) {
-    await listCalendars();           // maintenant, calendar est défini
-  }
-}
-
-// Appeler une seule fois :
-startCalendar();
 
 // Fonction pour récupérer ou créer un thread
 async function getOrCreateThreadId(userNumber) {
@@ -488,124 +440,6 @@ async function fetchThreadMessages(threadId) {
     return { text: "", images: [] };
   }
 }
-
-async function createAppointment(params) {
-  // Vérifier si le client Google Calendar est déjà initialisé
-  if (!calendar) {
-    try {
-      const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY;
-      if (!serviceAccountJson) {
-        console.error("SERVICE_ACCOUNT_KEY n'est pas défini en variable d'env.");
-        return { success: false, message: "Service account non configuré." };
-      }
-      const key = JSON.parse(serviceAccountJson);
-      console.log("Compte de service :", key.client_email);
-
-      // Création du client JWT
-      const client = new google.auth.JWT(
-        key.client_email,
-        null,
-        key.private_key,
-        ['https://www.googleapis.com/auth/calendar']
-      );
-
-      // Authentification
-      await client.authorize();
-
-      // Initialisation du client Calendar et affectation à la variable globale
-      calendar = google.calendar({ version: 'v3', auth: client });
-      console.log('✅ Client Google Calendar initialisé dans createAppointment');
-    } catch (error) {
-      console.error("❌ Erreur lors de l'initialisation de Google Calendar :", error);
-      return { success: false, message: "Erreur d'initialisation de Calendar" };
-    }
-  }
-
-  // À partir d'ici, calendar est garanti d'être défini.
-  try {
-    // Définir l'événement à créer
-    const event = {
-      summary: `Cita de ${params.customerName}`,
-      description: `Téléphone: ${params.phoneNumber}\nService: ${params.service}`,
-      start: {
-        dateTime: `${params.date}T${params.startTime}:00`, // Ajout des secondes si besoin
-        timeZone: 'America/Bogota',
-      },
-      end: {
-        dateTime: `${params.date}T${params.endTime}:00`,
-        timeZone: 'America/Bogota',
-      },
-    };  
-
-    // Insertion de l'événement dans l'agenda de diegodfr75@gmail.com
-    const calendarRes = await calendar.events.insert({
-      calendarId: 'diegodfr75@gmail.com',
-      resource: event,
-    });
-
-    const eventId = calendarRes.data.id;
-    console.log('Événement créé sur Google Calendar, eventId =', eventId);
-
-    // Insertion en base de données (MongoDB) avec l'eventId
-    await db.collection('appointments').insertOne({
-      customerName: params.customerName,
-      phoneNumber: params.phoneNumber,
-      date: params.date,
-      startTime: params.startTime,
-      endTime: params.endTime,
-      service: params.service,
-      googleEventId: eventId
-    });
-
-    return { success: true, message: 'Cita creada en Calendar y Mongo', eventId };
-  } catch (error) {
-    console.error("Erreur lors de la création de l'événement :", error);
-    return { success: false, message: 'No se pudo crear la cita.' };
-  }
-}
-
-
-async function cancelAppointment(phoneNumber) {
-  try {
-    // 1) Trouver le RDV en base
-    const appointment = await db.collection('appointments')
-                                .findOne({ phonenumber: phoneNumber });
-    if (!appointment) {
-      console.log("Aucun RDV trouvé pour ce phoneNumber:", phoneNumber);
-      return false;
-    }
-
-    // 2) Supprimer l’event côté Google si googleEventId existe
-    if (appointment.googleEventId) {
-      await calendar.events.delete({
-        calendarId: 'diegodfr75@gmail.com',
-        eventId: appointment.googleEventId
-      });
-      console.log("Événement GoogleCalendar supprimé:", appointment.googleEventId);
-    } else {
-      console.log("Aucun googleEventId stocké, on ne supprime rien sur Google.");
-    }
-
-    // 3) Supprimer en base
-    const result = await db.collection('appointments').deleteOne({ _id: appointment._id });
-    return result.deletedCount > 0;
-  } catch (error) {
-    console.error("Erreur cancelAppointment:", error);
-    return false;
-  }
-}
-
-// Fonction pour récupérer les URLs des images depuis MongoDB
-async function getImageUrl(imageCode) {
-  try {
-    const image = await db.collection("images").findOne({ _id: imageCode });
-    return image ? image.url : null;
-  } catch (error) {
-    console.error("Erreur récupération URL image:", error);
-    return null;
-  }
-}
-
 
 app.post('/whatsapp', async (req, res) => {
   console.log('Requête reçue :', JSON.stringify(req.body, null, 2));
