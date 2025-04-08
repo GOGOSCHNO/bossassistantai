@@ -250,50 +250,46 @@
             return;
           }
       
-          // Groupement des conversations par userNumber
           data.conversations.forEach(conv => {
             const userNumber = conv.userNumber;
+            const responses = conv.responses;
+      
+            const last = responses[responses.length - 1];
+            const lastSummary = last?.assistantResponse?.note?.summary || "";
+            const lastStatus = last?.assistantResponse?.note?.status || "";
+            const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
+      
             const groupRow = document.createElement("tr");
-            const lastResponse = conv.responses[conv.responses.length - 1];
-            const resumen = lastResponse?.assistantResponse?.note?.summary || 'Sin resumen';
-            const estado = lastResponse?.assistantResponse?.note?.status || 'Sin estado';
-            
             groupRow.innerHTML = `
-              <td colspan="6" style="background: #e3e3e3; cursor: pointer; font-weight: bold;">
-                📱 ${userNumber}
-                <span style="float:right;">👁️ Mostrar</span>
-                <div style="font-weight: normal; font-size: 0.9rem; margin-top: 5px;">
-                  📝 Resumen: ${resumen} | 📌 Estado: ${estado}
-                </div>
-              </td>
+              <td><b>${userNumber}</b></td>
+              <td><i>${lastSummary}</i></td>
+              <td><i>${lastStatus}</i></td>
+              <td>${lastDate}</td>
             `;
+            groupRow.style.background = "#e3e3e3";
+            groupRow.style.cursor = "pointer";
+            groupRow.style.fontWeight = "bold";
             tbody.appendChild(groupRow);
       
-            // Crée une section pliable (hidden par défaut)
-            const messageRows = conv.responses.map(entry => {
+            const messageRows = responses.map(entry => {
               const tr = document.createElement("tr");
-              tr.style.display = "none"; // masqué au départ
+              tr.style.display = "none";
               tr.classList.add(`conv-${userNumber}`);
               tr.innerHTML = `
                 <td>${userNumber}</td>
                 <td>${entry.userMessage || ""}</td>
                 <td>${entry.assistantResponse?.text || ""}</td>
                 <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
-                <td>${entry.assistantResponse?.note?.summary || ""}</td>
-                <td>${entry.assistantResponse?.note?.status || ""}</td>
               `;
               return tr;
             });
       
             messageRows.forEach(row => tbody.appendChild(row));
       
-            // Ajoute un toggle d’affichage
             groupRow.addEventListener("click", () => {
               const isVisible = messageRows[0].style.display === "table-row";
               messageRows.forEach(row => row.style.display = isVisible ? "none" : "table-row");
-      
-              const label = groupRow.querySelector("span");
-              label.textContent = isVisible ? "👁️ Mostrar" : "🙈 Ocultar";
+              groupRow.style.background = isVisible ? "#e3e3e3" : "#c9dfff";
             });
           });
       
