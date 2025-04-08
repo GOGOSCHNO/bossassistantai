@@ -251,12 +251,13 @@
           data.conversations.forEach(conv => {
             const userNumber = conv.userNumber;
             const responses = conv.responses;
-      
+          
             const last = responses[responses.length - 1];
             const lastSummary = last?.assistantResponse?.note?.summary || "";
             const lastStatus = last?.assistantResponse?.note?.status || "";
             const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
-      
+          
+            // 🔹 Ligne "pliée"
             const groupRow = document.createElement("tr");
             groupRow.innerHTML = `
               <td><b>${userNumber}</b></td>
@@ -268,19 +269,43 @@
             groupRow.style.cursor = "pointer";
             groupRow.style.fontWeight = "bold";
             tbody.appendChild(groupRow);
-      
-            const messageRows = responses.map(entry => {
-              const tr = document.createElement("tr");
-              tr.style.display = "none";
-              tr.classList.add(`conv-${userNumber}`);
-              tr.innerHTML = `
-                <td>${userNumber}</td>
-                <td>${entry.userMessage || ""}</td>
-                <td>${entry.assistantResponse?.text || ""}</td>
-                <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
-              `;
-              return tr;
+          
+            // 🔹 Ligne "conteneur" pour les messages
+            const detailRow = document.createElement("tr");
+            detailRow.innerHTML = `
+              <td colspan="4">
+                <div class="accordion-wrapper">
+                  ${responses.map(entry => `
+                    <div class="accordion-line">
+                      <p><b>Cliente:</b> ${entry.userMessage || ""}</p>
+                      <p><b>Asistente:</b> ${entry.assistantResponse?.text || ""}</p>
+                      <p><b>🕒</b> ${new Date(entry.timestamp).toLocaleString("es-CO")}</p>
+                      <hr/>
+                    </div>
+                  `).join("")}
+                </div>
+              </td>
+            `;
+            detailRow.style.transition = "height 0.5s ease";
+            tbody.appendChild(detailRow);
+          
+            const contentDiv = detailRow.querySelector(".accordion-wrapper");
+            contentDiv.style.maxHeight = "0px";
+            contentDiv.style.overflow = "hidden";
+            contentDiv.style.transition = "max-height 0.5s ease";
+          
+            let isOpen = false;
+            groupRow.addEventListener("click", () => {
+              isOpen = !isOpen;
+              if (isOpen) {
+                contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
+                groupRow.style.background = "#c9dfff";
+              } else {
+                contentDiv.style.maxHeight = "0px";
+                groupRow.style.background = "#e3e3e3";
+              }
             });
+          });
       
             messageRows.forEach(row => tbody.appendChild(row));
       
