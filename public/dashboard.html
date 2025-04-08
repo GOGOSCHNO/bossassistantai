@@ -5,7 +5,13 @@
   <title>Dashboard – AssistantAI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
-
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  
+  <!-- jQuery (requis) + DataTables JS -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  
   <style>
     * {
       margin: 0;
@@ -250,7 +256,9 @@
             <th>🕒 Fecha</th>
           </tr>
         </thead>
-        <tbody id="conversations-body"></tbody>
+        <tbody>
+          <!-- rempli par JS -->
+        </tbody>
       </table>
     </div>
   </main>
@@ -341,7 +349,8 @@
             }
           });
         });
-  
+        window.conversationsList = data.conversations;
+        renderConversationsDataTable(window.conversationsList);
       } catch (err) {
         console.error("Error al cargar las conversaciones:", err);
         document.getElementById("conversations-body").innerHTML = `
@@ -391,7 +400,41 @@
         `;
       }
     }
-  
+    function renderConversationsDataTable(conversations) {
+      const tableBody = document.querySelector("#conversations-table tbody");
+      tableBody.innerHTML = ""; // reset
+    
+      conversations.forEach(conv => {
+        const userNumber = conv.userNumber;
+        const responses = conv.responses;
+    
+        const last = responses[responses.length - 1];
+        const lastSummary = last?.assistantResponse?.note?.summary || "";
+        const lastStatus = last?.assistantResponse?.note?.status || "";
+        const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
+    
+        const estadoHTML = `<span class="estado-tag ${getEstadoClass(lastStatus)}">${lastStatus}</span>`;
+    
+        const row = `
+          <tr>
+            <td>${userNumber}</td>
+            <td>${lastSummary}</td>
+            <td>${estadoHTML}</td>
+            <td>${lastDate}</td>
+          </tr>
+        `;
+        tableBody.insertAdjacentHTML("beforeend", row);
+      });
+    
+      // Initialise DataTables
+      $('#conversations-table').DataTable({
+        destroy: true,  // important si on recharge les données
+        order: [[3, 'desc']], // tri par défaut sur la date
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-CO.json"
+        }
+      });
+    }
     loadUserName();
     loadConversations();
   </script>
