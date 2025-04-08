@@ -220,6 +220,8 @@
             <th>🧠 Mensaje</th>
             <th>🤖 Respuesta</th>
             <th>🕒 Fecha</th>
+            <th>📝 Resumen</th>
+            <th>📌 Estado</th>
           </tr>
         </thead>
         <tbody id="conversations-body"></tbody>
@@ -267,6 +269,8 @@
                 <td>${entry.userMessage || ""}</td>
                 <td>${entry.assistantResponse?.text || ""}</td>
                 <td>${new Date(entry.timestamp).toLocaleString("es-CO")}</td>
+                <td>${entry.assistantResponse?.note?.summary || ""}</td>
+                <td>${entry.assistantResponse?.note?.status || ""}</td>
               `;
               return tr;
             });
