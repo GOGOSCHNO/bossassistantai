@@ -246,106 +246,96 @@
     <br/>
     <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
   </footer>
-  <script>
-      async function loadConversations() {
-        try {
-          const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
-            credentials: "include"
-          });
-          const data = await res.json();
-          const tbody = document.getElementById("conversations-body");
-      
-          if (!data.conversations || data.conversations.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
-            return;
-          }
-      
-          data.conversations.forEach(conv => {
-            const userNumber = conv.userNumber;
-            const responses = conv.responses;
-          
-            const last = responses[responses.length - 1];
-            const lastSummary = last?.assistantResponse?.note?.summary || "";
-            const lastStatus = last?.assistantResponse?.note?.status || "";
-            const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
-          
-            // 🔹 Ligne "pliée"
-            const groupRow = document.createElement("tr");
-            groupRow.innerHTML = `
-              <td><b>${userNumber}</b></td>
-              <td><i>${lastSummary}</i></td>
-              <td><i>${lastStatus}</i></td>
-              <td>${lastDate}</td>
-            `;
-            groupRow.style.background = "#e3e3e3";
-            groupRow.style.cursor = "pointer";
-            groupRow.style.fontWeight = "bold";
-            tbody.appendChild(groupRow);
-          
-            // 🔹 Ligne "conteneur" pour les messages
-            const detailRow = document.createElement("tr");
-            detailRow.innerHTML = `
-              <td colspan="4">
-                <div class="accordion-wrapper">
-                  ${responses.map(entry => `
-                    <div class="accordion-line">
-                      <p><b>Cliente:</b> ${entry.userMessage || ""}</p>
-                      <p><b>Asistente:</b> ${entry.assistantResponse?.text || ""}</p>
-                      <p><b>🕒</b> ${new Date(entry.timestamp).toLocaleString("es-CO")}</p>
-                      <hr/>
-                    </div>
-                  `).join("")}
-                </div>
-              </td>
-            `;
-            detailRow.style.transition = "height 0.5s ease";
-            tbody.appendChild(detailRow);
-          
-            const contentDiv = detailRow.querySelector(".accordion-wrapper");
-            contentDiv.style.maxHeight = "0px";
-            contentDiv.style.overflow = "hidden";
-            contentDiv.style.transition = "max-height 0.5s ease";
-          
-            let isOpen = false;
-            groupRow.addEventListener("click", () => {
-              isOpen = !isOpen;
-              if (isOpen) {
-                contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
-                groupRow.style.background = "#c9dfff";
-              } else {
-                contentDiv.style.maxHeight = "0px";
-                groupRow.style.background = "#e3e3e3";
-              }
-            });
-          });
-      
-            messageRows.forEach(row => tbody.appendChild(row));
-      
-            groupRow.addEventListener("click", () => {
-              const isVisible = messageRows[0].style.display === "table-row";
-              messageRows.forEach(row => row.style.display = isVisible ? "none" : "table-row");
-              groupRow.style.background = isVisible ? "#e3e3e3" : "#c9dfff";
-            });
-          });
-      
-        } catch (err) {
-          console.error("Error al cargar las conversaciones:", err);
-          document.getElementById("conversations-body").innerHTML = `
-            <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
-          `;
+   <script>
+    async function loadConversations() {
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
+          credentials: "include"
+        });
+        const data = await res.json();
+        const tbody = document.getElementById("conversations-body");
+  
+        if (!data.conversations || data.conversations.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
+          return;
         }
+  
+        data.conversations.forEach(conv => {
+          const userNumber = conv.userNumber;
+          const responses = conv.responses;
+  
+          const last = responses[responses.length - 1];
+          const lastSummary = last?.assistantResponse?.note?.summary || "";
+          const lastStatus = last?.assistantResponse?.note?.status || "";
+          const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
+  
+          // 🔹 Ligne pliée
+          const groupRow = document.createElement("tr");
+          groupRow.innerHTML = `
+            <td><b>${userNumber}</b></td>
+            <td><i>${lastSummary}</i></td>
+            <td><i>${lastStatus}</i></td>
+            <td>${lastDate}</td>
+          `;
+          groupRow.style.background = "#e3e3e3";
+          groupRow.style.cursor = "pointer";
+          groupRow.style.fontWeight = "bold";
+          tbody.appendChild(groupRow);
+  
+          // 🔹 Ligne détails masquée
+          const detailRow = document.createElement("tr");
+          detailRow.innerHTML = `
+            <td colspan="4">
+              <div class="accordion-wrapper">
+                ${responses.map(entry => `
+                  <div class="accordion-line">
+                    <p><b>Cliente:</b> ${entry.userMessage || ""}</p>
+                    <p><b>Asistente:</b> ${entry.assistantResponse?.text || ""}</p>
+                    <p><b>🕒</b> ${new Date(entry.timestamp).toLocaleString("es-CO")}</p>
+                    <hr/>
+                  </div>
+                `).join("")}
+              </div>
+            </td>
+          `;
+          tbody.appendChild(detailRow);
+  
+          // Ajout effet smooth
+          const contentDiv = detailRow.querySelector(".accordion-wrapper");
+          contentDiv.style.maxHeight = "0px";
+          contentDiv.style.overflow = "hidden";
+          contentDiv.style.transition = "max-height 0.5s ease";
+  
+          let isOpen = false;
+          groupRow.addEventListener("click", () => {
+            isOpen = !isOpen;
+            if (isOpen) {
+              contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
+              groupRow.style.background = "#c9dfff";
+            } else {
+              contentDiv.style.maxHeight = "0px";
+              groupRow.style.background = "#e3e3e3";
+            }
+          });
+        });
+  
+      } catch (err) {
+        console.error("Error al cargar las conversaciones:", err);
+        document.getElementById("conversations-body").innerHTML = `
+          <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
+        `;
       }
-      async function loadUserName() {
+    }
+  
+    async function loadUserName() {
       const authDiv = document.getElementById("auth-buttons");
-    
       try {
         const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
           credentials: "include"
         });
         const data = await res.json();
-    
+  
         if (res.ok) {
-          // Affiche le nom et les boutons Dashboard + Déconnexion
           authDiv.innerHTML = `
             <div id="user-info" style="cursor: pointer; font-weight: bold;">
               👋 Hola, ${data.name}
@@ -353,16 +343,14 @@
             <a href="dashboard.html" class="auth-btn" style="margin-top: 10px;">📊 Dashboard</a>
             <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
           `;
-    
+  
           const userInfo = document.getElementById("user-info");
           const logoutBtn = document.getElementById("logout-btn");
-    
-          // Toggle d'affichage du bouton logout
+  
           userInfo.addEventListener("click", () => {
             logoutBtn.classList.toggle("visible");
           });
-    
-          // Déconnexion
+  
           logoutBtn.addEventListener("click", async () => {
             await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
               method: "POST",
@@ -370,19 +358,17 @@
             });
             window.location.reload();
           });
-    
         } else {
           throw new Error();
         }
       } catch {
-        // Non connecté : afficher login/signup
         authDiv.innerHTML = `
           <a href="signup.html" class="auth-btn">Crear cuenta</a>
           <a href="login.html" class="auth-btn">Iniciar sesión</a>
         `;
       }
     }
-    
+  
     loadUserName();
     loadConversations();
   </script>
