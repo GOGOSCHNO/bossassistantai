@@ -254,9 +254,17 @@
           data.conversations.forEach(conv => {
             const userNumber = conv.userNumber;
             const groupRow = document.createElement("tr");
+            const lastResponse = conv.responses[conv.responses.length - 1];
+            const resumen = lastResponse?.assistantResponse?.note?.summary || 'Sin resumen';
+            const estado = lastResponse?.assistantResponse?.note?.status || 'Sin estado';
+            
             groupRow.innerHTML = `
-              <td colspan="4" style="background: #e3e3e3; cursor: pointer; font-weight: bold;">
-                📱 ${userNumber} <span style="float:right;">👁️ Mostrar</span>
+              <td colspan="6" style="background: #e3e3e3; cursor: pointer; font-weight: bold;">
+                📱 ${userNumber}
+                <span style="float:right;">👁️ Mostrar</span>
+                <div style="font-weight: normal; font-size: 0.9rem; margin-top: 5px;">
+                  📝 Resumen: ${resumen} | 📌 Estado: ${estado}
+                </div>
               </td>
             `;
             tbody.appendChild(groupRow);
