@@ -196,6 +196,18 @@
       td:nth-child(5)::before { content: "📝 Resumen"; }
       td:nth-child(6)::before { content: "📌 Estado"; }
     }
+    .accordion-wrapper {
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+    
+    .accordion-line {
+      margin-bottom: 10px;
+      padding: 5px;
+      border-left: 3px solid #007bff;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
