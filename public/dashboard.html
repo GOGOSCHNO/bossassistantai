@@ -208,6 +208,20 @@
       background: #f9f9f9;
       border-radius: 6px;
     }
+    .estado-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .estado-accion { background-color: #e74c3c; }          /* Acción requerida */
+    .estado-nada { background-color: #7f8c8d; }             /* Nada que hacer */
+    .estado-info { background-color: #3498db; }             /* Conversación informativa */
+    .estado-potencial { background-color: #f39c12; }        /* Potencial cliente */
+    .estado-seguimiento { background-color: #2ecc71; }      /* Seguimiento recomendado */
   </style>
 </head>
 <body>
@@ -259,7 +273,16 @@
           tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
           return;
         }
-  
+        function getEstadoClass(status) {
+          switch (status.toLowerCase()) {
+            case "acción requerida": return "estado-accion";
+            case "nada que hacer": return "estado-nada";
+            case "conversación informativa": return "estado-info";
+            case "potencial cliente": return "estado-potencial";
+            case "seguimiento recomendado": return "estado-seguimiento";
+            default: return "";
+          }
+        }  
         data.conversations.forEach(conv => {
           const userNumber = conv.userNumber;
           const responses = conv.responses;
@@ -274,7 +297,7 @@
           groupRow.innerHTML = `
             <td><b>${userNumber}</b></td>
             <td><i>${lastSummary}</i></td>
-            <td><i>${lastStatus}</i></td>
+            <td><span class="estado-tag ${getEstadoClass(lastStatus)}">${lastStatus}</span></td>
             <td>${lastDate}</td>
           `;
           groupRow.style.background = "#e3e3e3";
