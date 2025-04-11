@@ -149,10 +149,27 @@
         const data = await res.json();
 
         if (res.ok) {
-          alert("✅ Cuenta creada exitosamente. Serás redirigido.");
-          window.location.href = "https://bossassistantai-439c88409c33.herokuapp.com/dashboard.html";
-        } else {
-          alert("❌ Error: " + data.error);
+          alert("✅ Cuenta creada exitosamente. Guardando cookie...");
+        
+          // 👉 On récupère le token
+          const { token } = data;
+        
+          // 👉 On appelle /api/set-cookie pour l'enregistrer
+          const cookieRes = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/set-cookie", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include",  // 🔐 indispensable pour que le cookie HTTP-only soit accepté
+            body: JSON.stringify({ token })
+          });
+        
+          if (cookieRes.ok) {
+            alert("🔐 Cookie configurado. Redirigiendo al dashboard...");
+            window.location.href = "https://assistantai.site/dashboard.html";
+          } else {
+            alert("⚠️ Cuenta creada pero no se pudo guardar el token.");
+          }
         }
       } catch (err) {
         console.error("❌ Error de red:", err);
