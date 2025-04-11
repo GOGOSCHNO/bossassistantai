@@ -64,10 +64,10 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+      return callback(null, true); // ✅ sécurise aussi les requêtes sans header Origin
     }
+    console.warn("❌ CORS refusé pour :", origin);
+    callback(new Error("Not allowed by CORS"));
   },
   credentials: true
 }));
