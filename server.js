@@ -669,17 +669,29 @@ app.post("/api/signup", async (req, res) => {
       expiresIn: '7d'
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None"
+    res.status(201).json({
+      message: "Usuario creado con éxito",
+      token  // 👈 on renvoie le token au frontend
     });
-
-    res.status(201).json({ message: "Usuario creado con éxito" });
   } catch (err) {
     console.error("❌ Error en /api/signup:", err);
     res.status(500).json({ error: "Error del servidor." });
   }
+});
+app.post("/api/set-cookie", (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ error: "Token manquant" });
+  }
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None"
+  });
+
+  res.status(200).json({ message: "Cookie configurado con éxito" });
 });
 app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
