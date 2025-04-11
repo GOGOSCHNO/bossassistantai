@@ -642,7 +642,45 @@ app.get('/api/me', async (req, res) => {
     res.status(403).json({ error: "Token inválido" });
   }
 });
+app.post("/api/signup", async (req, res) => {
+  const { name, email, password } = req.body;
 
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "Todos los campos son obligatorios." });
+  }
+
+  try {
+    const existingUser = await db.collection("users").findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: "Este correo ya está registrado." });
+    }
+
+    // Tu peux ici ajouter un hash du mot de passe avec bcrypt si tu veux
+    await db.collection("users").insertOne({
+      name,
+      email,
+      password, // ⚠️ pas sécurisé, à remplacer par un hash plus tard
+      threadsCollection: "threads_" + Date.now(),
+      hasAssistant: false
+    });
+
+    // Génère un token comme pour Google
+    const token = jwt.sign({ email, name }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None"
+    });
+
+    res.status(201).json({ message: "Usuario creado con éxito" });
+  } catch (err) {
+    console.error("❌ Error en /api/signup:", err);
+    res.status(500).json({ error: "Error del servidor." });
+  }
+});
 app.post('/api/logout', (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
@@ -673,3 +711,4 @@ app.get("/api/mes-conversations", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+
