@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Planes y precios | AssistantAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .overlay {
+      background: rgba(0, 0, 0, 0.7);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    header, footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+    }
+    .branding img {
+      max-width: 300px;
+      height: auto;
+    }
+    .pricing-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin: 50px 0;
+    }
+    .pricing-plan {
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+    .pricing-plan h3 {
+      margin-bottom: 10px;
+      color: #4A90E2;
+    }
+    .pricing-plan p {
+      margin: 8px 0;
+      font-size: 15px;
+    }
+    .pricing-plan .price {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    .cta-button {
+      display: inline-block;
+      background: #4A90E2;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .cta-button:hover {
+      background: #3b78b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <header class="branding">
+      <a href="index.html">
+        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" alt="AssistantAI logo">
+      </a>
+      <p class="slogan">Planes adaptados a tu negocio</p>
+    </header>
+
+    <main>
+      <section class="pricing-container">
+        <div class="pricing-plan">
+          <h3>Pack Esencial</h3>
+          <p>✔️ Asistente WhatsApp básico</p>
+          <p>✔️ Respuestas automáticas y FAQ</p>
+          <p class="price">$58.000 / mes</p>
+          <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
+        </div>
+
+        <div class="pricing-plan" style="border: 2px solid gold;">
+          <h3>Pack Pro ⭐</h3>
+          <p>✔️ Todo el Esencial</p>
+          <p>✔️ Panel de control + integración CRM</p>
+          <p>✔️ Configuración personalizada</p>
+          <p class="price">$116.000 / mes</p>
+          <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
+        </div>
+
+        <div class="pricing-plan">
+          <h3>AI-Phone Pack</h3>
+          <p>✔️ Atención automática vía WhatsApp y llamadas</p>
+          <p>✔️ Transcripción y resumen de llamadas</p>
+          <p class="price">$58.000 / mes</p>
+          <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      &copy; 2025 AssistantAI – Todos los derechos reservados.
+    </footer>
+  </div>
+</body>
+</html>
