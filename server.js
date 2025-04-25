@@ -58,8 +58,8 @@ connectToMongoDB();
 // Middleware
 const allowedOrigins = [
   "https://assistantai.site",
-  "https://www.assistantai.site"
-  "https://bossassistantai-439c88409c33.herokuapp.com"
+  "https://www.assistantai.site",
+  "https://bossassistantai-439c88409c33.herokuapp.com" // 👈 Ajout nécessaire pour les tests Heroku
 ];
 
 app.use(cors({
