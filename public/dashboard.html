@@ -223,102 +223,44 @@
     .estado-seguimiento { background-color: #2ecc71; }      /* Seguimiento recomendado */
     
     @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem 0.5rem;
-        margin-top: 10px;
-        position: relative;
-      }
-    
-      .branding {
-        position: relative;
-        transform: none;
-        margin-bottom: 10px;
-        width: 100%;
-      }
-    
-      .branding img {
-        max-width: 200px;
-        margin: 0 auto;
+      table, thead, tbody, th, td, tr {
         display: block;
-      }
-    
-      .slogan {
-        font-size: 0.9rem;
-        margin-top: 0.2rem;
-      }
-    
-      #auth-buttons {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 0.5rem;
-      }
-    
-      #auth-buttons .auth-btn {
-        font-size: 14px;
-        padding: 6px 10px;
-      }
-    
-      #user-info {
-        font-size: 14px;
-        text-align: center;
         width: 100%;
       }
     
-      main h1 {
-        font-size: 1.5rem;
-        margin-top: 10px;
-      }
-    
-      table thead {
+      thead {
         display: none;
       }
     
-      table, tbody, tr, td {
-        display: block;
-        width: 100%;
-      }
-    
       tr {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         background: rgba(255, 255, 255, 0.95);
         border-radius: 8px;
         overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
       }
     
       td {
-        padding: 10px 15px;
-        position: relative;
         border: none;
-        border-bottom: 1px solid #ddd;
-        font-size: 14px;
+        padding: 15px;
         text-align: left;
+        position: relative;
         background: #fff;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
       }
     
       td::before {
         content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        top: 10px;
         font-weight: bold;
+        font-size: 13px;
         color: #4A90E2;
       }
     
       td:last-child {
         border-bottom: none;
-      }
-    
-      .accordion-wrapper {
-        padding: 0 15px 15px;
-      }
-    
-      footer {
-        font-size: 0.75rem;
-        padding: 1rem 0.5rem;
       }
     }
   </style>
