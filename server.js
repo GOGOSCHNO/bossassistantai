@@ -723,4 +723,32 @@ app.get("/api/mes-conversations", async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email y contraseña requeridos." });
+  }
+
+  try {
+    const user = await db.collection("users").findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    // ⚠️ Comparaison simple (à remplacer par bcrypt plus tard)
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Contraseña incorrecta." });
+    }
+
+    const token = jwt.sign({ email: user.email, name: user.name }, process.env.JWT_SECRET, {
+      expiresIn: "7d"
+    });
+
+    res.status(200).json({ token });
+
+  } catch (err) {
+    console.error("❌ Error en /api/login:", err);
+    res.status(500).json({ error: "Error del servidor." });
+  }
+});
