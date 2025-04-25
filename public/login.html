@@ -121,33 +121,50 @@
       </div>
     </div>
   </main>
-
   <script>
     document.getElementById("login-form").addEventListener("submit", async function (e) {
       e.preventDefault();
-
+  
       const formData = {
         email: document.getElementById("email").value.trim(),
         password: document.getElementById("password").value.trim()
       };
-
+  
       try {
+        // 🔐 Étape 1 : Envoie des données de connexion
         const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          credentials: "include", // nécessaire si tu utilises des cookies
           body: JSON.stringify(formData)
         });
-
+  
         const data = await res.json();
-
+  
         if (res.ok) {
-          alert("✅ Sesión iniciada correctamente. Redirigiendo...");
-          window.location.href = "/dashboard"; // à adapter
+          alert("✅ Sesión iniciada correctamente. Guardando cookie...");
+  
+          // 🔐 Étape 2 : on récupère le token et on appelle /api/set-cookie
+          const { token } = data;
+  
+          const cookieRes = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/set-cookie", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({ token })
+          });
+  
+          if (cookieRes.ok) {
+            alert("🔐 Cookie configurado. Redirigiendo al dashboard...");
+            window.location.href = "https://bossassistantai-439c88409c33.herokuapp.com/dashboard.html";
+          } else {
+            alert("⚠️ Sesión iniciada pero no se pudo guardar el token.");
+          }
         } else {
-          alert("❌ Error: " + data.error);
+          alert("❌ Error: " + (data.error || "Credenciales inválidas."));
         }
       } catch (err) {
         console.error("❌ Error de red:", err);
