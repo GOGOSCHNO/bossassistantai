@@ -226,36 +226,46 @@
       .header {
         flex-direction: column;
         align-items: center;
-        padding: 1rem;
-        margin-top: 20px;
+        padding: 1rem 0.5rem;
+        margin-top: 10px;
+        position: relative;
       }
     
       .branding {
-        position: static;
+        position: relative;
         transform: none;
-        margin-bottom: 1rem;
+        margin-bottom: 10px;
+        width: 100%;
       }
     
       .branding img {
-        max-width: 80%;
+        max-width: 200px;
+        margin: 0 auto;
+        display: block;
+      }
+    
+      .slogan {
+        font-size: 0.9rem;
+        margin-top: 0.2rem;
       }
     
       #auth-buttons {
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
-        margin-top: 10px;
         gap: 10px;
+        margin-top: 0.5rem;
       }
     
       #auth-buttons .auth-btn {
         font-size: 14px;
-        padding: 6px 12px;
+        padding: 6px 10px;
       }
     
       #user-info {
         font-size: 14px;
         text-align: center;
+        width: 100%;
       }
     
       main h1 {
