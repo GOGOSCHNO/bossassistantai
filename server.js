@@ -59,6 +59,7 @@ connectToMongoDB();
 const allowedOrigins = [
   "https://assistantai.site",
   "https://www.assistantai.site"
+  "https://bossassistantai-439c88409c33.herokuapp.com"
 ];
 
 app.use(cors({
