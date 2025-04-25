@@ -170,61 +170,6 @@
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {
         display: block;
-      }
-
-      tr {
-        margin-bottom: 15px;
-      }
-
-      td {
-        padding-left: 50%;
-        position: relative;
-      }
-
-      td::before {
-        position: absolute;
-        left: 10px;
-        top: 10px;
-        font-weight: bold;
-      }
-
-      td:nth-child(1)::before { content: "📱 Cliente"; }
-      td:nth-child(2)::before { content: "🧠 Mensaje"; }
-      td:nth-child(3)::before { content: "🤖 Respuesta"; }
-      td:nth-child(4)::before { content: "🕒 Fecha"; }
-      td:nth-child(5)::before { content: "📝 Resumen"; }
-      td:nth-child(6)::before { content: "📌 Estado"; }
-    }
-    .accordion-wrapper {
-      overflow: hidden;
-      transition: max-height 0.5s ease;
-    }
-    
-    .accordion-line {
-      margin-bottom: 10px;
-      padding: 5px;
-      border-left: 3px solid #007bff;
-      background: #f9f9f9;
-      border-radius: 6px;
-    }
-    .estado-tag {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      color: white;
-    }
-    
-    .estado-accion { background-color: #e74c3c; }          /* Acción requerida */
-    .estado-nada { background-color: #7f8c8d; }             /* Nada que hacer */
-    .estado-info { background-color: #3498db; }             /* Conversación informativa */
-    .estado-potencial { background-color: #f39c12; }        /* Potencial cliente */
-    .estado-seguimiento { background-color: #2ecc71; }      /* Seguimiento recomendado */
-    
-    @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
         width: 100%;
       }
     
