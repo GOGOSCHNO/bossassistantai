@@ -268,6 +268,41 @@
       font-weight: bold;
       font-size: 14px;
     }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between; /* espaces entre les deux blocs */
+      align-items: center;
+      padding: 0.8rem 2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex: 1;
+    }
+    
+    .nav-login {
+      flex-shrink: 0;
+    }
+    
+    .top-nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .cta-btn {
+      background-color: #4A90E2;
+      padding: 6px 12px;
+      border-radius: 5px;
+    }
 
     @media (max-width: 768px) {
       .header {
@@ -324,24 +359,13 @@
 </head>
 <body>
   <div class="overlay">
-    <nav style="
-      position: sticky;
-      top: 0;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(6px);
-      z-index: 1000;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 0.8rem 1rem;
-      font-weight: bold;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      align-items: center;
-    ">
-      <a href="precio.html" style="color: white; text-decoration: none;">Ver planes</a>
-      <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20AssistantAI" target="_blank" style="color: white; text-decoration: none;">Reservar demo</a>
-      <a href="#pruebaGratisForm" style="background: #4A90E2; color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none;">Probar gratis 🚀</a>
-      <div id="auth-buttons">
+    <nav class="top-nav">
+      <div class="nav-links">
+        <a href="precio.html">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20AssistantAI" target="_blank">Reservar demo</a>
+        <a href="#pruebaGratisForm" class="cta-btn">Probar gratis 🚀</a>
+      </div>
+      <div id="auth-buttons" class="nav-login">
         <!-- Affichage dynamique via JS -->
       </div>
     </nav>
