@@ -228,6 +228,47 @@
     #pruebaGratisForm button:hover {
         background: #3b78b9;
     }
+    /* 🎠 Hero carousel des assistants */
+    .carousel-container {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      justify-content: center;
+      margin: 0 auto;
+      padding-bottom: 10px;
+    }
+    
+    .carousel {
+      display: flex;
+      gap: 20px;
+      scroll-snap-align: start;
+      padding: 10px;
+    }
+    
+    .carousel-item {
+      flex: 0 0 auto;
+      width: 200px;
+      text-align: center;
+      scroll-snap-align: start;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.3);
+    }
+    
+    .carousel-item img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .carousel-item .role {
+      color: #333;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
     @media (max-width: 768px) {
       .header {
         flex-direction: column;
