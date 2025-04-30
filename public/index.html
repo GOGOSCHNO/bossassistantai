@@ -304,7 +304,46 @@
       padding: 6px 12px;
       border-radius: 5px;
     }
-
+    .video-carousel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .carousel-video {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    
+    .caption {
+      color: white;
+      font-style: italic;
+      text-align: center;
+      max-width: 90%;
+    }
+    
+    .carousel-controls {
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .carousel-controls button {
+      background-color: #4A90E2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      margin: 0 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    
+    .carousel-controls button:hover {
+      background-color: #3b78b9;
+    }
     @media (max-width: 768px) {
       .header {
         flex-direction: column;
@@ -403,6 +442,17 @@
             <p class="role">🍽️ Leo – Restaurantes</p>
           </div>
         </div>
+      </div>
+    </section>
+    <section id="testimonios-clientes" style="margin: 60px auto; max-width: 600px;">
+      <h2 style="text-align: center; font-size: 2rem; margin-bottom: 20px;">Clientes que confían en nosotros</h2>
+      <div class="video-carousel">
+        <video src="videos/dolcezza.mp4" class="carousel-video" controls></video>
+        <p class="caption">Dolcezza ahora automatiza el agendamiento de cita con Camila</p>
+      </div>
+      <div class="carousel-controls">
+        <button onclick="prevVideo()">⏮️</button>
+        <button onclick="nextVideo()">⏭️</button>
       </div>
     </section>
     <!-- Formulario de Prueba Gratis -->
@@ -629,6 +679,40 @@
     }
     
     loadUserName();
+    const videos = [
+      {
+        src: "videos/dolcezza.mp4",
+        caption: "Dolcezza ahora automatiza el agendamiento de cita con Camila"
+      },
+      {
+        src: "videos/naysa.mp4",
+        caption: "Dani recomienda los shampoos naturales de Naysa según las necesidades de sus clientes"
+      },
+      {
+        src: "videos/enigma.mp4",
+        caption: "Leo ayuda a Enigma con la reservación de salas"
+      }
+    ];
+  
+    let currentIndex = 0;
+    const videoElement = document.querySelector(".carousel-video");
+    const captionElement = document.querySelector(".caption");
+  
+    function showVideo(index) {
+      videoElement.src = videos[index].src;
+      captionElement.textContent = videos[index].caption;
+      videoElement.load();
+    }
+  
+    function nextVideo() {
+      currentIndex = (currentIndex + 1) % videos.length;
+      showVideo(currentIndex);
+    }
+  
+    function prevVideo() {
+      currentIndex = (currentIndex - 1 + videos.length) % videos.length;
+      showVideo(currentIndex);
+    }
   </script>
 </body>
 </html>
