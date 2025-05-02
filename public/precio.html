@@ -186,11 +186,20 @@
   <script>
     function togglePrices() {
       const isYearly = !document.getElementById('priceToggle').checked;
-      document.querySelectorAll('.price-year').forEach(el => el.style.display = 'block');
-      document.querySelectorAll('.price-month').forEach(el => el.style.display = 'block');
+      
+      document.querySelectorAll('.price-year').forEach(el => {
+        el.style.display = isYearly ? 'block' : 'none';
+      });
+      document.querySelectorAll('.price-month').forEach(el => {
+        el.style.display = isYearly ? 'none' : 'block';
+      });
+  
       document.getElementById('labelYear').classList.toggle('active-label', isYearly);
       document.getElementById('labelMonth').classList.toggle('active-label', !isYearly);
     }
+  
+    // Affiche uniquement le prix annuel au chargement
+    window.onload = () => togglePrices();
   </script>
 </body>
 </html>
