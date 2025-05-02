@@ -57,10 +57,7 @@
     .price-month, .price-year {
       font-size: 24px;
       font-weight: bold;
-      margin: 15px 0;
-      display: none;
-    }
-    .price-year {
+      margin: 10px 0 5px 0;
       display: block;
     }
     .cta-button {
@@ -83,9 +80,6 @@
       gap: 15px;
       margin-bottom: 30px;
       margin-top: 20px;
-    }
-    .label-text {
-      font-size: 16px;
     }
     .label-annual,
     .label-monthly {
@@ -155,29 +149,31 @@
       <section class="pricing-container">
         <div class="pricing-plan">
           <h3>Pack Esencial</h3>
+          <p>✔️ Perfecto para emprendedores que inician</p>
           <p>✔️ Asistente WhatsApp básico</p>
           <p>✔️ Respuestas automáticas y FAQ</p>
-          <p class="price-year">$580.000 / año</p>
-          <p class="price-month">$58.000 / mes</p>
+          <p class="price-month">$390.000 / mes</p>
+          <p class="price-year">$300.000 / mes (facturado anual: $3.600.000)</p>
           <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
         </div>
 
         <div class="pricing-plan" style="border: 2px solid gold;">
           <h3>Pack Pro ⭐</h3>
+          <p>✔️ Ideal para negocios en expansión</p>
           <p>✔️ Todo el Esencial</p>
           <p>✔️ Panel de control + integración CRM</p>
           <p>✔️ Configuración personalizada</p>
-          <p class="price-year">$1.160.000 / año</p>
-          <p class="price-month">$116.000 / mes</p>
+          <p class="price-month">$650.000 / mes</p>
+          <p class="price-year">$500.000 / mes (facturado anual: $6.000.000)</p>
           <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
         </div>
 
         <div class="pricing-plan">
           <h3>AI-Phone Pack</h3>
-          <p>✔️ Atención automática vía WhatsApp y llamadas</p>
-          <p>✔️ Transcripción y resumen de llamadas</p>
-          <p class="price-year">$580.000 / año</p>
-          <p class="price-month">$58.000 / mes</p>
+          <p>✔️ Asistencia por texto 100% automatizada</p>
+          <p>✔️ Seguimiento inteligente a los mensajes</p>
+          <p class="price-month">$520.000 / mes</p>
+          <p class="price-year">$400.000 / mes (facturado anual: $4.800.000)</p>
           <a href="#" class="cta-button" target="_blank">Comprar ahora</a>
         </div>
       </section>
@@ -190,8 +186,8 @@
   <script>
     function togglePrices() {
       const isYearly = !document.getElementById('priceToggle').checked;
-      document.querySelectorAll('.price-year').forEach(el => el.style.display = isYearly ? 'block' : 'none');
-      document.querySelectorAll('.price-month').forEach(el => el.style.display = isYearly ? 'none' : 'block');
+      document.querySelectorAll('.price-year').forEach(el => el.style.display = 'block');
+      document.querySelectorAll('.price-month').forEach(el => el.style.display = 'block');
       document.getElementById('labelYear').classList.toggle('active-label', isYearly);
       document.getElementById('labelMonth').classList.toggle('active-label', !isYearly);
     }
