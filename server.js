@@ -241,52 +241,62 @@ async function pollForCompletion(threadId, runId) {
           return;
         }
 
-        if (runStatus.status === 'requires_action' &&
-            runStatus.required_action?.submit_tool_outputs?.tool_calls) {
+        if (
+          runStatus.status === 'requires_action' &&
+          runStatus.required_action?.submit_tool_outputs?.tool_calls
+        ) {
           const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
+          const toolOutputs = [];
 
           for (const toolCall of toolCalls) {
+            const { function: fn, id } = toolCall;
             let params;
+
             try {
-              params = JSON.parse(toolCall.function.arguments);
+              params = JSON.parse(fn.arguments);
             } catch (error) {
               console.error("❌ Erreur en parsant les arguments JSON:", error);
               reject(error);
               return;
             }
 
-            if (toolCall.function.name === "get_image_url") {
-              console.log("🖼️ Demande d'URL image reçue:", params);
-              const imageUrl = await getImageUrl(params.imageCode);
+            switch (fn.name) {
+              case "notificar_comerciante":
+                console.log("📣 Function calling détectée : notificar_comerciante");
+                const { estado, numero_cliente } = params;
+                await enviarAlertaComerciante(estado, numero_cliente);
 
-              const toolOutputs = [{
-                tool_call_id: toolCall.id,
-                output: JSON.stringify({ imageUrl })
-              }];
+                toolOutputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({ success: true })
+                });
+                break;
 
-              await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-                tool_outputs: toolOutputs
-              });
-
-              setTimeout(checkRun, 500);
-              return;
-            } else {
-              console.warn(`⚠️ Fonction non gérée (hors MVP): ${toolCall.function.name}`);
-              setTimeout(checkRun, 500);
-              return;
+              default:
+                console.warn(`⚠️ Fonction non reconnue : ${fn.name}`);
+                break;
             }
           }
-        } else {
-          elapsedTime += interval;
-          if (elapsedTime >= timeoutLimit) {
-            console.error("⏳ Timeout (80s), annulation du run...");
-            await openai.beta.threads.runs.cancel(threadId, runId);
-            reject(new Error("Run annulé après 80s sans réponse."));
-            return;
+
+          if (toolOutputs.length > 0) {
+            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
+              tool_outputs: toolOutputs
+            });
           }
 
-          setTimeout(checkRun, interval);
+          setTimeout(checkRun, 500);
+          return;
         }
+
+        elapsedTime += interval;
+        if (elapsedTime >= timeoutLimit) {
+          console.error("⏳ Timeout (80s), annulation du run...");
+          await openai.beta.threads.runs.cancel(threadId, runId);
+          reject(new Error("Run annulé après 80s sans réponse."));
+          return;
+        }
+
+        setTimeout(checkRun, interval);
 
       } catch (error) {
         console.error("Erreur dans pollForCompletion:", error);
@@ -296,6 +306,45 @@ async function pollForCompletion(threadId, runId) {
 
     checkRun();
   });
+}
+
+async function enviarAlertaComerciante(estado, numeroCliente) {
+  const numeroComerciante = "573009016472"; // numéro fixe
+  const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
+    "Content-Type": "application/json"
+  };
+
+  const messageData = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: numeroComerciante,
+    type: "template",
+    template: {
+      name: "alerta",  // le modèle que tu as validé
+      language: {
+        policy: "deterministic",
+        code: "es"
+      },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: estado },        // correspond à {{1}}
+            { type: "text", text: numeroCliente }  // correspond à {{2}}
+          ]
+        }
+      ]
+    }
+  };
+
+  try {
+    await axios.post(apiUrl, messageData, { headers });
+    console.log("✅ Alerta enviada al comerciante:", numeroComerciante);
+  } catch (err) {
+    console.error("❌ Error al enviar alerta al comerciante:", err.response?.data || err.message);
+  }
 }
 
 // Récupérer les messages d'un thread
