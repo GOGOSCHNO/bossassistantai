@@ -322,7 +322,7 @@ async function enviarAlertaComerciante(estado, numeroCliente) {
     to: numeroComerciante,
     type: "template",
     template: {
-      name: "alerta",  // le modèle que tu as validé
+      name: "confirmation",  // le modèle que tu as validé
       language: {
         policy: "deterministic",
         code: "es"
