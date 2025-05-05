@@ -2,116 +2,249 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Prueba Gratis – AssistantAI</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <title>Formulario - AssistantAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
     body {
-      background-color: #f8f9fa;
+      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+    }
+    .overlay {
+      background: rgba(0, 0, 0, 0.6);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     header {
       text-align: center;
-      padding: 20px 0;
+      padding: 2rem 1.5rem 1rem;
     }
-    header img {
-      max-width: 250px;
+    .branding img {
+      max-width: 300px;
+      height: auto;
+      cursor: pointer;
     }
-    main {
-      padding: 40px 20px;
-      max-width: 600px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .slogan {
+      margin-top: 0.3rem;
+      font-size: 1rem;
+      color: #fff;
     }
     footer {
       text-align: center;
-      padding: 20px;
-      font-size: 0.9em;
-      color: #6c757d;
+      padding: 1rem;
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    a {
+      color: #fff;
+    }
+
+    /* Formulario */
+    #pruebaGratisForm {
+        max-width: 500px;
+        margin: 20px auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        text-align: left;
+        color: #333;
+    }
+    #pruebaGratisForm h2 {
+        text-align: center;
+        color: #4A90E2;
+        margin-bottom: 15px;
+    }
+    #pruebaGratisForm label {
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+    #pruebaGratisForm input,
+    #pruebaGratisForm select,
+    #pruebaGratisForm textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .whatsapp-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .whatsapp-container input {
+        flex: 1;
+    }
+    #indicativo {
+        width: 80px !important;
+        padding: 8px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 5px !important;
+    }
+    #manualIndicativo {
+        width: 60px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    #numero {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    #pruebaGratisForm button {
+        background: #4A90E2;
+        color: white;
+        border: none;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 5px;
+        width: 100%;
+        margin-top: 15px;
+        transition: background 0.3s ease;
+    }
+    #pruebaGratisForm button:hover {
+        background: #3b78b9;
     }
   </style>
 </head>
 <body>
+  <div class="overlay">
+    <header class="branding">
+      <a href="index.html">
+        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" alt="AssistantAI logo">
+      </a>
+      <p class="slogan">Tu asistente IA personalizado en WhatsApp</p>
+    </header>
 
-  <header>
-    <img src="/images/logo-assistantai.png" alt="AssistantAI">
-  </header>
+    <main>
+      <div id="pruebaGratisForm">
+        <h2>Prueba Gratis de AssistantAI 🚀</h2>
+        <p style="text-align: center;">Descubre cómo un asistente WhatsApp puede mejorar la atención al cliente en tu negocio.</p>
+        <form id="formularioPrueba">
+            <label for="nombre_comercio">Nombre del comercio</label>
+            <input type="text" id="nombre_comercio" name="nombre_comercio" required>
 
-  <main>
-    <h2 class="text-center mb-4">¡Activa tu asistente WhatsApp GRATIS!</h2>
-    <form id="pruebaGratisForm">
-      <div class="mb-3">
-        <label for="nombre" class="form-label">Nombre del comercio *</label>
-        <input type="text" class="form-control" id="nombre" required>
-      </div>
-      <div class="mb-3">
-        <label for="sector" class="form-label">Sector / Actividad *</label>
-        <input type="text" class="form-control" id="sector" required>
-      </div>
-      <div class="mb-3">
-        <label for="correo" class="form-label">Correo electrónico *</label>
-        <input type="email" class="form-control" id="correo" required>
-      </div>
-      <div class="mb-3">
-        <label for="telefono" class="form-label">Número de WhatsApp *</label>
-        <input type="tel" class="form-control" id="telefono" required>
-      </div>
-      <div class="mb-3">
-        <label for="objetivo" class="form-label">¿Qué te gustaría automatizar?</label>
-        <textarea class="form-control" id="objetivo" rows="3"></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="servicios" class="form-label">¿Qué servicios ofreces?</label>
-        <textarea class="form-control" id="servicios" rows="3"></textarea>
-      </div>
-      <button type="submit" class="btn btn-success w-100">Enviar y activar prueba gratuita</button>
-    </form>
-    <div id="mensajeExito" class="alert alert-success mt-4 d-none" role="alert">
-      ¡Formulario enviado con éxito! Te contactaremos pronto por WhatsApp 📲
-    </div>
-    <div id="mensajeError" class="alert alert-danger mt-4 d-none" role="alert">
-      Ocurrió un error. Inténtalo de nuevo más tarde.
-    </div>
-  </main>
+            <label for="sector">Sector de actividad</label>
+            <select id="sector" name="sector" required>
+                <option value="">Selecciona un sector</option>
+                <option value="Belleza">Belleza</option>
+                <option value="Salud">Salud</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="Restaurantes">Restaurantes</option>
+                <option value="Servicios">Servicios</option>
+                <option value="Otro">Otro</option>
+            </select>
 
-  <footer>
-    &copy; 2024 AssistantAI – Todos los derechos reservados.
-  </footer>
+            <label for="whatsapp">Número de WhatsApp:</label>
+            <div class="whatsapp-container">
+              <select id="indicativo" name="indicativo">
+                  <option value="+57" selected>🇨🇴 +57</option>
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                  <option value="+55">🇧🇷 +55</option>
+                  <option value="manual">Otro</option>
+              </select>
+              <input type="text" id="manualIndicativo" name="manualIndicativo" placeholder="+XX" style="display: none;">
+              <input type="text" id="numero" name="numero" placeholder="Ej: 3009016472" required>
+            </div>
+
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="productosServicios">¿Qué productos o servicios ofreces?</label>
+            <textarea id="productosServicios" name="productosServicios" rows="3" required></textarea>
+
+            <label for="objetivo">¿Para qué necesitas el asistente?</label>
+            <select id="objetivo" name="objetivo" required>
+                <option value="">Selecciona una opción</option>
+                <option value="Automatizar respuestas a clientes">Automatizar respuestas a clientes</option>
+                <option value="Recomendar productos o servicios">Recomendar productos o servicios</option>
+                <option value="Gestionar consultas frecuentes">Gestionar consultas frecuentes</option>
+            </select>
+
+            <label for="mensajeAdicional">¿Algo más que debamos saber?</label>
+            <textarea id="mensajeAdicional" name="mensajeAdicional" rows="3"></textarea>
+
+            <label for="archivo">Adjunta un archivo (opcional)</label>
+            <input type="file" id="archivo" name="archivo">
+
+            <label style="margin-top: 10px;">
+              <input type="checkbox" id="consentement" required>
+              Acepto los <a href="politica-de-privacidad.html" target="_blank">terminos y condiciones</a> de AssistantAI
+            </label>
+
+            <button type="submit">Crear mi asistente gratuito 🚀</button>
+        </form>
+      </div>
+    </main>
+
+    <footer>
+      &copy; 2025 AssistantAI – Todos los derechos reservados.
+    </footer>
+  </div>
 
   <script>
-    document.getElementById("pruebaGratisForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const nombre = document.getElementById("nombre").value;
-      const sector = document.getElementById("sector").value;
-      const correo = document.getElementById("correo").value;
-      const telefono = document.getElementById("telefono").value;
-      const objetivo = document.getElementById("objetivo").value;
-      const servicios = document.getElementById("servicios").value;
+    const selectIndicativo = document.getElementById("indicativo");
+    const manualIndicativo = document.getElementById("manualIndicativo");
+    const numeroInput = document.getElementById("numero");
 
-      const data = { nombre, sector, correo, telefono, objetivo, servicios };
-
-      try {
-        const response = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-
-        if (response.ok) {
-          document.getElementById("pruebaGratisForm").reset();
-          document.getElementById("mensajeExito").classList.remove("d-none");
-          document.getElementById("mensajeError").classList.add("d-none");
+    selectIndicativo.addEventListener("change", function () {
+        if (this.value === "manual") {
+            manualIndicativo.style.display = "block";
+            manualIndicativo.focus();
         } else {
-          throw new Error("Error en la respuesta");
+            manualIndicativo.style.display = "none";
+            manualIndicativo.value = "";
         }
-      } catch (error) {
-        console.error(error);
-        document.getElementById("mensajeError").classList.remove("d-none");
-        document.getElementById("mensajeExito").classList.add("d-none");
-      }
+    });
+
+    document.getElementById("formularioPrueba").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+
+        let indicativoSeleccionado = selectIndicativo.value;
+        if (indicativoSeleccionado === "manual" && manualIndicativo.value.trim() !== "") {
+            indicativoSeleccionado = manualIndicativo.value.trim();
+        }
+
+        let numero = numeroInput.value.trim();
+        if (!indicativoSeleccionado.startsWith("+")) {
+            indicativoSeleccionado = "+" + indicativoSeleccionado;
+        }
+        const numeroCompleto = indicativoSeleccionado + numero;
+        formData.set("whatsapp", numeroCompleto);
+        formData.delete("manualIndicativo");
+
+        fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
+            method: "POST",
+            body: formData
+        }).then(() => {
+            alert("✅ Asistente creado. Te contactaremos pronto.");
+            this.reset();
+        }).catch(error => {
+            alert("❌ Error al enviar el formulario.");
+            console.error(error);
+        });
     });
   </script>
-
 </body>
 </html>
