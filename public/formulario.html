@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prueba Gratis – AssistantAI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    header {
+      text-align: center;
+      padding: 20px 0;
+    }
+    header img {
+      max-width: 250px;
+    }
+    main {
+      padding: 40px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9em;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="/images/logo-assistantai.png" alt="AssistantAI">
+  </header>
+
+  <main>
+    <h2 class="text-center mb-4">¡Activa tu asistente WhatsApp GRATIS!</h2>
+    <form id="pruebaGratisForm">
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del comercio *</label>
+        <input type="text" class="form-control" id="nombre" required>
+      </div>
+      <div class="mb-3">
+        <label for="sector" class="form-label">Sector / Actividad *</label>
+        <input type="text" class="form-control" id="sector" required>
+      </div>
+      <div class="mb-3">
+        <label for="correo" class="form-label">Correo electrónico *</label>
+        <input type="email" class="form-control" id="correo" required>
+      </div>
+      <div class="mb-3">
+        <label for="telefono" class="form-label">Número de WhatsApp *</label>
+        <input type="tel" class="form-control" id="telefono" required>
+      </div>
+      <div class="mb-3">
+        <label for="objetivo" class="form-label">¿Qué te gustaría automatizar?</label>
+        <textarea class="form-control" id="objetivo" rows="3"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="servicios" class="form-label">¿Qué servicios ofreces?</label>
+        <textarea class="form-control" id="servicios" rows="3"></textarea>
+      </div>
+      <button type="submit" class="btn btn-success w-100">Enviar y activar prueba gratuita</button>
+    </form>
+    <div id="mensajeExito" class="alert alert-success mt-4 d-none" role="alert">
+      ¡Formulario enviado con éxito! Te contactaremos pronto por WhatsApp 📲
+    </div>
+    <div id="mensajeError" class="alert alert-danger mt-4 d-none" role="alert">
+      Ocurrió un error. Inténtalo de nuevo más tarde.
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2024 AssistantAI – Todos los derechos reservados.
+  </footer>
+
+  <script>
+    document.getElementById("pruebaGratisForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const nombre = document.getElementById("nombre").value;
+      const sector = document.getElementById("sector").value;
+      const correo = document.getElementById("correo").value;
+      const telefono = document.getElementById("telefono").value;
+      const objetivo = document.getElementById("objetivo").value;
+      const servicios = document.getElementById("servicios").value;
+
+      const data = { nombre, sector, correo, telefono, objetivo, servicios };
+
+      try {
+        const response = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          document.getElementById("pruebaGratisForm").reset();
+          document.getElementById("mensajeExito").classList.remove("d-none");
+          document.getElementById("mensajeError").classList.add("d-none");
+        } else {
+          throw new Error("Error en la respuesta");
+        }
+      } catch (error) {
+        console.error(error);
+        document.getElementById("mensajeError").classList.remove("d-none");
+        document.getElementById("mensajeExito").classList.add("d-none");
+      }
+    });
+  </script>
+
+</body>
+</html>
