@@ -200,50 +200,81 @@
       &copy; 2025 AssistantAI – Todos los derechos reservados.
     </footer>
   </div>
-
   <script>
-    const selectIndicativo = document.getElementById("indicativo");
-    const manualIndicativo = document.getElementById("manualIndicativo");
-    const numeroInput = document.getElementById("numero");
-
-    selectIndicativo.addEventListener("change", function () {
+    document.addEventListener("DOMContentLoaded", function () {
+      const selectIndicativo = document.getElementById("indicativo");
+      const manualIndicativo = document.getElementById("manualIndicativo");
+      const numeroInput = document.getElementById("numero");
+      const form = document.getElementById("formularioPrueba");
+      const formContainer = document.getElementById("pruebaGratisForm");
+  
+      // Animation douce sur le formulaire
+      formContainer.style.opacity = "1";
+      formContainer.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+  
+      selectIndicativo.addEventListener("change", function () {
         if (this.value === "manual") {
-            manualIndicativo.style.display = "block";
-            manualIndicativo.focus();
+          manualIndicativo.style.display = "block";
+          manualIndicativo.focus();
         } else {
-            manualIndicativo.style.display = "none";
-            manualIndicativo.value = "";
+          manualIndicativo.style.display = "none";
+          manualIndicativo.value = "";
         }
-    });
-
-    document.getElementById("formularioPrueba").addEventListener("submit", async function (event) {
+      });
+  
+      form.addEventListener("submit", async function (event) {
         event.preventDefault();
-
+  
         const formData = new FormData(this);
-
         let indicativoSeleccionado = selectIndicativo.value;
         if (indicativoSeleccionado === "manual" && manualIndicativo.value.trim() !== "") {
-            indicativoSeleccionado = manualIndicativo.value.trim();
+          indicativoSeleccionado = manualIndicativo.value.trim();
         }
-
+  
         let numero = numeroInput.value.trim();
         if (!indicativoSeleccionado.startsWith("+")) {
-            indicativoSeleccionado = "+" + indicativoSeleccionado;
+          indicativoSeleccionado = "+" + indicativoSeleccionado;
         }
         const numeroCompleto = indicativoSeleccionado + numero;
         formData.set("whatsapp", numeroCompleto);
         formData.delete("manualIndicativo");
-
+  
+        // Masquer le formulaire en douceur
+        formContainer.style.opacity = "0";
+        formContainer.style.transform = "translateY(-20px)";
+        setTimeout(() => {
+          formContainer.style.display = "none";
+        }, 500);
+  
+        // Message de félicitations
+        const mensajeFelicitacion = document.createElement("div");
+        mensajeFelicitacion.innerHTML = `
+          <h2>🎉 ¡Felicidades, ${formData.get("nombre_comercio")}! 🚀</h2>
+          <p>Tu asistente está en proceso de creación. Te contactaremos pronto.</p>
+          <p>📩 Hemos enviado un mensaje de confirmación a:</p>
+          <p><strong>Email:</strong> ${formData.get("email")}</p>
+          <p><strong>WhatsApp:</strong> ${numeroCompleto}</p>
+          <p>Si cometiste un error en los datos, por favor vuelve a intentarlo.</p>
+        `;
+        mensajeFelicitacion.style.textAlign = "center";
+        mensajeFelicitacion.style.marginTop = "20px";
+        mensajeFelicitacion.style.padding = "20px";
+        mensajeFelicitacion.style.background = "rgba(255,255,255,0.9)";
+        mensajeFelicitacion.style.color = "#000";
+        mensajeFelicitacion.style.borderRadius = "8px";
+        mensajeFelicitacion.style.maxWidth = "500px";
+        mensajeFelicitacion.style.margin = "20px auto";
+  
+        document.querySelector("main").appendChild(mensajeFelicitacion);
+  
+        // Envoi au backend
         fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
-            method: "POST",
-            body: formData
-        }).then(() => {
-            alert("✅ Asistente creado. Te contactaremos pronto.");
-            this.reset();
+          method: "POST",
+          body: formData
         }).catch(error => {
-            alert("❌ Error al enviar el formulario.");
-            console.error(error);
+          console.error("❌ Error al enviar la solicitud:", error);
         });
+      });
     });
   </script>
 </body>
