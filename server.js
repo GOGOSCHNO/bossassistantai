@@ -57,8 +57,8 @@ connectToMongoDB();
 
 // Middleware
 const allowedOrigins = [
-  "https://assistantai.site",
-  "https://www.assistantai.site",
+  "https://comercioai.site",
+  "https://www.comercioai.site",
   "https://bossassistantai-439c88409c33.herokuapp.com" // 👈 Ajout nécessaire pour les tests Heroku
 ];
 
@@ -133,7 +133,7 @@ const transporter = nodemailer.createTransport({
     port: 465, // Port sécurisé SSL
     secure: true, // SSL activé
     auth: {
-        user: "assistantai@assistantai.site", // Ton adresse email GoDaddy
+        user: "contact@comercioai.site", // Ton adresse email GoDaddy
         pass: process.env.EMAIL_PASS // Mot de passe stocké en variable d'environnement
     }
 });
@@ -564,8 +564,8 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
 
         // 📌 Configurar el correo con archivo adjunto (si lo hay)
         const mailOptions = {
-            from: `"AssistantAI" <assistantai@assistantai.site>`,
-            to: [data.email, "assistantai@assistantai.site"],
+            from: `"ComercioAI" <contact@comercioai.site>`,
+            to: [data.email, "contact@comercioai.site"],
             subject: "Tu prueba gratuita está en proceso 🚀",
             html: `<p>Hola, <strong>${data.nombre_comercio}</strong>!</p>
                    <p>Gracias por registrarte en AssistantAI. Estamos preparando tu asistente personalizado.</p>
@@ -673,7 +673,7 @@ app.get('/auth/google/callback',
     });
 
     // Rediriger vers la page privée
-    res.redirect("https://assistantai.site"); // à adapter selon ta page d’accueil après connexion
+    res.redirect("https://comercioai.site"); // à adapter selon ta page d’accueil après connexion
   }
 );
 app.get('/api/me', async (req, res) => {
