@@ -2,104 +2,56 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Iniciar sesión | Comercio AI</title>
+  <title>Comercio AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Style intégré -->
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Roboto', sans-serif;
-    }
-
-    body {
-      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-
-    .form-container {
-      background: rgba(255, 255, 255, 0.95);
-      color: #333;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-      max-width: 400px;
-      width: 100%;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #4A90E2;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background-color: #4A90E2;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      margin-top: 20px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .btn:hover {
-      background-color: #3b78b9;
-    }
-
-    .google-btn {
-      background-color: #db4437;
-      margin-top: 10px;
-    }
-
-    .link {
-      text-align: center;
-      margin-top: 15px;
-    }
-
-    .link a {
-      color: #4A90E2;
-      text-decoration: none;
-    }
-
-    .link a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <!-- Favicon -->
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <link rel="shortcut icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <link rel="stylesheet" href="comercioai.css">
 </head>
 <body>
-  <header>
-    <a href="index.html">
-        <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
-              alt="AssistantAI Logo" 
-              style="max-width: 100%; height: auto; cursor: pointer;">
-    </a>
+  <header class="ca-header">
+    <div class="ca-header-3col">
+      <div class="ca-header-left">
+        <a href="index.html" class="ca-logo-icon">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+        </a>
+        <a href="index.html" class="ca-logo-text-img">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+        </a>
+      </div>
+      <nav class="ca-header-center">
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
+      </nav>
+      <div class="ca-header-right">
+        <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+      </div>
+    </div>
+      <div class="ca-header-mobile">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <div class="ca-header-mobile-actions">
+          <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+          <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+      <nav class="ca-mobile-menu" id="caMobileMenu">
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
+      </nav>
   </header>
   <main>
     <div class="form-container">
@@ -169,6 +121,21 @@
       } catch (err) {
         console.error("❌ Error de red:", err);
         alert("Error al intentar iniciar sesión.");
+      }
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const burger = document.getElementById("caHamburgerBtn");
+      const menu = document.getElementById("caMobileMenu");
+      if (burger && menu) {
+        burger.addEventListener("click", function () {
+          menu.classList.toggle("open");
+        });
+        // Refermer le menu si on clique sur un lien du menu
+        menu.querySelectorAll("a").forEach(link => {
+          link.addEventListener("click", () => menu.classList.remove("open"));
+        });
       }
     });
   </script>
