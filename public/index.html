@@ -364,5 +364,20 @@
       showVideo(currentIndex);
     }
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const burger = document.getElementById("caHamburgerBtn");
+      const menu = document.getElementById("caMobileMenu");
+      if (burger && menu) {
+        burger.addEventListener("click", function () {
+          menu.classList.toggle("open");
+        });
+        // Refermer le menu si on clique sur un lien du menu
+        menu.querySelectorAll("a").forEach(link => {
+          link.addEventListener("click", () => menu.classList.remove("open"));
+        });
+      }
+    });
+  </script>
 </body>
 </html>
