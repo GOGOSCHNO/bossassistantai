@@ -7,6 +7,25 @@
 }
 
 body {
+  /* ... déjà existant ... */
+  position: relative;
+  z-index: 1;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(15,15,20,0.6); /* Ajuste la teinte si besoin */
+}
+.ca-header,
+main,
+footer {
+  position: relative;
+  z-index: 1;
+}
+body {
   background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
   background-size: cover;
   color: #fff;
