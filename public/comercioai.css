@@ -308,7 +308,95 @@ main p {
   .ca-footer a:hover {
     text-decoration: underline;
   }
+/* === Header Mobile Linear Style === */
+.ca-header-mobile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.6rem 1.1rem;
+}
 
+.ca-header-mobile .ca-header-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ca-header-mobile-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Hamburger button */
+.ca-hamburger {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+.ca-hamburger span {
+  display: block;
+  height: 4px;
+  width: 28px;
+  background: #fff;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+/* Menu Mobile */
+.ca-mobile-menu {
+  display: none;
+  flex-direction: column;
+  background: rgba(15,15,20,0.98);
+  position: absolute;
+  top: 58px; /* ajuste à la hauteur du header */
+  right: 0;
+  left: 0;
+  z-index: 200;
+  padding: 1.2rem 1rem 1rem 1rem;
+  gap: 18px;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.18);
+}
+.ca-mobile-menu.open {
+  display: flex;
+  animation: caMenuSlideIn 0.25s;
+}
+@keyframes caMenuSlideIn {
+  from { opacity: 0; transform: translateY(-20px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+
+/* Responsive : active dès 900px ou moins */
+@media (max-width: 900px) {
+  .ca-header-3col, .ca-header-center, .ca-header-right {
+    display: none !important;
+  }
+  .ca-header-mobile {
+    display: flex !important;
+  }
+  .ca-mobile-menu {
+    width: 100vw;
+    border-radius: 0 0 12px 12px;
+  }
+}
+@media (min-width: 901px) {
+  .ca-header-mobile, .ca-mobile-menu {
+    display: none !important;
+  }
+  .ca-header-3col {
+    display: flex !important;
+  }
+}
 /* --- RESPONSIVE --- */
 @media (max-width: 800px) {
   .ca-header-content {
