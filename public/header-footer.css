@@ -1,0 +1,141 @@
+/* =============================== */
+/* === Header (3 parties Linear) ==*/
+/* =============================== */
+
+.ca-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    background: rgba(15, 15, 20, 0.95);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  }
+  
+  .ca-header-3col {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* gauche / centre / droite */
+    padding: 0.7rem 2.5rem;
+    min-height: 64px;
+    gap: 24px;
+  }
+  
+  .ca-header-left,
+  .ca-header-center,
+  .ca-header-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .ca-header-left { gap: 8px; }
+  .ca-header-center { gap: 18px; justify-content: center; flex: 1; }
+  .ca-header-right { gap: 10px; }
+  
+  .ca-logo-icon img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+  .ca-logo-text-img img {
+    height: 36px;
+    vertical-align: middle;
+  }
+  
+  .ca-btn {
+    padding: 8px 22px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: none;
+    border: none;
+    color: #fff;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    outline: none;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    display: inline-block;
+  }
+  .ca-btn.nav-btn:hover {
+    background: rgba(74, 144, 226, 0.12);
+  }
+  .ca-btn-primary {
+    background: #4A90E2;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(74, 144, 226, 0.12);
+    border: none;
+  }
+  .ca-btn-primary:hover {
+    background: #3b78b9;
+  }
+  .ca-btn-outline {
+    border: 1.5px solid #fff;
+    color: #fff;
+    background: none;
+  }
+  .ca-btn-outline:hover {
+    background: #222b3a;
+    color: #4A90E2;
+    border-color: #4A90E2;
+  }
+  
+  /* ====================== */
+  /* ======= FOOTER ======= */
+  /* ====================== */
+  .ca-footer {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    text-align: center;
+    padding: 1.2rem 0.5rem 1.3rem 0.5rem;
+    font-size: 0.95rem;
+    margin-top: 50px;
+  }
+  .ca-footer a {
+    color: #4A90E2;
+    text-decoration: none;
+    margin: 0 7px;
+  }
+  .ca-footer a:hover {
+    text-decoration: underline;
+  }
+  
+  /* ====================== */
+  /* ===== RESPONSIVE ===== */
+  /* ====================== */
+  @media (max-width: 950px) {
+    .ca-header-3col {
+      max-width: 98vw;
+      padding: 0.7rem 1rem;
+      gap: 10px;
+    }
+    .ca-header-center {
+      gap: 10px;
+    }
+    .ca-logo-text-img img { height: 25px; }
+    .ca-logo-icon img { width: 30px; height: 30px; }
+    .ca-btn { font-size: 0.92rem; padding: 7px 12px;}
+  }
+  @media (max-width: 700px) {
+    .ca-header-3col {
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+      min-height: unset;
+      padding: 0.5rem 0.5rem;
+    }
+    .ca-header-center {
+      justify-content: center;
+      margin: 5px 0;
+      width: 100%;
+    }
+    .ca-header-right {
+      justify-content: flex-end;
+      width: 100%;
+    }
+  }
+  
