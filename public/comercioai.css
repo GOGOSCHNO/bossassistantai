@@ -131,6 +131,64 @@ main {
     color: #4A90E2;
     border-color: #4A90E2;
   }
+.user-info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 8px 20px;
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(74,144,226,0.12);
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.user-info-btn:hover,
+.user-info-btn.active {
+  background: #223048;
+}
+
+.user-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: #1a2331;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  border-radius: 10px;
+  z-index: 500;
+  padding: 10px 0;
+}
+
+.user-menu.open {
+  display: block;
+  animation: menuFadeIn 0.18s;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-8px);}
+  to   { opacity: 1; transform: translateY(0);}
+}
+.user-menu button.auth-btn {
+  width: 100%;
+  border: none;
+  background: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 0;
+  text-align: left;
+  transition: background 0.15s;
+}
+.user-menu button.auth-btn:hover {
+  background: #4A90E2;
+  color: #fff;
+}
 
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
