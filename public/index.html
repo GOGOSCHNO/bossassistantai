@@ -170,339 +170,227 @@
     <a href="eliminar-datos.html" target="_blank">Eliminar mis datos</a>
   </footer>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // 📌 Récupération des éléments HTML
-        const btnProbarGratis = document.getElementById("probarGratisBtn");
-        const formContainer = document.getElementById("pruebaGratisForm");
-        const selectIndicativo = document.getElementById("indicativo");
-        const manualIndicativo = document.getElementById("manualIndicativo");
-        const numeroInput = document.getElementById("numero");
+  // === Fonctions dynamiques ===
   
-        // 📌 Initialisation du formulaire caché avec animation fluide
-        formContainer.style.display = "none";
-        formContainer.style.opacity = "0";
-        formContainer.style.transition = "opacity 0.5s ease, transform 0.5s ease";
-        formContainer.style.transform = "translateY(-20px)";
+  // -- Header central (desktop) --
+  async function updateHeaderNavCenter() {
+    const navCenter = document.getElementById("nav-center");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
   
-        // 📌 Gestion du bouton pour afficher le formulaire en douceur
-        btnProbarGratis.addEventListener("click", function () {
-            if (formContainer.style.display === "none") {
-                formContainer.style.display = "block";
-                setTimeout(() => {
-                    formContainer.style.opacity = "1";
-                    formContainer.style.transform = "translateY(0px)";
-                }, 50);
-  
-                // 📌 Faire défiler l'écran jusqu'au formulaire
-                formContainer.scrollIntoView({ behavior: "smooth" });
-  
-                // 📌 Cacher le bouton après ouverture
-                btnProbarGratis.style.display = "none";
-            }
-        });
-  
-        // 📌 Afficher le champ manuel si l'utilisateur choisit "Otro"
-        selectIndicativo.addEventListener("change", function () {
-            if (this.value === "manual") {
-                manualIndicativo.style.display = "block";
-                manualIndicativo.focus();
-            } else {
-                manualIndicativo.style.display = "none";
-                manualIndicativo.value = "";
-            }
-        });
-  
-        // 📌 Gestion de la soumission du formulaire
-        document.getElementById("formularioPrueba").addEventListener("submit", async function (event) {
-            event.preventDefault();
-  
-            const formData = new FormData(this);
-  
-            // 📌 Récupérer l'indicatif et le numéro
-            let indicativoSeleccionado = selectIndicativo.value;
-            if (indicativoSeleccionado === "manual" && manualIndicativo.value.trim() !== "") {
-                indicativoSeleccionado = manualIndicativo.value.trim();
-            }
-  
-            let numero = numeroInput.value.trim();
-  
-            // 📌 Vérifier si l'indicatif commence par "+"
-            if (!indicativoSeleccionado.startsWith("+")) {
-                indicativoSeleccionado = "+" + indicativoSeleccionado;
-            }
-  
-            // 📌 Fusionner l'indicatif et le numéro
-            const numeroCompleto = indicativoSeleccionado + numero;
-            formData.set("whatsapp", numeroCompleto);
-            formData.delete("manualIndicativo"); // Supprimer le champ inutile
-  
-            console.log("📞 Número enviado al backend:", numeroCompleto);
-  
-            // 📌 Masquer immédiatement le formulaire avec effet
-            formContainer.style.opacity = "0";
-            formContainer.style.transform = "translateY(-20px)";
-            setTimeout(() => {
-                formContainer.style.display = "none";
-            }, 500);
-  
-            // 📌 Affichage du message de confirmation
-            const mensajeFelicitacion = document.createElement("div");
-            mensajeFelicitacion.innerHTML = `
-                <h2>🎉 ¡Felicidades, ${formData.get("nombre_comercio")}! 🚀</h2>
-                <p>Tu asistente está en proceso de creación. Te contactaremos pronto.</p>
-                <p>📩 Hemos enviado un mensaje de confirmación a:</p>
-                <p><strong>Email:</strong> ${formData.get("email")}</p>
-                <p><strong>WhatsApp:</strong> ${numeroCompleto}</p>
-                <p>Si cometiste un error en los datos, por favor vuelve a intentarlo.</p>
-            `;
-            mensajeFelicitacion.style.textAlign = "center";
-            mensajeFelicitacion.style.marginTop = "20px";
-            mensajeFelicitacion.style.padding = "20px";
-            mensajeFelicitacion.style.background = "rgba(255,255,255,0.9)";
-            mensajeFelicitacion.style.color = "#000";
-            mensajeFelicitacion.style.borderRadius = "8px";
-            mensajeFelicitacion.style.maxWidth = "500px";
-            mensajeFelicitacion.style.margin = "20px auto";
-  
-            document.querySelector("main").appendChild(mensajeFelicitacion);
-  
-            // 📌 Envoyer les données au backend sans attendre la réponse
-            fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
-                method: "POST",
-                body: formData
-            }).catch(error => {
-                console.error("❌ Error al enviar la solicitud:", error);
-            });
-        });
-    });
-    async function updateHeaderNavCenter() {
-      const navCenter = document.getElementById("nav-center");
-      try {
-        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
-          credentials: "include"
-        });
-        const data = await res.json();
-    
-        if (res.ok) {
-          // CONNECTÉ : Dashboard remplace Probar Gratis
-          navCenter.innerHTML = `
-            <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-            <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-            <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
-          `;
-        } else {
-          throw new Error();
-        }
-      } catch {
-        // NON CONNECTÉ : Probar Gratis affiché
+      if (res.ok) {
         navCenter.innerHTML = `
           <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
           <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-          <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
         `;
-        // Réactiver l'ouverture du formulaire si besoin
-        const btnProbarGratis = document.getElementById("probarGratisBtn");
-        if (btnProbarGratis) {
-          btnProbarGratis.addEventListener("click", function () {
-            const formContainer = document.getElementById("pruebaGratisForm");
-            formContainer.style.display = "block";
-            formContainer.style.opacity = "1";
-            formContainer.style.transform = "translateY(0px)";
-            btnProbarGratis.style.display = "none";
-            formContainer.scrollIntoView({ behavior: "smooth" });
-          });
-        }
+      } else {
+        throw new Error();
+      }
+    } catch {
+      navCenter.innerHTML = `
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
+      `;
+      // Activation du formulaire "Probar Gratis"
+      const btnProbarGratis = document.getElementById("probarGratisBtn");
+      if (btnProbarGratis) {
+        btnProbarGratis.addEventListener("click", function () {
+          const formContainer = document.getElementById("pruebaGratisForm");
+          formContainer.style.display = "block";
+          formContainer.style.opacity = "1";
+          formContainer.style.transform = "translateY(0px)";
+          btnProbarGratis.style.display = "none";
+          formContainer.scrollIntoView({ behavior: "smooth" });
+        });
       }
     }
-    
-    // Appeler la fonction au chargement
-    document.addEventListener("DOMContentLoaded", function () {
-      updateHeaderNavCenter();
-    });
-
-    async function loadUserName() {
-      const authDiv = document.getElementById("auth-buttons");
-    
-      try {
-        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
-          credentials: "include"
-        });
-        const data = await res.json();
-    
-        if (res.ok) {
-          // Menu déroulant utilisateur (sans bouton Dashboard)
-          authDiv.innerHTML = `
-            <div class="user-info-wrapper">
-              <div id="user-info" class="user-info-btn">
-                👋 Hola, ${data.name} ▼
-              </div>
-              <div class="user-menu" id="userMenu">
-                <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
-              </div>
+  }
+  
+  // -- Authentification, menu utilisateur (desktop) --
+  async function loadUserName() {
+    const authDiv = document.getElementById("auth-buttons");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
+  
+      if (res.ok) {
+        authDiv.innerHTML = `
+          <div class="user-info-wrapper">
+            <div id="user-info" class="user-info-btn">
+              👋 Hola, ${data.name} ▼
             </div>
-          `;
-    
-          const userInfo = document.getElementById("user-info");
-          const userMenu = document.getElementById("userMenu");
-          const logoutBtn = document.getElementById("logout-btn");
-    
+            <div class="user-menu" id="userMenu">
+              <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
+            </div>
+          </div>
+        `;
+  
+        const userInfo = document.getElementById("user-info");
+        const userMenu = document.getElementById("userMenu");
+        const logoutBtn = document.getElementById("logout-btn");
+  
+        userInfo.addEventListener("click", (e) => {
+          e.stopPropagation();
+          userMenu.classList.toggle("open");
+          userInfo.classList.toggle("active");
+        });
+        document.addEventListener("click", (e) => {
+          if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
+            userMenu.classList.remove("open");
+            userInfo.classList.remove("active");
+          }
+        });
+        logoutBtn.addEventListener("click", async () => {
+          await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+            method: "POST", credentials: "include"
+          });
+          window.location.reload();
+        });
+      } else {
+        throw new Error();
+      }
+    } catch {
+      authDiv.innerHTML = `
+        <a href="login.html" class="auth-btn">Iniciar sesión</a>
+      `;
+    }
+  }
+  
+  // -- Menu mobile dynamique (hamburger) --
+  async function updateMobileMenu() {
+    const mobileMenu = document.getElementById("caMobileMenu");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
+  
+      if (res.ok) {
+        mobileMenu.innerHTML = `
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+          <div class="user-info-wrapper mobile-user-info">
+            <div id="user-info-mobile" class="user-info-btn">
+              👋 ${data.name} ▼
+            </div>
+            <div class="user-menu" id="userMenuMobile">
+              <button id="logout-btn-mobile" class="auth-btn">Cerrar sesión</button>
+            </div>
+          </div>
+        `;
+        attachMobileMenuLinkListeners();
+        // Menu utilisateur mobile
+        const userInfo = document.getElementById("user-info-mobile");
+        const userMenu = document.getElementById("userMenuMobile");
+        const logoutBtn = document.getElementById("logout-btn-mobile");
+        if (userInfo && userMenu && logoutBtn) {
           userInfo.addEventListener("click", (e) => {
             e.stopPropagation();
             userMenu.classList.toggle("open");
             userInfo.classList.toggle("active");
           });
-    
-          // Clique dehors = fermer le menu
           document.addEventListener("click", (e) => {
             if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
               userMenu.classList.remove("open");
               userInfo.classList.remove("active");
             }
           });
-    
           logoutBtn.addEventListener("click", async () => {
             await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
-              method: "POST",
-              credentials: "include"
+              method: "POST", credentials: "include"
             });
             window.location.reload();
           });
-    
-        } else {
-          throw new Error();
         }
-      } catch {
-        // Non connecté : afficher login/signup
-        authDiv.innerHTML = `
-          <a href="login.html" class="auth-btn">Iniciar sesión</a>
-        `;
+      } else {
+        throw new Error();
       }
-    }
-    
-    loadUserName();
-    async function updateMobileMenu() {
-      const mobileMenu = document.getElementById("caMobileMenu");
-      try {
-        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
-          credentials: "include"
+    } catch {
+      mobileMenu.innerHTML = `
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
+        <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+      `;
+      attachMobileMenuLinkListeners();
+      // Activation du formulaire "Probar Gratis" (mobile)
+      const probarBtnMobile = document.getElementById("probarGratisBtnMenu");
+      if (probarBtnMobile) {
+        probarBtnMobile.addEventListener("click", function () {
+          const formContainer = document.getElementById("pruebaGratisForm");
+          formContainer.style.display = "block";
+          formContainer.style.opacity = "1";
+          formContainer.style.transform = "translateY(0px)";
+          probarBtnMobile.style.display = "none";
+          formContainer.scrollIntoView({ behavior: "smooth" });
         });
-        const data = await res.json();
-    
-        if (res.ok) {
-          // CONNECTÉ : Dashboard dans le menu
-          mobileMenu.innerHTML = `
-            <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-            <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-            <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
-            <div class="user-info-wrapper mobile-user-info">
-              <div id="user-info-mobile" class="user-info-btn">
-                👋 ${data.name} ▼
-              </div>
-              <div class="user-menu" id="userMenuMobile">
-                <button id="logout-btn-mobile" class="auth-btn">Cerrar sesión</button>
-              </div>
-            </div>
-          `;
-          // Gestion du menu utilisateur mobile
-          const userInfo = document.getElementById("user-info-mobile");
-          const userMenu = document.getElementById("userMenuMobile");
-          const logoutBtn = document.getElementById("logout-btn-mobile");
-    
-          if (userInfo && userMenu && logoutBtn) {
-            userInfo.addEventListener("click", (e) => {
-              e.stopPropagation();
-              userMenu.classList.toggle("open");
-              userInfo.classList.toggle("active");
-            });
-            document.addEventListener("click", (e) => {
-              if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
-                userMenu.classList.remove("open");
-                userInfo.classList.remove("active");
-              }
-            });
-            logoutBtn.addEventListener("click", async () => {
-              await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
-                method: "POST",
-                credentials: "include"
-              });
-              window.location.reload();
-            });
-          }
-        } else {
-          throw new Error();
-        }
-      } catch {
-        // NON CONNECTÉ : menu mobile classique
-        mobileMenu.innerHTML = `
-          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-          <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
-          <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
-        `;
-        // Réactive le bouton Probar Gratis sur mobile si besoin
-        const probarBtnMobile = document.getElementById("probarGratisBtnMenu");
-        if (probarBtnMobile) {
-          probarBtnMobile.addEventListener("click", function () {
-            const formContainer = document.getElementById("pruebaGratisForm");
-            formContainer.style.display = "block";
-            formContainer.style.opacity = "1";
-            formContainer.style.transform = "translateY(0px)";
-            probarBtnMobile.style.display = "none";
-            formContainer.scrollIntoView({ behavior: "smooth" });
-          });
-        }
       }
     }
-
-    const videos = [
-      {
-        src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0502_cbUSAN5r.mp4",
-        caption: "Dolcezza ahora automatiza el agendamiento de cita con Camila"
-      },
-      {
-        src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0502 naysa.mp4",
-        caption: "Dani recomienda los shampoos naturales de Naysa según las necesidades de sus clientes"
-      },
-      {
-        src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0429.mp4",
-        caption: "Leo ayuda a Enigma con la reservación de salas"
-      }
-    ];
+  }
   
-    let currentIndex = 0;
+  // -- Rattache le listener de fermeture de menu mobile après chaque update du menu hamburger
+  function attachMobileMenuLinkListeners() {
+    const menu = document.getElementById("caMobileMenu");
+    if (menu) {
+      menu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", () => menu.classList.remove("open"));
+      });
+    }
+  }
+  
+  // === Carrousel vidéo ===
+  const videos = [
+    {
+      src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0502_cbUSAN5r.mp4",
+      caption: "Dolcezza ahora automatiza el agendamiento de cita con Camila"
+    },
+    {
+      src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0502 naysa.mp4",
+      caption: "Dani recomienda los shampoos naturales de Naysa según las necesidades de sus clientes"
+    },
+    {
+      src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0429.mp4",
+      caption: "Leo ayuda a Enigma con la reservación de salas"
+    }
+  ];
+  let currentIndex = 0;
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialisation des boutons/menus dynamiques
+    updateHeaderNavCenter();
+    loadUserName();
+    updateMobileMenu();
+  
+    // Hamburger menu (open/close)
+    const burger = document.getElementById("caHamburgerBtn");
+    const menu = document.getElementById("caMobileMenu");
+    if (burger && menu) {
+      burger.addEventListener("click", function () {
+        menu.classList.toggle("open");
+      });
+    }
+  
+    // Carousel vidéo (pour changer de vidéo)
     const videoElement = document.querySelector(".carousel-video");
     const captionElement = document.querySelector(".caption");
-  
     function showVideo(index) {
       videoElement.src = videos[index].src;
       captionElement.textContent = videos[index].caption;
       videoElement.load();
     }
-  
-    function nextVideo() {
+    window.nextVideo = function () {
       currentIndex = (currentIndex + 1) % videos.length;
       showVideo(currentIndex);
     }
-  
-    function prevVideo() {
+    window.prevVideo = function () {
       currentIndex = (currentIndex - 1 + videos.length) % videos.length;
       showVideo(currentIndex);
     }
+    // Afficher la première vidéo au chargement
+    showVideo(0);
+  });
   </script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const burger = document.getElementById("caHamburgerBtn");
-      const menu = document.getElementById("caMobileMenu");
-      if (burger && menu) {
-        burger.addEventListener("click", function () {
-          menu.classList.toggle("open");
-        });
-        // Refermer le menu si on clique sur un lien du menu
-        menu.querySelectorAll("a").forEach(link => {
-          link.addEventListener("click", () => menu.classList.remove("open"));
-        });
-      }
-    });
-  </script>
+
 </body>
 </html>
