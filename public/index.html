@@ -35,7 +35,7 @@
           </a>
         </div>
         <div class="ca-header-mobile-actions">
-          <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+          <a href="login.html" class="ca-btn ca-btn-outline" id="mobileAuthBtn">Iniciar sesión</a>
           <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
             <span></span>
             <span></span>
@@ -331,8 +331,28 @@
       }
     }
   }
+  // -- Gestion du bouton Auth Mobile (login/dashboard) --
+  async function updateMobileAuthBtn() {
+    const btn = document.getElementById("mobileAuthBtn");
+    if (!btn) return;
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      if (res.ok) {
+        btn.textContent = "Dashboard";
+        btn.href = "dashboard.html";
+        btn.classList.remove("ca-btn-outline");
+        btn.classList.add("ca-btn-primary");
+      } else {
+        throw new Error();
+      }
+    } catch {
+      btn.textContent = "Iniciar sesión";
+      btn.href = "login.html";
+      btn.classList.add("ca-btn-outline");
+      btn.classList.remove("ca-btn-primary");
+    }
+  }
 
-  
   // -- Rattache le listener de fermeture de menu mobile après chaque update du menu hamburger
   function attachMobileMenuLinkListeners() {
     const menu = document.getElementById("caMobileMenu");
