@@ -20,11 +20,7 @@
           <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
         </a>
       </div>
-      <nav class="ca-header-center">
-        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
-      </nav>
+      <nav class="ca-header-center" id="nav-center"></nav>
       <div id="auth-buttons" class="nav-login">
         <!-- Affichage dynamique via JS -->
       </div>
@@ -281,6 +277,51 @@
             });
         });
     });
+    async function updateHeaderNavCenter() {
+      const navCenter = document.getElementById("nav-center");
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
+          credentials: "include"
+        });
+        const data = await res.json();
+    
+        if (res.ok) {
+          // CONNECTÉ : Dashboard remplace Probar Gratis
+          navCenter.innerHTML = `
+            <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+            <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+            <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+          `;
+        } else {
+          throw new Error();
+        }
+      } catch {
+        // NON CONNECTÉ : Probar Gratis affiché
+        navCenter.innerHTML = `
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+          <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
+        `;
+        // Réactiver l'ouverture du formulaire si besoin
+        const btnProbarGratis = document.getElementById("probarGratisBtn");
+        if (btnProbarGratis) {
+          btnProbarGratis.addEventListener("click", function () {
+            const formContainer = document.getElementById("pruebaGratisForm");
+            formContainer.style.display = "block";
+            formContainer.style.opacity = "1";
+            formContainer.style.transform = "translateY(0px)";
+            btnProbarGratis.style.display = "none";
+            formContainer.scrollIntoView({ behavior: "smooth" });
+          });
+        }
+      }
+    }
+    
+    // Appeler la fonction au chargement
+    document.addEventListener("DOMContentLoaded", function () {
+      updateHeaderNavCenter();
+    });
+
     async function loadUserName() {
       const authDiv = document.getElementById("auth-buttons");
     
