@@ -35,7 +35,9 @@
           </a>
         </div>
         <div class="ca-header-mobile-actions">
-          <a href="login.html" class="ca-btn ca-btn-outline" id="mobileAuthBtn">Iniciar sesión</a>
+          <<div class="ca-header-mobile-actions" id="mobile-actions">
+            <!-- Géré dynamiquement par JS -->
+          </div>
           <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
             <span></span>
             <span></span>
@@ -332,24 +334,40 @@
     }
   }
   // -- Gestion du bouton Auth Mobile (login/dashboard) --
-  async function updateMobileAuthBtn() {
-    const btn = document.getElementById("mobileAuthBtn");
-    if (!btn) return;
+  async function updateMobileActions() {
+    const actionsDiv = document.getElementById("mobile-actions");
     try {
       const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
       if (res.ok) {
-        btn.textContent = "Dashboard";
-        btn.href = "dashboard.html";
-        btn.classList.remove("ca-btn-outline");
-        btn.classList.add("ca-btn-primary");
+        actionsDiv.innerHTML = `
+          <a href="dashboard.html" class="ca-btn ca-btn-primary" id="mobileDashboardBtn">Dashboard</a>
+          <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        `;
       } else {
         throw new Error();
       }
     } catch {
-      btn.textContent = "Iniciar sesión";
-      btn.href = "login.html";
-      btn.classList.add("ca-btn-outline");
-      btn.classList.remove("ca-btn-primary");
+      actionsDiv.innerHTML = `
+        <a href="login.html" class="ca-btn ca-btn-outline" id="mobileLoginBtn">Iniciar sesión</a>
+        <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      `;
+    }
+  
+    // Ré-attache le gestionnaire hamburger à chaque update !
+    const burger = document.getElementById("caHamburgerBtn");
+    const menu = document.getElementById("caMobileMenu");
+    if (burger && menu) {
+      burger.onclick = function () {
+        menu.classList.toggle("open");
+      };
     }
   }
 
