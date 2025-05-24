@@ -267,6 +267,7 @@
       const data = await res.json();
   
       if (res.ok) {
+        // Quand connecté
         mobileMenu.innerHTML = `
           <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
           <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
@@ -281,7 +282,7 @@
           </div>
         `;
         attachMobileMenuLinkListeners();
-        // Menu utilisateur mobile
+        // Gestion du menu utilisateur mobile
         const userInfo = document.getElementById("user-info-mobile");
         const userMenu = document.getElementById("userMenuMobile");
         const logoutBtn = document.getElementById("logout-btn-mobile");
@@ -308,6 +309,7 @@
         throw new Error();
       }
     } catch {
+      // Quand non connecté
       mobileMenu.innerHTML = `
         <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
         <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
