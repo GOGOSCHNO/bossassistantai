@@ -44,9 +44,7 @@
         </div>
       </div>
       <nav class="ca-mobile-menu" id="caMobileMenu">
-        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
+        <!-- Les liens seront générés ici -->
       </nav>
   </header>
     <main>
@@ -382,6 +380,80 @@
     }
     
     loadUserName();
+    async function updateMobileMenu() {
+      const mobileMenu = document.getElementById("caMobileMenu");
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
+          credentials: "include"
+        });
+        const data = await res.json();
+    
+        if (res.ok) {
+          // CONNECTÉ : Dashboard dans le menu
+          mobileMenu.innerHTML = `
+            <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+            <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+            <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+            <div class="user-info-wrapper mobile-user-info">
+              <div id="user-info-mobile" class="user-info-btn">
+                👋 ${data.name} ▼
+              </div>
+              <div class="user-menu" id="userMenuMobile">
+                <button id="logout-btn-mobile" class="auth-btn">Cerrar sesión</button>
+              </div>
+            </div>
+          `;
+          // Gestion du menu utilisateur mobile
+          const userInfo = document.getElementById("user-info-mobile");
+          const userMenu = document.getElementById("userMenuMobile");
+          const logoutBtn = document.getElementById("logout-btn-mobile");
+    
+          if (userInfo && userMenu && logoutBtn) {
+            userInfo.addEventListener("click", (e) => {
+              e.stopPropagation();
+              userMenu.classList.toggle("open");
+              userInfo.classList.toggle("active");
+            });
+            document.addEventListener("click", (e) => {
+              if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
+                userMenu.classList.remove("open");
+                userInfo.classList.remove("active");
+              }
+            });
+            logoutBtn.addEventListener("click", async () => {
+              await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+                method: "POST",
+                credentials: "include"
+              });
+              window.location.reload();
+            });
+          }
+        } else {
+          throw new Error();
+        }
+      } catch {
+        // NON CONNECTÉ : menu mobile classique
+        mobileMenu.innerHTML = `
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+          <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
+          <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+        `;
+        // Réactive le bouton Probar Gratis sur mobile si besoin
+        const probarBtnMobile = document.getElementById("probarGratisBtnMenu");
+        if (probarBtnMobile) {
+          probarBtnMobile.addEventListener("click", function () {
+            const formContainer = document.getElementById("pruebaGratisForm");
+            formContainer.style.display = "block";
+            formContainer.style.opacity = "1";
+            formContainer.style.transform = "translateY(0px)";
+            probarBtnMobile.style.display = "none";
+            formContainer.scrollIntoView({ behavior: "smooth" });
+          });
+        }
+      }
+    }
+
     const videos = [
       {
         src: "https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/0502_cbUSAN5r.mp4",
