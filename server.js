@@ -673,7 +673,7 @@ app.get('/auth/google/callback',
     });
 
     // Rediriger vers la page privée
-    res.redirect("https://comercioai.site"); // à adapter selon ta page d’accueil après connexion
+    res.redirect("https://www.comercioai.site"); // à adapter selon ta page d’accueil après connexion
   }
 );
 app.get('/api/me', async (req, res) => {
