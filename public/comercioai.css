@@ -193,6 +193,28 @@ main {
   background: #4A90E2;
   color: #fff;
 }
+.cta-button {
+  display: inline-block;
+  padding: 12px 32px;
+  background: #4A90E2;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 1.13rem;
+  border-radius: 10px;
+  border: none;
+  text-decoration: none;
+  box-shadow: 0 3px 16px rgba(74,144,226,0.08);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.14s;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+.cta-button:hover, .cta-button:focus {
+  background: #3b78b9;
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 24px rgba(74,144,226,0.14);
+}
 
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
