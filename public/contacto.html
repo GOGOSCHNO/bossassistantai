@@ -68,5 +68,221 @@
       &copy; 2025 Comercio AI – Todos los derechos reservados.<br/>
       <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
     </footer>
+  <script>
+  // -- Header central (desktop)
+  async function updateHeaderNavCenter() {
+    const navCenter = document.getElementById("nav-center");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        navCenter.innerHTML = `
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+        `;
+      } else {
+        throw new Error();
+      }
+    } catch {
+      navCenter.innerHTML = `
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
+      `;
+      // Activation du formulaire "Probar Gratis"
+      const btnProbarGratis = document.getElementById("probarGratisBtn");
+      if (btnProbarGratis) {
+        btnProbarGratis.addEventListener("click", function () {
+          const formContainer = document.getElementById("pruebaGratisForm");
+          if (formContainer) {
+            formContainer.style.display = "block";
+            formContainer.style.opacity = "1";
+            formContainer.style.transform = "translateY(0px)";
+            btnProbarGratis.style.display = "none";
+            formContainer.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      }
+    }
+  }
+
+  // -- Authentification, menu utilisateur (desktop)
+  async function loadUserName() {
+    const authDiv = document.getElementById("auth-buttons");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        authDiv.innerHTML = `
+          <div class="user-info-wrapper">
+            <div id="user-info" class="user-info-btn">
+              👋 Hola, ${data.name} ▼
+            </div>
+            <div class="user-menu" id="userMenu">
+              <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
+            </div>
+          </div>
+        `;
+        const userInfo = document.getElementById("user-info");
+        const userMenu = document.getElementById("userMenu");
+        const logoutBtn = document.getElementById("logout-btn");
+        userInfo.addEventListener("click", (e) => {
+          e.stopPropagation();
+          userMenu.classList.toggle("open");
+          userInfo.classList.toggle("active");
+        });
+        document.addEventListener("click", (e) => {
+          if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
+            userMenu.classList.remove("open");
+            userInfo.classList.remove("active");
+          }
+        });
+        logoutBtn.addEventListener("click", async () => {
+          await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+            method: "POST", credentials: "include"
+          });
+          window.location.reload();
+        });
+      } else {
+        throw new Error();
+      }
+    } catch {
+      authDiv.innerHTML = `
+        <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+      `;
+    }
+  }
+
+  // -- Menu mobile dynamique (hamburger)
+  async function updateMobileMenu() {
+    const mobileMenu = document.getElementById("caMobileMenu");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) {
+        // Quand connecté
+        mobileMenu.innerHTML = `
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+          <div class="user-info-wrapper mobile-user-info">
+            <div id="user-info-mobile" class="user-info-btn">
+              👋 ${data.name} ▼
+            </div>
+            <div class="user-menu" id="userMenuMobile">
+              <button id="logout-btn-mobile" class="auth-btn">Cerrar sesión</button>
+            </div>
+          </div>
+        `;
+        attachMobileMenuLinkListeners();
+        // Gestion du menu utilisateur mobile
+        const userInfo = document.getElementById("user-info-mobile");
+        const userMenu = document.getElementById("userMenuMobile");
+        const logoutBtn = document.getElementById("logout-btn-mobile");
+        if (userInfo && userMenu && logoutBtn) {
+          userInfo.addEventListener("click", (e) => {
+            e.stopPropagation();
+            userMenu.classList.toggle("open");
+            userInfo.classList.toggle("active");
+          });
+          document.addEventListener("click", (e) => {
+            if (!userInfo.contains(e.target) && !userMenu.contains(e.target)) {
+              userMenu.classList.remove("open");
+              userInfo.classList.remove("active");
+            }
+          });
+          logoutBtn.addEventListener("click", async () => {
+            await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+              method: "POST", credentials: "include"
+            });
+            window.location.reload();
+          });
+        }
+      } else {
+        throw new Error();
+      }
+    } catch {
+      // Quand non connecté
+      mobileMenu.innerHTML = `
+        <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
+        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtnMenu">Probar Gratis 🚀</a>
+        <a href="login.html" class="ca-btn ca-btn-outline">Iniciar sesión</a>
+      `;
+      attachMobileMenuLinkListeners();
+      // Activation du formulaire "Probar Gratis" (mobile)
+      const probarBtnMobile = document.getElementById("probarGratisBtnMenu");
+      if (probarBtnMobile) {
+        probarBtnMobile.addEventListener("click", function () {
+          const formContainer = document.getElementById("pruebaGratisForm");
+          if (formContainer) {
+            formContainer.style.display = "block";
+            formContainer.style.opacity = "1";
+            formContainer.style.transform = "translateY(0px)";
+            probarBtnMobile.style.display = "none";
+            formContainer.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      }
+    }
+  }
+
+  // -- Gestion du bouton Auth Mobile (login/dashboard)
+  async function updateMobileActions() {
+    const actionsDiv = document.getElementById("mobile-actions");
+    try {
+      const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
+      if (res.ok) {
+        actionsDiv.innerHTML = `
+          <a href="dashboard.html" class="ca-btn ca-btn-primary" id="mobileDashboardBtn">Dashboard</a>
+          <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        `;
+      } else {
+        throw new Error();
+      }
+    } catch {
+      actionsDiv.innerHTML = `
+        <a href="login.html" class="ca-btn ca-btn-outline" id="mobileLoginBtn">Iniciar sesión</a>
+        <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      `;
+    }
+    // Ré-attache le gestionnaire hamburger à chaque update !
+    const burger = document.getElementById("caHamburgerBtn");
+    const menu = document.getElementById("caMobileMenu");
+    if (burger && menu) {
+      burger.onclick = function () {
+        menu.classList.toggle("open");
+      };
+    }
+  }
+
+  // -- Rattache le listener de fermeture de menu mobile après chaque update du menu hamburger
+  function attachMobileMenuLinkListeners() {
+    const menu = document.getElementById("caMobileMenu");
+    if (menu) {
+      menu.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", () => menu.classList.remove("open"));
+      });
+    }
+  }
+
+  // === Initialisation au chargement ===
+  document.addEventListener("DOMContentLoaded", function () {
+    updateHeaderNavCenter();
+    loadUserName();
+    updateMobileMenu();
+    updateMobileActions();
+  });
+</script>
 </body>
+
 </html>
