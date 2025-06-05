@@ -7,103 +7,48 @@
   <!-- Favicon -->
   <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
   <link rel="shortcut icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
-
-  <style>
-    /* Réinitialisation globale */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-    body {
-      background: url("https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/galaxia.jpg") no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      min-height: 100vh;
-    }
-    /* Overlay uniforme */
-    .overlay {
-      background: rgba(0, 0, 0, 0.6);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header, main, footer {
-      padding: 2rem 1.5rem;
-      text-align: center;
-    }
-    header {
-      background: transparent;
-    }
-    header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-    header p {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-    }
-    main {
-      margin-top: 1%;
-      flex: 1;
-    }
-    main h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    main p {
-      font-size: 1.1rem;
-      max-width: 800px;
-      margin: 0 auto 1.5rem auto;
-      line-height: 1.5;
-    }
-    .contact-info {
-      text-align: left;
-      max-width: 800px;
-      margin: 0 auto 1.5rem auto;
-      font-size: 1.1rem;
-      line-height: 1.5;
-      list-style: none;
-      padding: 0;
-    }
-    .contact-info li {
-      margin-bottom: 0.5rem;
-    }
-    .cta-button {
-      display: inline-block;
-      background: #4A90E2;
-      color: #fff;
-      text-decoration: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 4px;
-      transition: background 0.3s ease;
-      font-size: 1rem;
-    }
-    .cta-button:hover {
-      background: #3b78b9;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.85rem;
-      background: rgba(0, 0, 0, 0.7);
-    }
-    a {
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="comercioai.css">
 </head>
 <body>
-  <div class="overlay">
-    <header>
-      <a href="index.html">
-          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/nom-removebg-preview.png" 
-               alt="AssistantAI Logo" 
-               style="max-width: 100%; height: auto; cursor: pointer;">
-      </a>
-      <p>Chatbots & Soluciones de IA para tu negocio</p>
-    </header>
+  <header class="ca-header">
+      <div class="ca-header-3col">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <nav class="ca-header-center" id="nav-center"></nav>
+        <div id="auth-buttons" class="nav-login">
+          <!-- Affichage dynamique via JS -->
+        </div>
+      </div>
+      <div class="ca-header-mobile">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <!-- *** AJOUTE CE BLOC ENTRE LES DEUX *** -->
+        <div class="ca-header-mobile-actions" id="mobile-actions">
+          <!-- Géré dynamiquement par JS -->
+        </div>
+        <!-- Le burger doit rester seul à droite -->
+        <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <nav class="ca-mobile-menu" id="caMobileMenu">
+        <!-- Les liens seront générés ici -->
+      </nav>
+  </header>
     <main>
       <h2>Información de Contacto</h2>
       <p>En Comercio AI creemos en la transparencia y la comunicación directa. A continuación, te ofrecemos nuestros datos de contacto para que puedas comunicarte con nosotros de forma clara y sencilla.</p>
@@ -123,6 +68,5 @@
       &copy; 2025 Comercio AI – Todos los derechos reservados.<br/>
       <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
     </footer>
-  </div>
 </body>
 </html>
