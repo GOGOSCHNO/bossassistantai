@@ -432,6 +432,61 @@
     showVideo(0);
   });
   </script>
-
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Activation du champ manuel pour l'indicatif
+    const selectIndicativo = document.getElementById("indicativo");
+    const manualIndicativo = document.getElementById("manualIndicativo");
+    const numeroInput = document.getElementById("numero");
+  
+    if (selectIndicativo && manualIndicativo) {
+      selectIndicativo.addEventListener("change", function () {
+        if (this.value === "manual") {
+          manualIndicativo.style.display = "block";
+          manualIndicativo.focus();
+        } else {
+          manualIndicativo.style.display = "none";
+          manualIndicativo.value = "";
+        }
+      });
+    }
+  
+    // Gestion de la soumission du formulaire de test gratuit
+    const form = document.getElementById("formularioPrueba");
+    if (form) {
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+  
+        let indicativoSeleccionado = selectIndicativo ? selectIndicativo.value : "";
+        if (indicativoSeleccionado === "manual" && manualIndicativo && manualIndicativo.value.trim() !== "") {
+          indicativoSeleccionado = manualIndicativo.value.trim();
+        }
+  
+        let numero = numeroInput ? numeroInput.value.trim() : "";
+        if (!indicativoSeleccionado.startsWith("+")) {
+          indicativoSeleccionado = "+" + indicativoSeleccionado;
+        }
+        const numeroCompleto = indicativoSeleccionado + numero;
+        formData.set("whatsapp", numeroCompleto);
+        formData.delete("manualIndicativo");
+  
+        fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/inscription", {
+          method: "POST",
+          body: formData
+        }).then(() => {
+          alert("✅ Asistente creado. Te contactaremos pronto.");
+          this.reset();
+          // Tu peux aussi refermer le formulaire ici si tu veux
+          document.getElementById("pruebaGratisForm").style.display = "none";
+          document.getElementById("probarGratisBtn").style.display = "inline-block";
+        }).catch(error => {
+          alert("❌ Error al enviar el formulario.");
+          console.error(error);
+        });
+      });
+    }
+  });
+  </script>
 </body>
 </html>
