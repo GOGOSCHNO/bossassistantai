@@ -480,7 +480,6 @@ async function enviarAlertaComerciante(estado, numeroCliente) {
 async function fetchThreadMessages(threadId) {
   try {
     const messagesResponse = await openai.beta.threads.messages.list(threadId);
-    console.log("🟣 Messages assistant bruts :", JSON.stringify(messagesResponse.data, null, 2));
     const messages = messagesResponse.data.filter(msg => msg.role === 'assistant');
     const latestMessage = messages[0];
 
