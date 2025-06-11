@@ -248,62 +248,37 @@ async function getOrCreateThreadId(userNumber) {
 
 // Fonction pour interagir avec OpenAI
 async function interactWithAssistant(userMessage, userNumber) {
-    if (!userMessage || userMessage.trim() === "") {
-      throw new Error("Le contenu du message utilisateur est vide ou manquant.");
-    }
-  
-    try {
-      const threadId = await getOrCreateThreadId(userNumber);
-      const currentDateTime = new Date().toLocaleString('es-ES', { timeZone: 'America/Bogota' });
-  
-      // Envoi du message utilisateur à OpenAI
-      await openai.beta.threads.messages.create(threadId, {
-        role: "user",
-        content: `Mensaje del cliente: "${userMessage}". Nota: El número WhatsApp del cliente es ${userNumber}. Fecha y hora del mensaje: ${currentDateTime}`
-      });
-  
-      // Création d'un nouveau "run" pour générer la réponse
-      const runResponse = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I" // Remplace par ton assistant_id
-      });
-  
-      const runId = runResponse.id;
-      // Attente de la fin du run ou d'un éventuel function calling
-      const messages = await pollForCompletion(threadId, runId);
-  
-      console.log("📩 Messages reçus de l'assistant :", messages);
-  
-      // Sauvegarde des messages et du thread dans MongoDB
-      if (messages) {
-        const collection = db.collection('threads');
-        await collection.updateOne(
-          { userNumber },
-          {
-            $set: { threadId },
-            $push: {
-              responses: {
-                userMessage,
-                assistantResponse: {
-                  text: messages.text,
-                  note: messages.note // ✅ ici on stocke la note !
-                },
-                timestamp: new Date()
-              }
-            }
-          },
-          { upsert: true }
-        );
-      }
-  
-      return messages;
-    } catch (error) {
-      console.error("❌ Erreur lors de l'interaction avec l'assistant:", error);
-      throw error;
-    }
-  }  
+  try {
+    const threadId = await getOrCreateThreadId(userNumber);
+    const dateISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Bogota' });
+    const heure = new Date().toLocaleTimeString('es-ES', { timeZone: 'America/Bogota' });
+
+    // 💬 Envoi du message utilisateur
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: `Mensaje del cliente: "${userMessage}". Nota: El número WhatsApp del cliente es ${userNumber}. Fecha actual: ${dateISO} Hora actual: ${heure}`
+    });
+    console.log(`✉️ Message utilisateur ajouté au thread ${threadId}`);
+
+    // ▶️ Création d’un nouveau run
+    const runResponse = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: "asst_aH2eDHwU2aIIUGjYNAi9h44T"
+    });
+    const runId = runResponse.id;
+    console.log(`▶️ Run lancé : runId = ${runId}`);
+
+    // ⏳ Attente de la complétion
+    const messages = await pollForCompletion(threadId, runId);
+
+    return { threadId, runId, messages };
+  } catch (error) {
+    console.error("❌ Erreur dans interactWithAssistant:", error);
+    throw error;
+  }
+}
 
 // Vérification du statut d'un run
-async function pollForCompletion(threadId, runId) {
+async function pollForCompletion(threadId, runId, userNumber) {
   return new Promise((resolve, reject) => {
     const interval = 2000;
     const timeoutLimit = 80000;
@@ -341,20 +316,94 @@ async function pollForCompletion(threadId, runId) {
             }
 
             switch (fn.name) {
-              case "notificar_comerciante":
+              case "getAppointments": {
+                if (!calendar) {
+                  await initGoogleCalendarClient(); // au cas où non initialisé
+                }
+              
+                try {
+                  const startOfDay = `${params.date}T00:00:00-05:00`; // Bogota timezone
+                  const endOfDay = `${params.date}T23:59:59-05:00`;
+              
+                  const res = await calendar.events.list({
+                    calendarId: params.calendarId,
+                    timeMin: new Date(startOfDay).toISOString(),
+                    timeMax: new Date(endOfDay).toISOString(),
+                    singleEvents: true,
+                    orderBy: 'startTime',
+                  });
+              
+                  const appointments = res.data.items.map(event => ({
+                    start: event.start.dateTime,
+                    end: event.end.dateTime,
+                    summary: event.summary,
+                  }));
+              
+                  toolOutputs.push({
+                    tool_call_id: id,
+                    output: JSON.stringify(appointments),
+                  });
+                } catch (error) {
+                  console.error("❌ Erreur lors de la récupération des RDV Google Calendar :", error);
+                  toolOutputs.push({
+                    tool_call_id: id,
+                    output: JSON.stringify({ error: "Erreur Google Calendar" }),
+                  });
+                }
+                break;
+              }
+
+              case "cancelAppointment": {
+                const wasDeleted = await cancelAppointment(params.phoneNumber);
+
+                toolOutputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({
+                    success: wasDeleted,
+                    message: wasDeleted
+                      ? "La cita ha sido cancelada."
+                      : "No se encontró ninguna cita para ese número."
+                  })
+                });
+                break;
+              }
+
+              case "createAppointment": {
+                const result = await createAppointment(params);
+
+                toolOutputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({
+                    success: result.success,
+                    message: result.message
+                  })
+                });
+                break;
+              }
+
+              case "get_image_url": {
+                console.log("🖼️ Demande d'URL image reçue:", params);
+                const imageUrl = await getImageUrl(params.imageCode);
+
+                toolOutputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({ imageUrl })
+                });
+                break;
+              }
+
+              case "notificar_comerciante": {
                 console.log("📣 Function calling détectée : notificar_comerciante");
                 const { estado, numero_cliente } = params;
                 await enviarAlertaComerciante(estado, numero_cliente);
-
                 toolOutputs.push({
                   tool_call_id: id,
                   output: JSON.stringify({ success: true })
                 });
                 break;
-
+              }
               default:
-                console.warn(`⚠️ Fonction non reconnue : ${fn.name}`);
-                break;
+                console.warn(`⚠️ Fonction inconnue (non gérée) : ${fn.name}`);
             }
           }
 
@@ -431,33 +480,48 @@ async function enviarAlertaComerciante(estado, numeroCliente) {
 async function fetchThreadMessages(threadId) {
   try {
     const messagesResponse = await openai.beta.threads.messages.list(threadId);
+    console.log("🟣 Messages assistant bruts :", JSON.stringify(messagesResponse.data, null, 2));
     const messages = messagesResponse.data.filter(msg => msg.role === 'assistant');
-
     const latestMessage = messages[0];
+
     let textContent = latestMessage.content
       .filter(c => c.type === 'text')
       .map(c => c.text.value)
       .join(" ");
 
-    // Extraction des URLs Markdown du texte
-    const markdownUrlRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
+    // --- Extraction des URLs d'image dans le texte (jpg, png, webp, etc)
+    const imageUrlRegex = /https?:\/\/[^\s)]+?\.(?:png|jpg|jpeg|webp|gif)/gi;
+    let imageUrls = [];
     let match;
-    const markdownImageUrls = [];
-
-    while ((match = markdownUrlRegex.exec(textContent)) !== null) {
-      markdownImageUrls.push(match[1]);
+    while ((match = imageUrlRegex.exec(textContent)) !== null) {
+      imageUrls.push(match[0]);
     }
-
-    // Nettoyage des URL markdown du texte
-    textContent = textContent.replace(markdownUrlRegex, '').trim();
+    // Nettoyage du texte : on retire les URLs brutes et préfixes "Imagen:"
+    imageUrls.forEach(url => {
+      textContent = textContent.replace(new RegExp(`(Imagen:?\\s*)?${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g'), '');
+    });
+    textContent = textContent.replace(/\n{2,}/g, '\n').trim();
 
     // Suppression des références internes 【XX:XX†nomfichier.json】
     textContent = textContent.replace(/【\d+:\d+†[^\]]+】/g, '').trim();
 
+    // Extraction et suppression des URLs directes (hors Markdown)
+    const plainUrlRegex = /(https?:\/\/[^\s]+)/g;
+    const imageExtensions = /\.(png|jpg|jpeg|webp|gif)$/i;
+    let plainMatch;
+    const plainImageUrls = [];
+    while ((plainMatch = plainUrlRegex.exec(textContent)) !== null) {
+      // Optionnel : ne prendre que les images
+      if (imageExtensions.test(plainMatch[1])) {
+        plainImageUrls.push(plainMatch[1]);
+        // Supprime cette URL du texte à envoyer
+        textContent = textContent.replace(plainMatch[1], '').replace(/\s\s+/g, ' ').trim();
+      }
+    }
+
     // ➕ Détection et extraction de la nota interna
     let summaryNote = null;
     let statusNote = null;
-
     const noteStart = textContent.indexOf('--- Nota interna ---');
     if (noteStart !== -1) {
       const noteContent = textContent.slice(noteStart).replace(/[-]+/g, '').trim();
@@ -472,7 +536,7 @@ async function fetchThreadMessages(threadId) {
       textContent = textContent.slice(0, noteStart).trim();
     }
 
-    // ➕ Conversion Markdown OpenAI → Markdown WhatsApp
+    // ➕ Conversion Markdown OpenAI → Markdown WhatsApp (optionnel, adapte si tu veux)
     function convertMarkdownToWhatsApp(text) {
       return text
         .replace(/\*\*(.*?)\*\*/g, '*$1*')          // Gras
@@ -484,23 +548,38 @@ async function fetchThreadMessages(threadId) {
         .replace(/^(\d+)\.\s/gm, '- ')              // Listes
         .trim();
     }
-
-    // Application de la conversion Markdown
     textContent = convertMarkdownToWhatsApp(textContent);
 
-    // Récupération des images issues du Function Calling
+    // Extraction d’images issues du Function Calling (par sécurité, utile si jamais assistant les place là)
+    // Récupération de toutes les URLs d'images issues du Function Calling (JSON)
     const toolMessages = messagesResponse.data.filter(msg => msg.role === 'tool');
-    const toolImageUrls = toolMessages
-      .map(msg => {
+    const toolImageUrls = [];
+    for (const msg of toolMessages) {
+      const value = msg.content?.[0]?.text?.value;
+      if (value) {
         try {
-          return JSON.parse(msg.content[0].text.value).imageUrl;
-        } catch {
-          return null;
+          // On attend {"imageUrl": "url"}
+          const obj = JSON.parse(value);
+          if (obj.imageUrl && obj.imageUrl.startsWith('http')) {
+            toolImageUrls.push(obj.imageUrl);
+          }
+        } catch (e) {
+          // Si ce n’est pas du JSON (rare), on tente de récupérer direct une url brute
+          if (typeof value === "string" && value.startsWith('http')) {
+            toolImageUrls.push(value);
+          }
         }
-      })
-      .filter(url => url != null);
+      }
+    }
 
-    const images = [...markdownImageUrls, ...toolImageUrls];
+    // ➡️ On fusionne toutes les URLs extraites (texte + function calling), sans doublon
+    const images = Array.from(new Set([
+      ...imageUrls,
+      ...plainImageUrls,
+      ...toolImageUrls
+    ]));
+
+    console.log("🖼️ Images extraites dans fetchThreadMessages:", images);
 
     // ✅ Retour complet avec note extraite
     return {
@@ -522,25 +601,90 @@ async function fetchThreadMessages(threadId) {
   }
 }
 
-app.post('/whatsapp', async (req, res) => {
-  console.log('Requête reçue :', JSON.stringify(req.body, null, 2));
-
+async function getImageUrl(imageCode) {
   try {
-    // 1) Vérifier la structure du body : Meta envoie { object, entry: [...] }
-    if (
-      !req.body.entry ||
-      !req.body.entry[0].changes ||
-      !req.body.entry[0].changes[0].value.messages
-    ) {
-      return res.status(200).send('Aucun message entrant.');
+    const image = await db.collection("images").findOne({ _id: imageCode });
+
+    if (image && image.url) {
+      console.log(`✅ URL trouvée pour le code "${imageCode}" : ${image.url}`);
+    } else {
+      console.warn(`⚠️ Aucune URL trouvée pour le code "${imageCode}".`);
     }
 
-    const value = req.body.entry[0].changes[0].value;
-    const message = value.messages[0];
-    const from = message.from;
-    const phoneNumberId = value.metadata.phone_number_id;
+    return image ? image.url : null;
+  } catch (error) {
+    console.error("❌ Erreur récupération URL image:", error);
+    return null;
+  }
+}
 
-    // 2) Déterminer le type de message et extraire le texte
+async function sendResponseToWhatsApp(response, userNumber) {
+  const { text, images } = response;
+  console.log("📤 Envoi WhatsApp : texte =", text, "images =", images);
+  const apiUrl = `https://graph.facebook.com/v16.0/${whatsappPhoneNumberId}/messages`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  if (text) {
+    await axios.post(apiUrl, {
+      messaging_product: 'whatsapp',
+      to: userNumber,
+      text: { body: text },
+    }, { headers });
+  }
+
+  if (images && images.length > 0) {
+    for (const url of images) {
+      if (url) {
+        await axios.post(apiUrl, {
+          messaging_product: 'whatsapp',
+          to: userNumber,
+          type: 'image',
+          image: { link: url },
+        }, { headers });
+      }
+    }
+  }
+}
+
+app.post('/whatsapp', async (req, res) => {
+  // 📩 Requête reçue : log simplifié
+  try {
+    // 📌 Déclaration variables
+    const entry = req.body?.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const field = changes?.field;
+  
+    // 🚫 Ignorer si ce n'est pas un message entrant
+    if (field !== "messages" || !value.messages || !value.messages[0]) {
+      return res.status(200).send("Pas un message entrant à traiter.");
+    }
+  
+    // 📌 Déclaration message
+    const message = value.messages[0];
+    const from = message.from; // numéro du client
+    const messageId = message.id; // ID unique du message
+    const name = value.contacts?.[0]?.profile?.name || "Inconnu";
+    const body = message?.text?.body || "🟡 Aucun contenu texte";
+  
+    // ✅ Log propre et lisible
+    console.log(`📥 Message reçu de ${name} (${from}) : "${body}"`);
+
+    // ✅ Vérifier si ce message a déjà été traité
+    const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
+    if (alreadyProcessed) {
+      console.log("⚠️ Message déjà traité, on ignore :", messageId);
+      return res.status(200).send("Message déjà traité.");
+    }
+    await db.collection('processedMessages').insertOne({
+      messageId,
+      createdAt: new Date()
+    });
+
+    // 🧠 Extraire le contenu utilisateur
     let userMessage = '';
     if (message.type === 'text' && message.text.body) {
       userMessage = message.text.body.trim();
@@ -556,54 +700,14 @@ app.post('/whatsapp', async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 3) Envoyer le message à l'assistant
-    const response = await interactWithAssistant(userMessage, from);
+    // 🔄 Envoyer le message à handleMessage (qui appelle OpenAI + répond au client)
+    await handleMessage(userMessage, from);
 
-    // 3) Récupération de la réponse
-    const { text, images } = response;
+    res.status(200).send('Message reçu et en cours de traitement.');
 
-    // 4) Répondre à l'utilisateur via l’API WhatsApp Cloud
-    const apiUrl = `https://graph.facebook.com/v16.0/${phoneNumberId}/messages`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-
-    // Envoi du texte si disponible
-    if (text) {
-      await axios.post(
-        apiUrl,
-        {
-          messaging_product: 'whatsapp',
-          to: from,
-          text: { body: text },
-        },
-        { headers }
-      );
-    }
-
-    // Envoi des images récupérées via function calling
-    if (images && images.length > 0) {
-      for (const url of images) {
-        if (url) {
-          await axios.post(
-            apiUrl,
-            {
-              messaging_product: 'whatsapp',
-              to: from,
-              type: 'image',
-              image: { link: url },
-            },
-            { headers }
-        );
-        }
-      }
-    }
-
-    res.status(200).send('Message envoyé avec succès');
   } catch (error) {
-    console.error("Erreur lors du traitement du message WhatsApp:", error);
-    res.status(500).json({ error: "Erreur interne." });
+    console.error("❌ Erreur lors du traitement du message WhatsApp :", error);
+    res.status(500).json({ error: "Erreur serveur." });
   }
 });
 
