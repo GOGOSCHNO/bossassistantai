@@ -38,6 +38,10 @@ if (!mongoUri) {
     process.exit(1);
 }
 
+const activeRuns = new Map(); // userNumber -> { threadId, runId }
+const locks = new Map(); // userNumber -> bool
+const messageQueue = new Map(); // userNumber -> array
+
 let db;  // Variable pour stocker la connexion à MongoDB
 
 async function connectToMongoDB() {
@@ -50,6 +54,11 @@ async function connectToMongoDB() {
     console.error("❌ Erreur lors de la connexion à MongoDB :", err);
     process.exit(1);
   }
+  await db.collection('processedMessages').createIndex(
+    { createdAt: 1 },
+    { expireAfterSeconds: 86400 } // 86400 secondes = 24 heures
+  );
+  console.log("🧹 Index TTL activé sur processedMessages (expiration après 24h).");
 }
 
 // Appel de la connexion MongoDB
@@ -61,6 +70,77 @@ const allowedOrigins = [
   "https://www.comercioai.site",
   "https://bossassistantai-439c88409c33.herokuapp.com" // 👈 Ajout nécessaire pour les tests Heroku
 ];
+
+async function handleMessage(userMessage, userNumber) {
+  if (!messageQueue.has(userNumber)) messageQueue.set(userNumber, []);
+  messageQueue.get(userNumber).push(userMessage);
+  console.log(`🧾 Message ajouté à la file pour ${userNumber} : "${userMessage}"`);
+  
+  // Si un traitement est déjà en cours, on ne relance rien
+  if (locks.get(userNumber)) return;
+
+  locks.set(userNumber, true);
+  console.log(`🔒 Lock activé pour ${userNumber}`);
+
+  try {
+    // 🔁 Récupérer tous les messages actuels dans la file
+    const initialQueue = [...messageQueue.get(userNumber)];
+    console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
+    messageQueue.set(userNumber, []); // capter les nouveaux entre-temps
+    
+    const combinedMessage = initialQueue.join(". ");
+    const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
+    console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
+    console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
+    activeRuns.set(userNumber, { threadId, runId });
+    
+    // 🧠 Vérification ici : y a-t-il eu d'autres messages pendant le run ?
+    const newMessages = messageQueue.get(userNumber) || [];
+    if (newMessages.length > 0) {
+      console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
+      messageQueue.set(userNumber, [...initialQueue, ...newMessages]);
+      locks.set(userNumber, false);
+      return await handleMessage("", userNumber);
+      console.log(`📥 Nouveaux messages détectés pendant le run pour ${userNumber} :`, newMessages);
+    }
+    const messages = await pollForCompletion(threadId, runId);
+    // ✅ Sinon, envoyer la réponse
+    console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
+    await sendResponseToWhatsApp(messages, userNumber);
+
+    await db.collection('threads1').updateOne(
+      { userNumber },
+      {
+        $set: { threadId },
+        $push: {
+          responses: {
+            userMessage: combinedMessage,
+            assistantResponse: {
+              text: messages.text,
+              note: messages.note
+            },
+            timestamp: new Date()
+          }
+        }
+      },
+      { upsert: true }
+    );
+  console.log("🗃️ Réponse enregistrée dans MongoDB pour", userNumber);
+  } catch (error) {
+    console.error("❌ Erreur dans handleMessage :", error);
+  } finally {
+    console.log(`🔓 Lock libéré pour ${userNumber}`);
+    locks.set(userNumber, false);
+
+    const remaining = messageQueue.get(userNumber) || [];
+    if (remaining.length > 0) {
+      const next = remaining.shift();
+      messageQueue.set(userNumber, [next, ...remaining]);
+      await handleMessage("", userNumber); // relancer pour le prochain bloc
+      console.log(`➡️ Message restant détecté, relance de handleMessage() pour ${userNumber}`);
+    }
+  }
+}
 
 app.use(cors({
   origin: function (origin, callback) {
