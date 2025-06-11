@@ -262,7 +262,7 @@ async function interactWithAssistant(userMessage, userNumber) {
 
     // ▶️ Création d’un nouveau run
     const runResponse = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: "asst_aH2eDHwU2aIIUGjYNAi9h44T"
+      assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I"
     });
     const runId = runResponse.id;
     console.log(`▶️ Run lancé : runId = ${runId}`);
