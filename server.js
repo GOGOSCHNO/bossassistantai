@@ -108,7 +108,7 @@ async function handleMessage(userMessage, userNumber) {
     console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
     await sendResponseToWhatsApp(messages, userNumber);
 
-    await db.collection('threads1').updateOne(
+    await db.collection('threads').updateOne(
       { userNumber },
       {
         $set: { threadId },
