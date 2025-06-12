@@ -777,7 +777,7 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
             to: data.whatsapp,
             type: "template",
             template: {
-                name: "teste",
+                name: "confirmacion",
                 language: {
                     policy: "deterministic",
                     code: "es"
