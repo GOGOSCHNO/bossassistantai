@@ -14,6 +14,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
+const { google } = require('googleapis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -276,7 +277,47 @@ async function interactWithAssistant(userMessage, userNumber) {
     throw error;
   }
 }
+async function initGoogleCalendarClient() {
+    try {
+      const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY; 
+      if (!serviceAccountJson) {
+        console.error("SERVICE_ACCOUNT_KEY n'est pas défini en variable d'env.");
+        return;
+      }
+      const key = JSON.parse(serviceAccountJson);
+      console.log("Compte de service :", key.client_email);
+  
+      const client = new google.auth.JWT(
+        key.client_email,
+        null,
+        key.private_key,
+        ['https://www.googleapis.com/auth/calendar']
+      );
+      
+      await client.authorize();
+      calendar = google.calendar({ version: 'v3', auth: client });
+      console.log('✅ Client Google Calendar initialisé');
+    } catch (error) {
+      console.error("❌ Erreur d'init du client Google Calendar :", error);
+    }
+  }
 
+async function startCalendar() {
+  await initGoogleCalendarClient();  // on attend l'init
+  if (calendar) {
+    try {
+      const res = await calendar.calendarList.list();
+      console.log('\n📅 Agendas disponibles :');
+      (res.data.items || []).forEach(cal => {
+        console.log(`- ID: ${cal.id}, Summary: ${cal.summary}`);
+      });
+    } catch (err) {
+      console.error("❌ Erreur lors de la récupération des agendas :", err);
+    }
+  }
+}
+  // Appeler une seule fois :
+  startCalendar();
 // Vérification du statut d'un run
 async function pollForCompletion(threadId, runId, userNumber) {
   return new Promise((resolve, reject) => {
