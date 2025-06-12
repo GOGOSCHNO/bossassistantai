@@ -451,7 +451,7 @@ async function enviarAlertaComerciante(estado, numeroCliente) {
     to: numeroComerciante,
     type: "template",
     template: {
-      name: "confirmation",  // le modèle que tu as validé
+      name: "confirmacion",  // le modèle que tu as validé
       language: {
         policy: "deterministic",
         code: "es"
