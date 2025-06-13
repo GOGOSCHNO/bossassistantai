@@ -274,6 +274,8 @@ main {
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
 }
 .message-block p {
   margin: 4px 0;
@@ -282,7 +284,37 @@ main {
   font-size: 0.8rem;
   color: #ccc;
 }
+.message-client,
+.message-assistant {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  margin-bottom: 5px;
+}
+.message-client {
+  align-self: flex-end;
+  background: #4A90E2;
+  color: white;
+  border-bottom-right-radius: 0;
+}
 
+.message-assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border-bottom-left-radius: 0;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #ccc;
+  text-align: center;
+  margin-top: 4px;
+}
 /* Section 3: Informations du client */
 .contact-info {
   flex: 1;
