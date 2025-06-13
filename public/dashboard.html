@@ -43,6 +43,11 @@
           <h3>ℹ️ Info Cliente</h3>
           <p><strong>Estado:</strong> <span id="estadoInfo">---</span></p>
           <p><strong>Resumen:</strong> <span id="resumenInfo">---</span></p>
+          <div class="appointment-info">
+            <h4>📅 Cita agendada</h4>
+            <p><strong>Nombre:</strong> <span id="appointmentName">---</span></p>
+            <p><strong>Fecha:</strong> <span id="appointmentDate">---</span></p>
+          </div>
         </aside>
       </div>
     </main>
@@ -126,6 +131,22 @@
       resumenSpan.textContent = last?.assistantResponse?.note?.summary || "---";
       estadoSpan.textContent = last?.assistantResponse?.note?.status || "---";
     }
+    // Réinitialise les champs
+    document.getElementById("appointmentName").textContent = "---";
+    document.getElementById("appointmentDate").textContent = "---";
+    
+    // Appelle l'API pour récupérer les RDV
+    fetch(`https://bossassistantai-439c88409c33.herokuapp.com/api/appointments?phone=${conv.userNumber}`, {
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.name && data.date && data.startTime) {
+        document.getElementById("appointmentName").textContent = data.name;
+        document.getElementById("appointmentDate").textContent = `${data.date} a las ${data.startTime}`;
+      }
+    })
+    .catch(err => console.error("Erreur récupération RDV :", err));
 
     loadUserName();
     loadConversations();
