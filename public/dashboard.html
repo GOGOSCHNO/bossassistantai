@@ -59,10 +59,9 @@
       <a href="eliminar-datos.html" target="_blank">Eliminar mis datos</a>
     </footer>
   </div>
-
   <script>
     let allConversations = [];
-
+  
     async function loadUserName() {
       const authDiv = document.getElementById("auth-buttons");
       try {
@@ -89,7 +88,7 @@
         `;
       }
     }
-
+  
     async function loadConversations() {
       try {
         const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
@@ -97,10 +96,10 @@
         });
         const data = await res.json();
         allConversations = data.conversations;
-
+  
         const list = document.getElementById("conversationList");
         list.innerHTML = "";
-
+  
         allConversations.forEach((conv, index) => {
           const li = document.createElement("li");
           li.className = "conversation-item";
@@ -112,13 +111,13 @@
         console.error("Error al cargar las conversaciones:", err);
       }
     }
-
+  
     function displayConversation(index) {
       const conv = allConversations[index];
       const messagesDiv = document.getElementById("conversationMessages");
       const estadoSpan = document.getElementById("estadoInfo");
       const resumenSpan = document.getElementById("resumenInfo");
-
+  
       messagesDiv.innerHTML = conv.responses.map(entry => `
         <div class="message-block">
           <div class="message-client">${entry.userMessage}</div>
@@ -126,28 +125,28 @@
           <div class="message-time">${new Date(entry.timestamp).toLocaleString("es-CO")}</div>
         </div>
       `).join("");
-
+  
       const last = conv.responses[conv.responses.length - 1];
       resumenSpan.textContent = last?.assistantResponse?.note?.summary || "---";
       estadoSpan.textContent = last?.assistantResponse?.note?.status || "---";
+  
+      // Affichage des infos de rendez-vous
+      document.getElementById("appointmentName").textContent = "---";
+      document.getElementById("appointmentDate").textContent = "---";
+  
+      fetch(`https://bossassistantai-439c88409c33.herokuapp.com/api/appointments?phone=${conv.userNumber}`, {
+        credentials: "include"
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.name && data.date && data.startTime) {
+          document.getElementById("appointmentName").textContent = data.name;
+          document.getElementById("appointmentDate").textContent = `${data.date} a las ${data.startTime}`;
+        }
+      })
+      .catch(err => console.error("Erreur récupération RDV :", err));
     }
-    // Réinitialise les champs
-    document.getElementById("appointmentName").textContent = "---";
-    document.getElementById("appointmentDate").textContent = "---";
-    
-    // Appelle l'API pour récupérer les RDV
-    fetch(`https://bossassistantai-439c88409c33.herokuapp.com/api/appointments?phone=${conv.userNumber}`, {
-      credentials: "include"
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.name && data.date && data.startTime) {
-        document.getElementById("appointmentName").textContent = data.name;
-        document.getElementById("appointmentDate").textContent = `${data.date} a las ${data.startTime}`;
-      }
-    })
-    .catch(err => console.error("Erreur récupération RDV :", err));
-
+  
     loadUserName();
     loadConversations();
   </script>
