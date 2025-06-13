@@ -1101,3 +1101,17 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ error: "Error del servidor." });
   }
 });
+
+app.get('/api/appointments', async (req, res) => {
+  const phone = req.query.phone;
+  if (!phone) return res.status(400).json({ error: "Numéro manquant" });
+
+  const appt = await db.collection("appointments").findOne({ phoneNumber: phone });
+  if (!appt) return res.json({});
+
+  res.json({
+    name: appt.customerName,
+    date: appt.date,
+    startTime: appt.startTime
+  });
+});
