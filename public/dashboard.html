@@ -3,142 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard – Comercio AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="comercioai.css">
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
 </head>
 <body>
   <div class="overlay">
     <header class="header">
       <div class="branding">
         <a href="index.html">
-          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" 
-               alt="AssistantAI Logo">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="ComercioAI Logo">
         </a>
         <p class="slogan">Chatbots & Soluciones de IA para tu negocio</p>
       </div>
-      <div id="auth-buttons">
-        <!-- Affichage dynamique via JS -->
-      </div>
+      <div id="auth-buttons"></div>
     </header>
+
     <main>
-      <h1>📊 Conversaciones de Patricia</h1>
-  
-      <table>
-        <thead>
-          <tr>
-            <th>📱 Cliente WhatsApp</th>
-            <th>📝 Resumen </th>
-            <th>📌 Estado </th>
-            <th>🕒 Fecha</th>
-          </tr>
-        </thead>
-        <tbody id="conversations-body"></tbody>
-      </table>
-    </div>
-  </main>
-  <footer>
-    &copy; 2025 Comercio AI – Todos los derechos reservados.
-    <a href="contacto.html" class="cta-button">Contáctanos</a>
-    <br/>
-    <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
-  </footer>
+      <div class="dashboard-wrapper">
+        <!-- Section 1: Liste des conversations -->
+        <aside class="conversation-list">
+          <h3>📱 Conversaciones</h3>
+          <ul id="conversationList"></ul>
+        </aside>
+
+        <!-- Section 2: Détail de la conversation -->
+        <section class="conversation-details">
+          <h3>💬 Detalles de la conversación</h3>
+          <div id="conversationMessages"></div>
+        </section>
+
+        <!-- Section 3: Informations supplémentaires -->
+        <aside class="contact-info">
+          <h3>ℹ️ Info Cliente</h3>
+          <p><strong>Estado:</strong> <span id="estadoInfo">---</span></p>
+          <p><strong>Resumen:</strong> <span id="resumenInfo">---</span></p>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="ca-footer">
+      &copy; 2025 Comercio AI – Todos los derechos reservados.
+      <a href="contacto.html">Contáctanos</a>
+      <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+      <a href="eliminar-datos.html" target="_blank">Eliminar mis datos</a>
+    </footer>
+  </div>
+
   <script>
-    async function loadConversations() {
-      try {
-        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
-          credentials: "include"
-        });
-        const data = await res.json();
-        // 🔽 Trie les conversations de la plus récente à la plus ancienne
-        data.conversations.sort((a, b) => {
-          const dateA = new Date(a.responses[a.responses.length - 1]?.timestamp || 0);
-          const dateB = new Date(b.responses[b.responses.length - 1]?.timestamp || 0);
-          return dateB - dateA;
-        });
-        const tbody = document.getElementById("conversations-body");
-  
-        if (!data.conversations || data.conversations.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='4'>Aún no hay conversaciones.</td></tr>";
-          return;
-        }
-        function getEstadoClass(status) {
-          switch (status.toLowerCase()) {
-            case "acción requerida": return "estado-accion";
-            case "nada que hacer": return "estado-nada";
-            case "conversación informativa": return "estado-info";
-            case "potencial cliente": return "estado-potencial";
-            case "seguimiento recomendado": return "estado-seguimiento";
-            default: return "";
-          }
-        }  
-        data.conversations.forEach(conv => {
-          const userNumber = conv.userNumber;
-          const responses = conv.responses;
-  
-          const last = responses[responses.length - 1];
-          const lastSummary = last?.assistantResponse?.note?.summary || "";
-          const lastStatus = last?.assistantResponse?.note?.status || "";
-          const lastDate = last?.timestamp ? new Date(last.timestamp).toLocaleString("es-CO") : "";
-  
-          // 🔹 Ligne pliée
-          const groupRow = document.createElement("tr");
-          groupRow.innerHTML = `
-            <td data-label="📱 Cliente">${userNumber}</td>
-            <td data-label="📝 Resumen"><i>${lastSummary}</i></td>
-            <td data-label="📌 Estado"><span class="estado-tag ${getEstadoClass(lastStatus)}">${lastStatus}</span></td>
-            <td data-label="🕒 Fecha">${lastDate}</td>
-          `;
-          groupRow.style.background = "#e3e3e3";
-          groupRow.style.cursor = "pointer";
-          groupRow.style.fontWeight = "bold";
-          tbody.appendChild(groupRow);
-  
-          // 🔹 Ligne détails masquée
-          const detailRow = document.createElement("tr");
-          detailRow.innerHTML = `
-            <td colspan="4">
-              <div class="accordion-wrapper">
-                ${responses.map(entry => `
-                  <div class="accordion-line">
-                    <p><b>Cliente:</b> ${entry.userMessage || ""}</p>
-                    <p><b>Asistente:</b> ${entry.assistantResponse?.text || ""}</p>
-                    <p><b>🕒</b> ${new Date(entry.timestamp).toLocaleString("es-CO")}</p>
-                    <hr/>
-                  </div>
-                `).join("")}
-              </div>
-            </td>
-          `;
-          tbody.appendChild(detailRow);
-  
-          // Ajout effet smooth
-          const contentDiv = detailRow.querySelector(".accordion-wrapper");
-          contentDiv.style.maxHeight = "0px";
-          contentDiv.style.overflow = "hidden";
-          contentDiv.style.transition = "max-height 0.5s ease";
-  
-          let isOpen = false;
-          groupRow.addEventListener("click", () => {
-            isOpen = !isOpen;
-            if (isOpen) {
-              contentDiv.style.maxHeight = contentDiv.scrollHeight + "px";
-              groupRow.style.background = "#c9dfff";
-            } else {
-              contentDiv.style.maxHeight = "0px";
-              groupRow.style.background = "#e3e3e3";
-            }
-          });
-        });
-  
-      } catch (err) {
-        console.error("Error al cargar las conversaciones:", err);
-        document.getElementById("conversations-body").innerHTML = `
-          <tr><td colspan="4" style="color: red;">❌ No estás conectado o hay un error con la API.</td></tr>
-        `;
-      }
-    }
-  
+    let allConversations = [];
+
     async function loadUserName() {
       const authDiv = document.getElementById("auth-buttons");
       try {
@@ -146,32 +60,17 @@
           credentials: "include"
         });
         const data = await res.json();
-  
         if (res.ok) {
           authDiv.innerHTML = `
-            <div id="user-info" style="cursor: pointer; font-weight: bold;">
-              👋 Hola, ${data.name}
-            </div>
-            <a href="dashboard.html" class="auth-btn" style="margin-top: 10px;">📊 Dashboard</a>
+            <div id="user-info" style="cursor: pointer; font-weight: bold;">👋 Hola, ${data.name}</div>
             <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
           `;
-  
-          const userInfo = document.getElementById("user-info");
-          const logoutBtn = document.getElementById("logout-btn");
-  
-          userInfo.addEventListener("click", () => {
-            logoutBtn.classList.toggle("visible");
-          });
-  
-          logoutBtn.addEventListener("click", async () => {
+          document.getElementById("logout-btn").addEventListener("click", async () => {
             await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
-              method: "POST",
-              credentials: "include"
+              method: "POST", credentials: "include"
             });
             window.location.reload();
           });
-        } else {
-          throw new Error();
         }
       } catch {
         authDiv.innerHTML = `
@@ -180,7 +79,50 @@
         `;
       }
     }
-  
+
+    async function loadConversations() {
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/mes-conversations", {
+          credentials: "include"
+        });
+        const data = await res.json();
+        allConversations = data.conversations;
+
+        const list = document.getElementById("conversationList");
+        list.innerHTML = "";
+
+        allConversations.forEach((conv, index) => {
+          const li = document.createElement("li");
+          li.className = "conversation-item";
+          li.textContent = conv.userNumber;
+          li.addEventListener("click", () => displayConversation(index));
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error("Error al cargar las conversaciones:", err);
+      }
+    }
+
+    function displayConversation(index) {
+      const conv = allConversations[index];
+      const messagesDiv = document.getElementById("conversationMessages");
+      const estadoSpan = document.getElementById("estadoInfo");
+      const resumenSpan = document.getElementById("resumenInfo");
+
+      messagesDiv.innerHTML = conv.responses.map(entry => `
+        <div class="message-block">
+          <p><strong>Cliente:</strong> ${entry.userMessage}</p>
+          <p><strong>Asistente:</strong> ${entry.assistantResponse?.text || ""}</p>
+          <small>${new Date(entry.timestamp).toLocaleString("es-CO")}</small>
+          <hr>
+        </div>
+      `).join("");
+
+      const last = conv.responses[conv.responses.length - 1];
+      resumenSpan.textContent = last?.assistantResponse?.note?.summary || "---";
+      estadoSpan.textContent = last?.assistantResponse?.note?.status || "---";
+    }
+
     loadUserName();
     loadConversations();
   </script>
