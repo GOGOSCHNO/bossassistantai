@@ -215,7 +215,100 @@ main {
   transform: translateY(-2px) scale(1.03);
   box-shadow: 0 6px 24px rgba(74,144,226,0.14);
 }
+/* ======== DASHBOARD CRM LAYOUT ======== */
 
+.dashboard-wrapper {
+  display: flex;
+  gap: 20px;
+  padding: 2rem;
+  color: white;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.conversation-list,
+.conversation-details,
+.contact-info {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+/* Section 1: Liste des conversations */
+.conversation-list {
+  flex: 1;
+  min-width: 250px;
+  max-width: 300px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.conversation-list h3 {
+  margin-bottom: 1rem;
+}
+.conversation-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.conversation-item:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.conversation-item.active {
+  background: #4A90E2;
+  color: white;
+}
+
+/* Section 2: Détails de conversation */
+.conversation-details {
+  flex: 2;
+  min-width: 450px;
+  max-width: 100%;
+}
+.message-block {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.message-block p {
+  margin: 4px 0;
+}
+.message-block small {
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+/* Section 3: Informations du client */
+.contact-info {
+  flex: 1;
+  min-width: 250px;
+  max-width: 300px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.contact-info h3 {
+  margin-bottom: 1rem;
+}
+.contact-info p {
+  margin: 0.6rem 0;
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .dashboard-wrapper {
+    flex-direction: column;
+  }
+  .conversation-list,
+  .conversation-details,
+  .contact-info {
+    max-width: 100%;
+  }
+}
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
   margin-top: 3%;
