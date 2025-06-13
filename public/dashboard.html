@@ -103,7 +103,10 @@
   
         allConversations.forEach((conv, index) => {
           const li = document.createElement("li");
-          li.className = "conversation-item";
+          const last = conv.responses?.[conv.responses.length - 1];
+          const estado = last?.assistantResponse?.note?.status || "";
+          const estadoClass = getEstadoClassForList(estado);
+          li.className = `conversation-item ${estadoClass}`;
           li.textContent = conv.userNumber;
           li.addEventListener("click", () => displayConversation(index));
           list.appendChild(li);
@@ -152,6 +155,16 @@
   
     loadUserName();
     loadConversations();
+    function getEstadoClassForList(status) {
+      switch (status?.toLowerCase()) {
+        case "potencial cliente": return "estado-potencial";
+        case "seguimiento recomendado": return "estado-seguimiento";
+        case "acción requerida": return "estado-accion";
+        case "conversación informativa": return "estado-info";
+        case "nada que hacer": return "estado-nada";
+        default: return "";
+      }
+    }
   </script>
 </body>
 </html>
