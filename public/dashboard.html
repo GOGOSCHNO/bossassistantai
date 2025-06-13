@@ -116,10 +116,9 @@
 
       messagesDiv.innerHTML = conv.responses.map(entry => `
         <div class="message-block">
-          <p><strong>Cliente:</strong> ${entry.userMessage}</p>
-          <p><strong>Asistente:</strong> ${entry.assistantResponse?.text || ""}</p>
-          <small>${new Date(entry.timestamp).toLocaleString("es-CO")}</small>
-          <hr>
+          <div class="message-client">${entry.userMessage}</div>
+          <div class="message-assistant">${entry.assistantResponse?.text || ""}</div>
+          <div class="message-time">${new Date(entry.timestamp).toLocaleString("es-CO")}</div>
         </div>
       `).join("");
 
