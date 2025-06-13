@@ -577,6 +577,20 @@ main p {
     .link a:hover {
       text-decoration: underline;
     }
+.appointment-info {
+  background: rgba(74, 144, 226, 0.15);
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 0.95rem;
+}
+.appointment-info h4 {
+  margin-bottom: 6px;
+  color: #4A90E2;
+}
+.appointment-info p {
+  margin: 4px 0;
+}
 /* ====================== */
   /* ======= FOOTER ======= */
   /* ====================== */
