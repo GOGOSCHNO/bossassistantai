@@ -20,7 +20,6 @@
       </div>
       <nav class="ca-header-center" id="nav-center">
         <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-        <a href="https://wa.me/573009016472?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
         <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
       </nav>
       <div id="auth-buttons" class="ca-header-right"></div>
@@ -29,8 +28,10 @@
 
   <main>
     <section style="text-align: center; margin-top: 60px;">
-      <h2>🛠️ Página de creación de tu asistente</h2>
-      <p>Estamos preparando tu entorno personalizado. Próximamente podrás configurar tu asistente IA aquí.</p>
+      <h2>🧠 Crea tu asistente personalizado</h2>
+      <p>Haz clic para crear tu asistente IA en OpenAI y comenzar a configurarlo.</p>
+      <button id="crearBtn" class="cta-button">Crear Asistente 🚀</button>
+      <p id="resultado" style="margin-top: 20px;"></p>
     </section>
   </main>
 
@@ -39,5 +40,45 @@
     <a href="contacto.html">Contáctanos</a>
     <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
   </footer>
+
+  <script>
+    // Vérifie l’authentification
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        if (!res.ok) throw new Error("No autenticado");
+        const data = await res.json();
+        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+      } catch (err) {
+        window.location.href = "login.html";
+      }
+    });
+
+    // Action sur le bouton
+    document.getElementById("crearBtn").addEventListener("click", async () => {
+      const resultado = document.getElementById("resultado");
+      resultado.textContent = "Creando tu asistente, espera un momento...";
+
+      try {
+        const res = await fetch("/api/crear-asistente", {
+          method: "POST",
+          credentials: "include"
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          resultado.innerHTML = `✅ Asistente creado: <code>${data.assistantId}</code><br>Redirigiendo a la configuración...`;
+          setTimeout(() => {
+            window.location.href = "configuracion-asistente.html";
+          }, 2500);
+        } else {
+          resultado.textContent = "❌ Error: " + (data.error || "No se pudo crear el asistente.");
+        }
+      } catch (err) {
+        resultado.textContent = "❌ Error de red.";
+        console.error(err);
+      }
+    });
+  </script>
 </body>
 </html>
