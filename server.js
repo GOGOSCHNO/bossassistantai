@@ -1115,3 +1115,48 @@ app.get('/api/appointments', async (req, res) => {
     startTime: appt.startTime
   });
 });
+app.post("/api/crear-asistente", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const email = decoded.email;
+    const user = await db.collection("users").findOne({ email });
+
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    if (user.hasAssistant) {
+      return res.status(400).json({ error: "Este usuario ya tiene un asistente." });
+    }
+
+    // Créer assistant OpenAI
+    const assistant = await openai.beta.assistants.create({
+      name: `Asistente de ${user.name}`,
+      instructions: "Responde como asistente comercial por WhatsApp.",
+      model: "gpt-4o"
+    });
+
+    // Générer nom de collection threads
+    const threadsCollection = "threads_" + Date.now();
+    await db.createCollection(threadsCollection);
+
+    // Mettre à jour le document utilisateur
+    await db.collection("users").updateOne(
+      { email },
+      {
+        $set: {
+          assistant_id: assistant.id,
+          hasAssistant: true,
+          threadsCollection
+        }
+      }
+    );
+
+    // ✅ Rediriger vers page de config (optionnelle)
+    res.status(200).json({ message: "Asistente creado", assistantId: assistant.id });
+  } catch (err) {
+    console.error("❌ Error en /api/crear-asistente:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
