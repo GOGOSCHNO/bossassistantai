@@ -95,7 +95,54 @@
             Siguiente sección →
           </button>
         </section>
-        <section id="final-instrucciones" class="form-step" style="display: none;">
+        <!-- SECTION II: Preguntas Frecuentes -->
+        <section id="seccion-preguntas" class="form-step" style="display: none;">
+          <h2>II. Preguntas Frecuentes</h2>
+          <div class="form-subsection">
+            <p>Puedes añadir tus preguntas frecuentes y sus respuestas:</p>
+            <div id="faq-container">
+              <div class="faq-item">
+                <label>Pregunta:</label>
+                <input type="text" class="faq-pregunta">
+                <label>Respuesta:</label>
+                <textarea class="faq-respuesta" rows="2"></textarea>
+              </div>
+            </div>
+            <button type="button" class="cta-button" id="agregarFaqBtn">➕ Añadir otra pregunta</button>
+          </div>
+          <button type="button" class="cta-button" id="siguienteBtn2">Siguiente sección →</button>
+        </section>
+        
+        <!-- SECTION III: Información del comercio -->
+        <section id="seccion-informacion-comercio" class="form-step" style="display: none;">
+          <h2>III. Información del Comercio</h2>
+        
+          <div class="form-subsection">
+            <label for="productosList">Lista de tus productos o servicios (uno por línea):</label>
+            <textarea id="productosList" rows="4" placeholder="Ej: Cejas HD&#10;Micropigmentación&#10;Limpieza facial..."></textarea>
+          </div>
+        
+          <div class="form-subsection">
+            <h3>Horarios de atención</h3>
+            <label for="lunes">Lunes:</label><input type="text" id="lunes" placeholder="Ej: 10:00–18:00"><br>
+            <label for="martes">Martes:</label><input type="text" id="martes"><br>
+            <label for="miercoles">Miércoles:</label><input type="text" id="miercoles"><br>
+            <label for="jueves">Jueves:</label><input type="text" id="jueves"><br>
+            <label for="viernes">Viernes:</label><input type="text" id="viernes"><br>
+            <label for="sabado">Sábado:</label><input type="text" id="sabado"><br>
+            <label for="domingo">Domingo:</label><input type="text" id="domingo"><br>
+            <label><input type="checkbox" id="trabajaFestivos"> Trabajamos los días festivos</label>
+          </div>
+        
+          <div class="form-subsection">
+            <h3>Datos de contacto</h3>
+            <label for="paginaWeb">Mi página web principal es:</label>
+            <input type="text" id="paginaWeb" placeholder="https://...">
+        
+            <label for="whatsapp">Mi número de WhatsApp es:</label>
+            <input type="text" id="whatsapp" placeholder="Ej: 573001234567">
+          </div>
+        
           <button class="cta-button" id="generarInstruccionesBtn" style="margin-top: 30px;">
             Generar instrucciones ✨
           </button>
