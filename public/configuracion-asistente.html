@@ -109,47 +109,11 @@
       <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
     </footer>
   </div>
-
   <script>
-    // Vérifie que l'utilisateur est connecté
-    window.addEventListener("DOMContentLoaded", async () => {
-      try {
-        const res = await fetch("/api/me", { credentials: "include" });
-        const data = await res.json();
-        if (!res.ok) throw new Error("No autenticado");
-        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-      } catch (err) {
-        window.location.href = "login.html";
-      }
-    });
-  </script>
-  <script>
-    // Mise à jour dynamique du libellé "productos/servicios"
-    const radiosVenta = document.querySelectorAll('input[name="tipoVenta"]');
-    const etiquetaTipoVenta = document.getElementById('etiquetaTipoVenta');
-    radiosVenta.forEach(radio => {
-      radio.addEventListener('change', () => {
-        etiquetaTipoVenta.textContent = radio.value === "productos" ? "productos" : "servicios";
-      });
-    });
-  
-    // Afficher champ "Otro objetivo"
-    const chkOtro = document.getElementById("objetivoOtroChk");
-    const inputOtro = document.getElementById("objetivoOtroInput");
-    chkOtro.addEventListener("change", () => {
-      inputOtro.style.display = chkOtro.checked ? "block" : "none";
-    });
-  
-    // Navigation vers section suivante (future)
-    const btnSiguiente = document.getElementById("siguienteBtn");
-    btnSiguiente.addEventListener("click", () => {
-      alert("Ici s’affichera la section II du formulaire. (à implémenter)");
-    });
-  </script>
-  <script>
-    // Navigation étape par étape
+    // Étapes du formulaire
     let currentStep = 0;
     const steps = document.querySelectorAll(".form-step");
+    const siguienteBtn = document.getElementById("siguienteBtn");
   
     function showStep(index) {
       steps.forEach((step, i) => {
@@ -157,40 +121,39 @@
       });
     }
   
-    document.getElementById("siguienteBtn").addEventListener("click", () => {
+    // Passage à l’étape suivante
+    siguienteBtn.addEventListener("click", () => {
       currentStep++;
       if (currentStep >= steps.length) currentStep = steps.length - 1;
       showStep(currentStep);
     });
   
-    // Affiche le premier step au chargement
-    window.addEventListener("DOMContentLoaded", () => {
-      showStep(0);
-  
-      // Vérifie que l'utilisateur est connecté
-      fetch("/api/me", { credentials: "include" })
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(data => {
-          document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-        })
-        .catch(() => {
-          window.location.href = "login.html";
-        });
-    });
-  
-    // Affichage dynamique du libellé
+    // Libellé dynamique selon produits/servicios
     document.querySelectorAll('input[name="tipoVenta"]').forEach(radio => {
       radio.addEventListener('change', () => {
-        document.getElementById('etiquetaTipoVenta').textContent = radio.value === "productos" ? "productos" : "servicios";
+        document.getElementById('etiquetaTipoVenta').textContent = radio.value;
       });
     });
   
-    // Affichage conditionnel du champ "otro"
+    // Affichage du champ "otro" dans les objectifs
     const chkOtro = document.getElementById("objetivoOtroChk");
     const inputOtro = document.getElementById("objetivoOtroInput");
     chkOtro.addEventListener("change", () => {
       inputOtro.style.display = chkOtro.checked ? "block" : "none";
     });
-  </script>
+  
+    // Vérifie que l'utilisateur est connecté
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        if (!res.ok) throw new Error("No autenticado");
+        const data = await res.json();
+        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+        showStep(currentStep); // affiche la première section
+      } catch (err) {
+        window.location.href = "login.html";
+      }
+    });
+  </script
 </body>
 </html>
