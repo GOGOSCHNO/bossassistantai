@@ -28,10 +28,61 @@
     </header>
 
     <main>
-      <section style="text-align: center;">
+      <div class="form-container">
         <h2>⚙️ Configuración del asistente</h2>
-        <p>Esta es una página temporal. Muy pronto podrás personalizar tu asistente IA desde aquí.</p>
-      </section>
+        
+        <!-- SECTION I: Información del asistente -->
+        <section>
+          <h3>I. Información del asistente</h3>
+          
+          <label for="contexto">I.i/ Contexto</label>
+          <textarea id="contexto" rows="4" placeholder="Describe tu negocio, ubicación, canales de contacto..."></textarea>
+    
+          <label for="objetivos">I.ii/ Objetivos</label>
+          <textarea id="objetivos" rows="4" placeholder="¿Qué quieres que haga el asistente? (responder dudas, vender, redirigir...)"></textarea>
+    
+          <label for="estilo">I.iii/ Estilo de comunicación</label>
+          <textarea id="estilo" rows="4" placeholder="Tono, estilo de lenguaje, ejemplos de respuesta con humor, emojis, etc."></textarea>
+        </section>
+    
+        <!-- SECTION II: Funciones del asistente -->
+        <section style="margin-top: 30px;">
+          <h3>II. Funciones</h3>
+    
+          <label for="recomendacion">II.i/ Recomendación de servicios</label>
+          <textarea id="recomendacion" rows="4" placeholder="¿Cómo debe hacer sugerencias? ¿Qué debe preguntar antes?"></textarea>
+    
+          <label for="faq">II.ii/ Preguntas frecuentes</label>
+          <textarea id="faq" rows="6" placeholder="Precios, horarios, políticas, ubicación..."></textarea>
+    
+          <label for="reservacion">II.iii/ Reservación o pedidos</label>
+          <textarea id="reservacion" rows="5" placeholder="¿Qué debe hacer el asistente para agendar o tomar un pedido?"></textarea>
+    
+          <label for="notificacion">II.iv/ Notificación al comerciante</label>
+          <textarea id="notificacion" rows="4" placeholder="¿Cuándo quieres recibir alertas del sistema?"></textarea>
+        </section>
+    
+        <!-- SECTION III: Información del comercio -->
+        <section style="margin-top: 30px;">
+          <h3>III. Información del comercio</h3>
+    
+          <label for="productos">III.i/ Lista de productos o servicios</label>
+          <textarea id="productos" rows="4" placeholder="Nombres de servicios, descripciones, edades, requisitos..."></textarea>
+    
+          <label for="tarifas">III.ii/ Tarifas</label>
+          <textarea id="tarifas" rows="3" placeholder="Precios por persona, por grupo o por categoría..."></textarea>
+    
+          <label for="horarios">III.iii/ Horarios de atención</label>
+          <textarea id="horarios" rows="2" placeholder="Horarios normales, atención 24h, días cerrados..."></textarea>
+    
+          <label for="sitio">III.iv/ Página oficial o enlaces</label>
+          <textarea id="sitio" rows="2" placeholder="Enlace principal, página de reservas, redes sociales..."></textarea>
+        </section>
+    
+        <button class="cta-button" style="margin-top: 30px;" id="generarInstruccionesBtn">
+          Generar instrucciones ✨
+        </button>
+      </div>
     </main>
 
     <footer class="ca-footer">
