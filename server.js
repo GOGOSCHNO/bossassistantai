@@ -1160,3 +1160,29 @@ app.post("/api/crear-asistente", async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 });
+
+app.post("/api/configurar-instrucciones", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // depuis verifyToken
+    const { instructions } = req.body;
+
+    if (!instructions || typeof instructions !== "string") {
+      return res.status(400).json({ error: "Instrucciones inválidas." });
+    }
+
+    const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+
+    if (!user || !user.assistant_id) {
+      return res.status(404).json({ error: "No se encontró el usuario o el assistant_id." });
+    }
+
+    await openai.beta.assistants.update(user.assistant_id, {
+      instructions,
+    });
+
+    res.status(200).json({ success: true, message: "Instrucciones actualizadas con éxito." });
+  } catch (error) {
+    console.error("❌ Error al actualizar el assistant:", error);
+    res.status(500).json({ error: "Error interno al actualizar el assistant." });
+  }
+});
