@@ -31,52 +31,69 @@
       <div class="form-container">
         <h2>⚙️ Configuración del asistente</h2>
         
-        <!-- SECTION I: Información del asistente -->
-        <section>
-          <h3>I. Información del asistente</h3>
-          
-          <label for="contexto">I.i/ Contexto</label>
-          <textarea id="contexto" rows="4" placeholder="Describe tu negocio, ubicación, canales de contacto..."></textarea>
-    
-          <label for="objetivos">I.ii/ Objetivos</label>
-          <textarea id="objetivos" rows="4" placeholder="¿Qué quieres que haga el asistente? (responder dudas, vender, redirigir...)"></textarea>
-    
-          <label for="estilo">I.iii/ Estilo de comunicación</label>
-          <textarea id="estilo" rows="4" placeholder="Tono, estilo de lenguaje, ejemplos de respuesta con humor, emojis, etc."></textarea>
-        </section>
-    
-        <!-- SECTION II: Funciones del asistente -->
-        <section style="margin-top: 30px;">
-          <h3>II. Funciones</h3>
-    
-          <label for="recomendacion">II.i/ Recomendación de servicios</label>
-          <textarea id="recomendacion" rows="4" placeholder="¿Cómo debe hacer sugerencias? ¿Qué debe preguntar antes?"></textarea>
-    
-          <label for="faq">II.ii/ Preguntas frecuentes</label>
-          <textarea id="faq" rows="6" placeholder="Precios, horarios, políticas, ubicación..."></textarea>
-    
-          <label for="reservacion">II.iii/ Reservación o pedidos</label>
-          <textarea id="reservacion" rows="5" placeholder="¿Qué debe hacer el asistente para agendar o tomar un pedido?"></textarea>
-    
-          <label for="notificacion">II.iv/ Notificación al comerciante</label>
-          <textarea id="notificacion" rows="4" placeholder="¿Cuándo quieres recibir alertas del sistema?"></textarea>
-        </section>
-    
-        <!-- SECTION III: Información del comercio -->
-        <section style="margin-top: 30px;">
-          <h3>III. Información del comercio</h3>
-    
-          <label for="productos">III.i/ Lista de productos o servicios</label>
-          <textarea id="productos" rows="4" placeholder="Nombres de servicios, descripciones, edades, requisitos..."></textarea>
-    
-          <label for="tarifas">III.ii/ Tarifas</label>
-          <textarea id="tarifas" rows="3" placeholder="Precios por persona, por grupo o por categoría..."></textarea>
-    
-          <label for="horarios">III.iii/ Horarios de atención</label>
-          <textarea id="horarios" rows="2" placeholder="Horarios normales, atención 24h, días cerrados..."></textarea>
-    
-          <label for="sitio">III.iv/ Página oficial o enlaces</label>
-          <textarea id="sitio" rows="2" placeholder="Enlace principal, página de reservas, redes sociales..."></textarea>
+        <section id="seccion-informacion" class="form-step active">
+          <h2>I. Información del Asistente</h2>
+        
+          <!-- I.i/ Contexto -->
+          <div class="form-subsection">
+            <h3>I.i/ Contexto</h3>
+        
+            <label for="nombreNegocio">El nombre de mi negocio es:</label>
+            <input type="text" id="nombreNegocio" placeholder="Ej: Dolcezza, Enigma Medellín...">
+        
+            <label for="tipoNegocio">Somos un negocio de:</label>
+            <input type="text" id="tipoNegocio" placeholder="Ej: belleza, entretenimiento, gastronomía...">
+        
+            <label>Vendemos:</label><br>
+            <label><input type="radio" name="tipoVenta" value="productos"> Productos</label>
+            <label><input type="radio" name="tipoVenta" value="servicios"> Servicios</label>
+        
+            <label for="especializacion">Nuestros <span id="etiquetaTipoVenta">productos/servicios</span> son principalmente:</label>
+            <input type="text" id="especializacion" placeholder="Ej: cejas, micropigmentación, salas de escape...">
+        
+            <label>Nuetros clientes son principalmente:</label><br>
+            <label><input type="radio" name="tipoCliente" value="mujeres"> Mujeres</label>
+            <label><input type="radio" name="tipoCliente" value="hombres"> Hombres</label>
+            <label><input type="radio" name="tipoCliente" value="ambos"> Los dos</label>
+        
+            <label for="ciudad">Trabajamos en la(s) ciudad(es) de:</label>
+            <input type="text" id="ciudad" placeholder="Ej: Medellín, Bogotá, Barranquilla...">
+          </div>
+        
+          <!-- I.ii/ Objetivos -->
+          <div class="form-subsection" style="margin-top: 30px;">
+            <h3>I.ii/ Objetivos del asistente</h3>
+            <p>¿Qué quieres que haga tu asistente IA? (selección múltiple)</p>
+            <label><input type="checkbox" value="responder dudas frecuentes" class="objetivo"> Responder dudas frecuentes</label><br>
+            <label><input type="checkbox" value="vender productos o servicios" class="objetivo"> Vender productos o servicios</label><br>
+            <label><input type="checkbox" value="redirigir a un sitio web" class="objetivo"> Redirigir a un sitio web</label><br>
+            <label><input type="checkbox" value="recomendar opciones" class="objetivo"> Recomendar opciones</label><br>
+            <label><input type="checkbox" value="agendar citas o reservas" class="objetivo"> Agendar citas o reservas</label><br>
+            <label><input type="checkbox" value="gestionar pedidos" class="objetivo"> Gestionar pedidos</label><br>
+            <label><input type="checkbox" value="otro" id="objetivoOtroChk"> Otro:</label>
+            <input type="text" id="objetivoOtroInput" style="display: none;" placeholder="Describe otro objetivo...">
+          </div>
+        
+          <!-- I.iii/ Estilo de comunicación -->
+          <div class="form-subsection" style="margin-top: 30px;">
+            <h3>I.iii/ Estilo de comunicación</h3>
+            <label for="tono">Tono general del asistente:</label>
+            <select id="tono">
+              <option value="">Selecciona un tono...</option>
+              <option value="profesional">Profesional</option>
+              <option value="amigable">Amigable</option>
+              <option value="divertido">Divertido</option>
+              <option value="juguetón">Juguetón</option>
+              <option value="formal">Formal</option>
+            </select>
+        
+            <label for="ejemploEstilo">Ejemplo de estilo de respuesta:</label>
+            <textarea id="ejemploEstilo" rows="2" placeholder="Ej: ¡Claro! Puedes venir con tus amigos y vivir una experiencia inolvidable 🔥"></textarea>
+          </div>
+        
+          <button id="siguienteBtn" class="cta-button" style="margin-top: 30px;">
+            Siguiente sección →
+          </button>
         </section>
     
         <button class="cta-button" style="margin-top: 30px;" id="generarInstruccionesBtn">
