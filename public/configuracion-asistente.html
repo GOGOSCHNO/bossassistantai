@@ -95,10 +95,11 @@
             Siguiente sección →
           </button>
         </section>
-    
-        <button class="cta-button" style="margin-top: 30px;" id="generarInstruccionesBtn">
-          Generar instrucciones ✨
-        </button>
+        <section id="final-instrucciones" class="form-step" style="display: none;">
+          <button class="cta-button" id="generarInstruccionesBtn" style="margin-top: 30px;">
+            Generar instrucciones ✨
+          </button>
+        </section>
       </div>
     </main>
 
@@ -143,6 +144,52 @@
     const btnSiguiente = document.getElementById("siguienteBtn");
     btnSiguiente.addEventListener("click", () => {
       alert("Ici s’affichera la section II du formulaire. (à implémenter)");
+    });
+  </script>
+  <script>
+    // Navigation étape par étape
+    let currentStep = 0;
+    const steps = document.querySelectorAll(".form-step");
+  
+    function showStep(index) {
+      steps.forEach((step, i) => {
+        step.style.display = i === index ? "block" : "none";
+      });
+    }
+  
+    document.getElementById("siguienteBtn").addEventListener("click", () => {
+      currentStep++;
+      if (currentStep >= steps.length) currentStep = steps.length - 1;
+      showStep(currentStep);
+    });
+  
+    // Affiche le premier step au chargement
+    window.addEventListener("DOMContentLoaded", () => {
+      showStep(0);
+  
+      // Vérifie que l'utilisateur est connecté
+      fetch("/api/me", { credentials: "include" })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(data => {
+          document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+        })
+        .catch(() => {
+          window.location.href = "login.html";
+        });
+    });
+  
+    // Affichage dynamique du libellé
+    document.querySelectorAll('input[name="tipoVenta"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.getElementById('etiquetaTipoVenta').textContent = radio.value === "productos" ? "productos" : "servicios";
+      });
+    });
+  
+    // Affichage conditionnel du champ "otro"
+    const chkOtro = document.getElementById("objetivoOtroChk");
+    const inputOtro = document.getElementById("objetivoOtroInput");
+    chkOtro.addEventListener("change", () => {
+      inputOtro.style.display = chkOtro.checked ? "block" : "none";
     });
   </script>
 </body>
