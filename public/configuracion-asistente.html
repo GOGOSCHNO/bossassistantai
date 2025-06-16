@@ -157,10 +157,8 @@
     </footer>
   </div>
   <script>
-    // Étapes du formulaire
     let currentStep = 0;
     const steps = document.querySelectorAll(".form-step");
-    const siguienteBtn = document.getElementById("siguienteBtn");
   
     function showStep(index) {
       steps.forEach((step, i) => {
@@ -168,39 +166,57 @@
       });
     }
   
-    // Passage à l’étape suivante
-    siguienteBtn.addEventListener("click", () => {
-      currentStep++;
-      if (currentStep >= steps.length) currentStep = steps.length - 1;
+    // Navigation boutons "Siguiente"
+    document.getElementById("siguienteBtn").addEventListener("click", () => {
+      currentStep = 1;
       showStep(currentStep);
     });
   
-    // Libellé dynamique selon produits/servicios
+    document.getElementById("siguienteBtn2").addEventListener("click", () => {
+      currentStep = 2;
+      showStep(currentStep);
+    });
+  
+    // Libellé dynamique "productos/servicios"
     document.querySelectorAll('input[name="tipoVenta"]').forEach(radio => {
       radio.addEventListener('change', () => {
         document.getElementById('etiquetaTipoVenta').textContent = radio.value;
       });
     });
   
-    // Affichage du champ "otro" dans les objectifs
+    // Afficher champ "otro" si coché
     const chkOtro = document.getElementById("objetivoOtroChk");
     const inputOtro = document.getElementById("objetivoOtroInput");
     chkOtro.addEventListener("change", () => {
       inputOtro.style.display = chkOtro.checked ? "block" : "none";
     });
   
-    // Vérifie que l'utilisateur est connecté
+    // Ajouter dynamiquement des blocs FAQ
+    const faqContainer = document.getElementById("faq-container");
+    document.getElementById("agregarFaqBtn").addEventListener("click", () => {
+      const div = document.createElement("div");
+      div.className = "faq-item";
+      div.innerHTML = `
+        <label>Pregunta:</label>
+        <input type="text" class="faq-pregunta">
+        <label>Respuesta:</label>
+        <textarea class="faq-respuesta" rows="2"></textarea>
+      `;
+      faqContainer.appendChild(div);
+    });
+  
+    // Vérification utilisateur + affichage initial
     window.addEventListener("DOMContentLoaded", async () => {
       try {
         const res = await fetch("/api/me", { credentials: "include" });
         if (!res.ok) throw new Error("No autenticado");
         const data = await res.json();
         document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-        showStep(currentStep); // affiche la première section
+        showStep(currentStep); // affiche section 1
       } catch (err) {
         window.location.href = "login.html";
       }
     });
-  </script
+  </script>
 </body>
 </html>
