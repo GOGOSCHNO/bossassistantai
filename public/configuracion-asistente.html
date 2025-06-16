@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuración del Asistente – Comercio AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="comercioai.css">
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+</head>
+<body>
+  <div class="overlay">
+    <header class="ca-header">
+      <div class="ca-header-3col">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <nav class="ca-header-center" id="nav-center">
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+        </nav>
+        <div id="auth-buttons" class="ca-header-right"></div>
+      </div>
+    </header>
+
+    <main>
+      <section style="text-align: center;">
+        <h2>⚙️ Configuración del asistente</h2>
+        <p>Esta es una página temporal. Muy pronto podrás personalizar tu asistente IA desde aquí.</p>
+      </section>
+    </main>
+
+    <footer class="ca-footer">
+      &copy; 2025 Comercio AI – Todos los derechos reservados.
+      <a href="contacto.html">Contáctanos</a>
+      <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+    </footer>
+  </div>
+
+  <script>
+    // Vérifie que l'utilisateur est connecté
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        const data = await res.json();
+        if (!res.ok) throw new Error("No autenticado");
+        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+      } catch (err) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+</body>
+</html>
