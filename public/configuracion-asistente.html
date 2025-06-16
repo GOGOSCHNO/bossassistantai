@@ -122,5 +122,28 @@
       }
     });
   </script>
+  <script>
+    // Mise à jour dynamique du libellé "productos/servicios"
+    const radiosVenta = document.querySelectorAll('input[name="tipoVenta"]');
+    const etiquetaTipoVenta = document.getElementById('etiquetaTipoVenta');
+    radiosVenta.forEach(radio => {
+      radio.addEventListener('change', () => {
+        etiquetaTipoVenta.textContent = radio.value === "productos" ? "productos" : "servicios";
+      });
+    });
+  
+    // Afficher champ "Otro objetivo"
+    const chkOtro = document.getElementById("objetivoOtroChk");
+    const inputOtro = document.getElementById("objetivoOtroInput");
+    chkOtro.addEventListener("change", () => {
+      inputOtro.style.display = chkOtro.checked ? "block" : "none";
+    });
+  
+    // Navigation vers section suivante (future)
+    const btnSiguiente = document.getElementById("siguienteBtn");
+    btnSiguiente.addEventListener("click", () => {
+      alert("Ici s’affichera la section II du formulaire. (à implémenter)");
+    });
+  </script>
 </body>
 </html>
