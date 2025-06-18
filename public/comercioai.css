@@ -392,11 +392,14 @@ label {
   border: 2px solid #ccc;
   padding: 20px;
   text-align: center;
-  width: 220px;
-  border-radius: 12px;
+  width: 250px;
+  border-radius: 20px;
   transition: transform 0.2s, border-color 0.2s;
   cursor: pointer;
   background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .assistant-option:hover {
@@ -405,14 +408,20 @@ label {
 }
 
 .assistant-option img {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
+  width: 140px;
+  height: auto;
+  border-radius: 12px;
+  margin-bottom: 10px;
 }
 
 .assistant-option.selected {
   border-color: #4CAF50;
   box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+.assistant-option p {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: #444;
 }
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
