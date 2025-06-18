@@ -361,7 +361,81 @@
   function volverPaso2() {
     currentStep = 2;
     updateProgressBar(currentStep);
-    siguientePaso(); // recharge l’étape des objectifs
+  
+    const esMayIA = selectedAssistant === "mayia";
+  
+    const objetivos = esMayIA
+      ? [
+          "Responder preguntas sobre productos",
+          "Promocionar nuevos productos",
+          "Guiar al cliente hacia la compra",
+          "Enviar enlaces a tienda virtual",
+          "Compartir precios y formas de pago",
+          "Ofrecer recomendaciones de productos",
+        ]
+      : [
+          "Responder dudas sobre servicios",
+          "Automatizar reservas o agendamientos",
+          "Confirmar citas automáticamente",
+          "Guiar al cliente al contacto por WhatsApp",
+          "Promover servicios destacados",
+          "Reducir el trabajo del equipo humano",
+        ];
+  
+    dynamicContainer.innerHTML = `
+      <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
+      <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
+  
+      <div class="objetivo-selection">
+        ${objetivos
+          .map(
+            (obj) => `
+            <div class="objetivo-option">${obj}</div>
+          `
+          )
+          .join("")}
+      </div>
+  
+      <label style="margin-top: 20px; display: block;">
+        Otro objetivo:
+        <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
+      </label>
+  
+      <div style="margin-top: 30px;">
+        <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
+        <button class="btn" onclick="siguientePaso()">Siguiente</button>
+      </div>
+    `;
+  
+    document.querySelectorAll(".objetivo-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        opt.classList.toggle("selected");
+      });
+    });
+  }
+  function volverPaso3() {
+    currentStep = 3;
+    updateProgressBar(currentStep);
+  
+    dynamicContainer.innerHTML = `
+      <h3>❓ Preguntas frecuentes (FAQ)</h3>
+      <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
+  
+      <div id="faqContainer">
+        <div class="faq-item">
+          <label>Pregunta</label>
+          <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuánto cuesta el envío?" />
+          <label>Respuesta</label>
+          <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
+        </div>
+      </div>
+  
+      <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
+      <div style="margin-top: 30px;">
+        <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
+        <button class="btn" onclick="siguientePaso()">Siguiente</button>
+      </div>
+    `;
   }
   function agregarProducto() {
     repliegueUltimoProducto(); // 🔧 Ajoute ici
