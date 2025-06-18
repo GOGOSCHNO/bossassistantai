@@ -305,6 +305,8 @@
           <button class="btn" id="finalizarConfiguracion">Finalizar configuración</button>
         </div>
       `;
+        document.getElementById("finalizarConfiguracion").addEventListener("click", finalizarFormulario);
+      }, 0);
     }
   }
   function repliegueUltimoProducto() {
@@ -491,6 +493,129 @@
       window.location.href = "login.html";
     }
   });
+    async function finalizarFormulario() {
+      try {
+        const cookies = document.cookie.split(';').reduce((acc, c) => {
+          const [key, val] = c.trim().split('=');
+          acc[key] = val;
+          return acc;
+        }, {});
+        const token = cookies.token;
+        if (!token) {
+          alert("No has iniciado sesión.");
+          return;
+        }
+    
+        const nombre = document.getElementById("nombreNegocioMayIA")?.value || document.getElementById("nombreNegocioSofIA")?.value;
+        const tipo = selectedAssistant === "mayia"
+          ? document.getElementById("productosVendidos").value
+          : document.getElementById("serviciosOfrecidos").value;
+        const ciudad = selectedAssistant === "mayia"
+          ? document.getElementById("ciudadMayIA")?.value || "toda Colombia"
+          : document.getElementById("ciudadSofIA")?.value;
+        const venta = window.tipoTiendaMayIA || "física";
+    
+        const objetivos = Array.from(document.querySelectorAll(".objetivo-option.selected")).map(el => el.textContent.trim());
+        const otro = document.getElementById("inputOtro")?.value;
+        if (otro) objetivos.push(otro);
+    
+        const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
+          const pregunta = faq.querySelector(".faq-pregunta").value;
+          const respuesta = faq.querySelector(".faq-respuesta").value;
+          return `Q: ${pregunta}\nA: ${respuesta}`;
+        });
+    
+        const productosData = Array.from(document.querySelectorAll(".producto-item")).map(block => {
+          const nombre = block.querySelector(".producto-nombre")?.value || "";
+          const precio = block.querySelector(".producto-precio")?.value || "";
+          const descripcion = block.querySelector(".producto-descripcion")?.value || "";
+          const otros = {};
+          block.querySelectorAll("input").forEach(input => {
+            if (!["producto-nombre", "producto-precio", "producto-descripcion"].some(cls => input.classList.contains(cls))) {
+              otros[input.className] = input.value;
+            }
+          });
+          return { nombre, precio, descripcion, ...otros };
+        });
+    
+        const productosTexto = productosData.map(p => {
+          const extras = Object.entries(p)
+            .filter(([k]) => !["nombre", "precio", "descripcion"].includes(k))
+            .map(([k, v]) => ` - ${k}: ${v}`)
+            .join("\n");
+          return `🛒 ${p.nombre} – ${p.precio}\n${p.descripcion}\n${extras}`;
+        }).join("\n\n");
+    
+        const horarios = [
+          "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
+        ].map(dia =>
+          `${dia.charAt(0).toUpperCase() + dia.slice(1)}: ${document.getElementById("horario-" + dia)?.value || "No definido"}`
+        ).join("\n");
+    
+        const festivos = document.getElementById("trabajaFestivos").checked;
+        const whatsapp = document.getElementById("whatsapp").value;
+        const email = document.getElementById("email").value;
+        const web = document.getElementById("web").value;
+    
+        const instructions = `
+    I/ Información del Asistente
+    I.i/ Contexto
+    ${nombre} es un negocio de ${tipo} y que vende ${venta}.
+    ${nombre} se encuentra en ${ciudad}.
+    
+    I.ii/ Objetivos
+    Los objetivos principales de ${nombre} son:
+    ${objetivos.map(o => "- " + o).join("\n")}
+    
+    II/ Funciones
+    II.i/ Preguntas frecuentes
+    ${faqPairs.join("\n\n")}
+    
+    III/ Información del comercio
+    III.i/ Información de los ${venta}
+    ${productosTexto}
+    
+    III.ii/ Horarios
+    ${horarios}
+    ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
+    
+    III.iii/ Contactos
+    WhatsApp: ${whatsapp}
+    Email: ${email}
+    Sitio Web: ${web}
+    
+    IV/ Notas Internas para Clasificación de Conversaciones
+    --- Nota interna ---
+    Resumen: [Una frase breve que resuma el propósito de la conversación]
+    Estado: [Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+    ---------------------
+    `.trim();
+    
+        const assistantData = {
+          nombre, tipo, ciudad, venta, objetivos, faq: faqPairs,
+          productos: productosData, horarios, festivos, whatsapp, email, web
+        };
+    
+        const response = await fetch("/api/configurar-instrucciones", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ instructions, assistantData })
+        });
+    
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || "Error desconocido");
+        }
+    
+        window.location.href = "dashboard.html";
+      } catch (e) {
+        console.error("❌ Error en finalizarFormulario():", e);
+        alert("Error al guardar la configuración.");
+      }
+    }
   </script>
   <script>
     document.getElementById("generarInstruccionesBtn").addEventListener("click", async () => {
