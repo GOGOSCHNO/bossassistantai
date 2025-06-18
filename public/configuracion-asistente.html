@@ -26,15 +26,14 @@
         <div id="auth-buttons" class="ca-header-right"></div>
       </div>
     </header>
-
     <main>
       <div id="progress-bar-container">
         <div id="progress-bar"></div>
       </div>
       <div class="form-container">
         <h2>⚙️ Configuración del asistente</h2>
-
-        <!-- ÉTAPE 0 : Sélection de l'assistant -->
+    
+        <!-- Étape 0 : Choix entre MayIA et SofIA -->
         <div class="form-step" id="step0">
           <h2>¿Cuál asistente deseas usar?</h2>
           <div class="assistant-selection">
@@ -49,13 +48,12 @@
               <p>Perfecta para servicios como belleza, salud, reservas…</p>
             </div>
           </div>
-          <p style="text-align:center; margin-top: 20px;">
-            <button id="btnElegirAsistente" class="cta-button" disabled>Siguiente →</button>
-          </p>
         </div>
+    
+        <!-- Étape dynamique -->
+        <div id="dynamic-form-container"></div>
       </div>
     </main>
-
     <footer class="ca-footer">
       &copy; 2025 Comercio AI – Todos los derechos reservados.
       <a href="contacto.html">Contáctanos</a>
@@ -63,62 +61,90 @@
     </footer>
   </div>
   <script>
-    let currentStep = 0;
-    let selectedAssistant = null;
-    const steps = document.querySelectorAll(".form-step");
-    const progressBar = document.getElementById("progress-bar");
+  let currentStep = 0;
+  let selectedAssistant = null;
+  const progressBar = document.getElementById("progress-bar");
+  const dynamicContainer = document.getElementById("dynamic-form-container");
   
-    function updateProgressBar(stepIndex) {
-      const progress = ((stepIndex) / (steps.length - 1)) * 100;
-      progressBar.style.width = `${progress}%`;
+  function updateProgressBar(stepIndex) {
+    const percent = Math.min((stepIndex / 4) * 100, 100);
+    progressBar.style.width = `${percent}%`;
+  }
+  
+  function showStep0() {
+    document.getElementById("step0").style.display = "block";
+    dynamicContainer.innerHTML = "";
+    updateProgressBar(0);
+  }
+  
+  function loadFormForMayIA() {
+    dynamicContainer.innerHTML = `
+      <h3>Información básica sobre tu tienda</h3>
+      <label>Nombre del negocio</label>
+      <input type="text" id="nombreNegocioMayIA" placeholder="Ej: Tienda El Rincón" />
+  
+      <label>¿Qué tipo de productos vendes?</label>
+      <input type="text" id="productosVendidos" placeholder="Ej: Cosméticos, electrodomésticos, comida rápida…" />
+  
+      <label>Ciudad donde operas</label>
+      <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
+  
+      <button class="btn" onclick="siguientePaso()">Siguiente</button>
+    `;
+    currentStep = 1;
+    updateProgressBar(currentStep);
+  }
+  
+  function loadFormForSofIA() {
+    dynamicContainer.innerHTML = `
+      <h3>Información básica sobre tu servicio</h3>
+      <label>Nombre del negocio</label>
+      <input type="text" id="nombreNegocioSofIA" placeholder="Ej: Estética Sofi Belleza" />
+  
+      <label>¿Qué servicios ofreces?</label>
+      <input type="text" id="serviciosOfrecidos" placeholder="Ej: Uñas, pestañas, masajes, reservas…" />
+  
+      <label>Ciudad donde operas</label>
+      <input type="text" id="ciudadSofIA" placeholder="Ej: Barranquilla, Cali" />
+  
+      <button class="btn" onclick="siguientePaso()">Siguiente</button>
+    `;
+    currentStep = 1;
+    updateProgressBar(currentStep);
+  }
+  
+  function siguientePaso() {
+    alert("⏭️ Tu assistant selectionné est " + selectedAssistant.toUpperCase() + ". Ici on construira la suite du formulaire.");
+    // Ici, on pourra injecter la deuxième partie du formulaire selon l’assistant
+  }
+  
+  // Gestion du choix
+  document.getElementById("mayia").addEventListener("click", () => {
+    selectedAssistant = "mayia";
+    document.getElementById("mayia").classList.add("selected");
+    document.getElementById("sofia").classList.remove("selected");
+    loadFormForMayIA();
+  });
+  
+  document.getElementById("sofia").addEventListener("click", () => {
+    selectedAssistant = "sofia";
+    document.getElementById("sofia").classList.add("selected");
+    document.getElementById("mayia").classList.remove("selected");
+    loadFormForSofIA();
+  });
+  
+  // Vérif auth
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const res = await fetch("/api/me", { credentials: "include" });
+      if (!res.ok) throw new Error("No autenticado");
+      const data = await res.json();
+      document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+      showStep0();
+    } catch (err) {
+      window.location.href = "login.html";
     }
-  
-    function showStep(index) {
-      steps.forEach((step, i) => {
-        step.style.display = i === index ? "block" : "none";
-      });
-      updateProgressBar(index);
-    }
-  
-    // Sélection de l’assistant
-    const btnElegir = document.getElementById("btnElegirAsistente");
-  
-    document.getElementById("mayia").addEventListener("click", () => {
-      selectedAssistant = "mayia";
-      document.getElementById("mayia").classList.add("selected");
-      document.getElementById("sofia").classList.remove("selected");
-      btnElegir.disabled = false;
-    });
-  
-    document.getElementById("sofia").addEventListener("click", () => {
-      selectedAssistant = "sofia";
-      document.getElementById("sofia").classList.add("selected");
-      document.getElementById("mayia").classList.remove("selected");
-      btnElegir.disabled = false;
-    });
-  
-    btnElegir.addEventListener("click", () => {
-      if (!selectedAssistant) return;
-      currentStep++;
-      showStep(currentStep);
-      window.assistantElegido = selectedAssistant;
-  
-      // Ici tu peux insérer dynamiquement les étapes suivantes
-      // (par ex: injecter le HTML d’un formulaire spécifique à MayIA ou SofIA)
-    });
-  
-    // Vérification utilisateur + affichage du step0
-    window.addEventListener("DOMContentLoaded", async () => {
-      try {
-        const res = await fetch("/api/me", { credentials: "include" });
-        if (!res.ok) throw new Error("No autenticado");
-        const data = await res.json();
-        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-        showStep(currentStep); // Montre l'étape 0 au chargement
-      } catch (err) {
-        window.location.href = "login.html";
-      }
-    });
+  });
   </script>
   <script>
     document.getElementById("generarInstruccionesBtn").addEventListener("click", async () => {
