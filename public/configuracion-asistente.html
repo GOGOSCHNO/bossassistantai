@@ -201,6 +201,22 @@
       const data = await res.json();
       document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
       showStep0();
+  
+      // 🔁 Ajoute ceci
+      document.getElementById("mayia").addEventListener("click", () => {
+        selectedAssistant = "mayia";
+        document.getElementById("mayia").classList.add("selected");
+        document.getElementById("sofia").classList.remove("selected");
+        loadFormForMayIA();
+      });
+  
+      document.getElementById("sofia").addEventListener("click", () => {
+        selectedAssistant = "sofia";
+        document.getElementById("sofia").classList.add("selected");
+        document.getElementById("mayia").classList.remove("selected");
+        loadFormForSofIA();
+      });
+  
     } catch (err) {
       window.location.href = "login.html";
     }
