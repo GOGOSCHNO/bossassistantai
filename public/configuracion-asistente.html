@@ -28,6 +28,9 @@
     </header>
 
     <main>
+      <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+      </div>
       <div class="form-container">
         <h2>⚙️ Configuración del asistente</h2>
 
@@ -173,6 +176,10 @@
     </footer>
   </div>
   <script>
+    function updateProgressBar(stepIndex) {
+      const progress = ((stepIndex) / (steps.length - 1)) * 100;
+      document.getElementById("progress-bar").style.width = `${progress}%`;
+    }
     let currentStep = 0;
     const steps = document.querySelectorAll(".form-step");
   
