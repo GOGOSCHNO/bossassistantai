@@ -244,6 +244,31 @@
         });
       });
     }
+    if (currentStep === 3) {
+      dynamicContainer.innerHTML = `
+        <h3>❓ Preguntas frecuentes (FAQ)</h3>
+        <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
+    
+        <div id="faqContainer">
+          <div class="faq-item">
+            <label>Pregunta</label>
+            <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuánto cuesta el envío?" />
+            <label>Respuesta</label>
+            <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
+          </div>
+        </div>
+    
+        <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
+        <div style="margin-top: 30px;">
+          <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
+          <button class="btn" onclick="siguientePaso()">Siguiente</button>
+        </div>
+      `;
+    
+      currentStep = 3;
+      updateProgressBar(currentStep);
+    }
+
     // Tu pourras ensuite ajouter ici le bloc `if (currentStep === 2)` pour l’étape suivante (style de communication, FAQ, etc.)
   }
     
@@ -262,6 +287,24 @@
     } else {
       loadFormForSofIA();
     }
+  }
+  function agregarFaq() {
+    const container = document.getElementById("faqContainer");
+    const faqHTML = `
+      <div class="faq-item" style="margin-top: 20px;">
+        <label>Pregunta</label>
+        <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuál es el horario de atención?" />
+        <label>Respuesta</label>
+        <input type="text" class="faq-respuesta" placeholder="Ej: De lunes a sábado, de 9am a 6pm." />
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", faqHTML);
+  }
+  
+  function volverPaso2() {
+    currentStep = 2;
+    updateProgressBar(currentStep);
+    siguientePaso(); // recharge l’étape des objectifs
   }
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
