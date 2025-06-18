@@ -53,122 +53,6 @@
             <button id="btnElegirAsistente" class="cta-button" disabled>Siguiente →</button>
           </p>
         </div>
-        <section id="seccion-informacion" class="form-step active">
-          <h2>I. Información del Asistente</h2>
-        
-          <!-- I.i/ Contexto -->
-          <div class="form-subsection">
-            <h3>I.i/ Contexto</h3>
-        
-            <label for="nombreNegocio">El nombre de mi negocio es:</label>
-            <input type="text" id="nombreNegocio" placeholder="Ej: Dolcezza, Enigma Medellín...">
-        
-            <label for="tipoNegocio">Somos un negocio de:</label>
-            <input type="text" id="tipoNegocio" placeholder="Ej: belleza, entretenimiento, gastronomía...">
-        
-            <label>Vendemos:</label><br>
-            <label><input type="radio" name="tipoVenta" value="productos"> Productos</label>
-            <label><input type="radio" name="tipoVenta" value="servicios"> Servicios</label>
-        
-            <label for="especializacion">Nuestros <span id="etiquetaTipoVenta">productos/servicios</span> son principalmente:</label>
-            <input type="text" id="especializacion" placeholder="Ej: cejas, micropigmentación, salas de escape...">
-        
-            <label>Nuetros clientes son principalmente:</label><br>
-            <label><input type="radio" name="tipoCliente" value="mujeres"> Mujeres</label>
-            <label><input type="radio" name="tipoCliente" value="hombres"> Hombres</label>
-            <label><input type="radio" name="tipoCliente" value="ambos"> Los dos</label>
-        
-            <label for="ciudad">Trabajamos en la(s) ciudad(es) de:</label>
-            <input type="text" id="ciudad" placeholder="Ej: Medellín, Bogotá, Barranquilla...">
-          </div>
-        
-          <!-- I.ii/ Objetivos -->
-          <div class="form-subsection" style="margin-top: 30px;">
-            <h3>I.ii/ Objetivos del asistente</h3>
-            <p>¿Qué quieres que haga tu asistente IA? (selección múltiple)</p>
-            <label><input type="checkbox" value="responder dudas frecuentes" class="objetivo"> Responder dudas frecuentes</label><br>
-            <label><input type="checkbox" value="vender productos o servicios" class="objetivo"> Vender productos o servicios</label><br>
-            <label><input type="checkbox" value="redirigir a un sitio web" class="objetivo"> Redirigir a un sitio web</label><br>
-            <label><input type="checkbox" value="recomendar opciones" class="objetivo"> Recomendar opciones</label><br>
-            <label><input type="checkbox" value="agendar citas o reservas" class="objetivo"> Agendar citas o reservas</label><br>
-            <label><input type="checkbox" value="gestionar pedidos" class="objetivo"> Gestionar pedidos</label><br>
-            <label><input type="checkbox" value="otro" id="objetivoOtroChk"> Otro:</label>
-            <input type="text" id="objetivoOtroInput" style="display: none;" placeholder="Describe otro objetivo...">
-          </div>
-        
-          <!-- I.iii/ Estilo de comunicación -->
-          <div class="form-subsection" style="margin-top: 30px;">
-            <h3>I.iii/ Estilo de comunicación</h3>
-            <label for="tono">Tono general del asistente:</label>
-            <select id="tono">
-              <option value="">Selecciona un tono...</option>
-              <option value="profesional">Profesional</option>
-              <option value="amigable">Amigable</option>
-              <option value="divertido">Divertido</option>
-              <option value="juguetón">Juguetón</option>
-              <option value="formal">Formal</option>
-            </select>
-        
-            <label for="ejemploEstilo">Ejemplo de estilo de respuesta:</label>
-            <textarea id="ejemploEstilo" rows="2" placeholder="Ej: ¡Claro! Puedes venir con tus amigos y vivir una experiencia inolvidable 🔥"></textarea>
-          </div>
-        
-          <button id="siguienteBtn" class="cta-button" style="margin-top: 30px;">
-            Siguiente sección →
-          </button>
-        </section>
-        <!-- SECTION II: Preguntas Frecuentes -->
-        <section id="seccion-preguntas" class="form-step" style="display: none;">
-          <h2>II. Preguntas Frecuentes</h2>
-          <div class="form-subsection">
-            <p>Puedes añadir tus preguntas frecuentes y sus respuestas:</p>
-            <div id="faq-container">
-              <div class="faq-item">
-                <label>Pregunta:</label>
-                <input type="text" class="faq-pregunta">
-                <label>Respuesta:</label>
-                <textarea class="faq-respuesta" rows="2"></textarea>
-              </div>
-            </div>
-            <button type="button" class="cta-button" id="agregarFaqBtn">➕ Añadir otra pregunta</button>
-          </div>
-          <button type="button" class="cta-button" id="siguienteBtn2">Siguiente sección →</button>
-        </section>
-        
-        <!-- SECTION III: Información del comercio -->
-        <section id="seccion-informacion-comercio" class="form-step" style="display: none;">
-          <h2>III. Información del Comercio</h2>
-        
-          <div class="form-subsection">
-            <label for="productosList">Lista de tus productos o servicios (uno por línea):</label>
-            <textarea id="productosList" rows="4" placeholder="Ej: Cejas HD&#10;Micropigmentación&#10;Limpieza facial..."></textarea>
-          </div>
-        
-          <div class="form-subsection">
-            <h3>Horarios de atención</h3>
-            <label for="lunes">Lunes:</label><input type="text" id="lunes" placeholder="Ej: 10:00–18:00"><br>
-            <label for="martes">Martes:</label><input type="text" id="martes"><br>
-            <label for="miercoles">Miércoles:</label><input type="text" id="miercoles"><br>
-            <label for="jueves">Jueves:</label><input type="text" id="jueves"><br>
-            <label for="viernes">Viernes:</label><input type="text" id="viernes"><br>
-            <label for="sabado">Sábado:</label><input type="text" id="sabado"><br>
-            <label for="domingo">Domingo:</label><input type="text" id="domingo"><br>
-            <label><input type="checkbox" id="trabajaFestivos"> Trabajamos los días festivos</label>
-          </div>
-        
-          <div class="form-subsection">
-            <h3>Datos de contacto</h3>
-            <label for="paginaWeb">Mi página web principal es:</label>
-            <input type="text" id="paginaWeb" placeholder="https://...">
-        
-            <label for="whatsapp">Mi número de WhatsApp es:</label>
-            <input type="text" id="whatsapp" placeholder="Ej: 573001234567">
-          </div>
-        
-          <button class="cta-button" id="generarInstruccionesBtn" style="margin-top: 30px;">
-            Generar instrucciones ✨
-          </button>
-        </section>
       </div>
     </main>
 
@@ -179,99 +63,58 @@
     </footer>
   </div>
   <script>
+    let currentStep = 0;
+    let selectedAssistant = null;
+    const steps = document.querySelectorAll(".form-step");
+    const progressBar = document.getElementById("progress-bar");
+  
     function updateProgressBar(stepIndex) {
       const progress = ((stepIndex) / (steps.length - 1)) * 100;
-      document.getElementById("progress-bar").style.width = `${progress}%`;
+      progressBar.style.width = `${progress}%`;
     }
-    let currentStep = 0;
-    const steps = document.querySelectorAll(".form-step");
   
     function showStep(index) {
       steps.forEach((step, i) => {
         step.style.display = i === index ? "block" : "none";
       });
+      updateProgressBar(index);
     }
   
-    // Navigation boutons "Siguiente"
-    document.getElementById("siguienteBtn").addEventListener("click", () => {
-      currentStep = 1;
-      showStep(currentStep);
-    });
-  
-    document.getElementById("siguienteBtn2").addEventListener("click", () => {
-      currentStep = 2;
-      showStep(currentStep);
-    });
-    let selectedAssistant = null;
-  
+    // Sélection de l’assistant
     const btnElegir = document.getElementById("btnElegirAsistente");
-    
+  
     document.getElementById("mayia").addEventListener("click", () => {
       selectedAssistant = "mayia";
       document.getElementById("mayia").classList.add("selected");
       document.getElementById("sofia").classList.remove("selected");
       btnElegir.disabled = false;
     });
-    
+  
     document.getElementById("sofia").addEventListener("click", () => {
       selectedAssistant = "sofia";
       document.getElementById("sofia").classList.add("selected");
       document.getElementById("mayia").classList.remove("selected");
       btnElegir.disabled = false;
     });
-    
+  
     btnElegir.addEventListener("click", () => {
-      if (selectedAssistant) {
-        currentStep = 1;
-        showStep(currentStep);
-        updateProgressBar(currentStep);
-      }
-    });
-    
-    function goToNextStep() {
       if (!selectedAssistant) return;
-      currentStep = 1;
+      currentStep++;
       showStep(currentStep);
-    
-      // Astuce : stocker le choix dans une variable globale pour adapter les étapes ensuite
       window.assistantElegido = selectedAssistant;
-    }
-    // Libellé dynamique "productos/servicios"
-    document.querySelectorAll('input[name="tipoVenta"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        document.getElementById('etiquetaTipoVenta').textContent = radio.value;
-      });
+  
+      // Ici tu peux insérer dynamiquement les étapes suivantes
+      // (par ex: injecter le HTML d’un formulaire spécifique à MayIA ou SofIA)
     });
   
-    // Afficher champ "otro" si coché
-    const chkOtro = document.getElementById("objetivoOtroChk");
-    const inputOtro = document.getElementById("objetivoOtroInput");
-    chkOtro.addEventListener("change", () => {
-      inputOtro.style.display = chkOtro.checked ? "block" : "none";
-    });
-  
-    // Ajouter dynamiquement des blocs FAQ
-    const faqContainer = document.getElementById("faq-container");
-    document.getElementById("agregarFaqBtn").addEventListener("click", () => {
-      const div = document.createElement("div");
-      div.className = "faq-item";
-      div.innerHTML = `
-        <label>Pregunta:</label>
-        <input type="text" class="faq-pregunta">
-        <label>Respuesta:</label>
-        <textarea class="faq-respuesta" rows="2"></textarea>
-      `;
-      faqContainer.appendChild(div);
-    });
-  
-    // Vérification utilisateur + affichage initial
+    // Vérification utilisateur + affichage du step0
     window.addEventListener("DOMContentLoaded", async () => {
       try {
         const res = await fetch("/api/me", { credentials: "include" });
         if (!res.ok) throw new Error("No autenticado");
         const data = await res.json();
         document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-        showStep(currentStep); // affiche section 1
+        showStep(currentStep); // Montre l'étape 0 au chargement
       } catch (err) {
         window.location.href = "login.html";
       }
