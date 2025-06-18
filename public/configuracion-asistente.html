@@ -150,24 +150,48 @@
   }
   
   function siguientePaso() {
-    alert("⏭️ Tu assistant selectionné est " + selectedAssistant.toUpperCase() + ". Ici on construira la suite du formulaire.");
-    // Ici, on pourra injecter la deuxième partie du formulaire selon l’assistant
+    if (currentStep === 1) {
+      currentStep = 2;
+      updateProgressBar(currentStep);
+  
+      const esMayIA = selectedAssistant === "mayia";
+  
+      const objetivosHTML = esMayIA
+        ? `
+          <label><input type="checkbox" class="objetivo" value="Responder preguntas sobre productos" /> Responder preguntas sobre productos</label>
+          <label><input type="checkbox" class="objetivo" value="Promocionar nuevos productos" /> Promocionar nuevos productos</label>
+          <label><input type="checkbox" class="objetivo" value="Guiar al cliente hacia la compra" /> Guiar al cliente hacia la compra</label>
+          <label><input type="checkbox" class="objetivo" value="Enviar enlaces a tienda virtual" /> Enviar enlaces a tienda virtual</label>
+          <label><input type="checkbox" class="objetivo" value="Compartir precios y formas de pago" /> Compartir precios y formas de pago</label>
+          <label><input type="checkbox" class="objetivo" value="Ofrecer recomendaciones de productos" /> Ofrecer recomendaciones de productos</label>
+        `
+        : `
+          <label><input type="checkbox" class="objetivo" value="Responder dudas sobre servicios" /> Responder dudas sobre servicios</label>
+          <label><input type="checkbox" class="objetivo" value="Automatizar reservas o agendamientos" /> Automatizar reservas o agendamientos</label>
+          <label><input type="checkbox" class="objetivo" value="Confirmar citas automáticamente" /> Confirmar citas automáticamente</label>
+          <label><input type="checkbox" class="objetivo" value="Guiar al cliente al contacto por WhatsApp" /> Guiar al cliente al contacto por WhatsApp</label>
+          <label><input type="checkbox" class="objetivo" value="Promover servicios destacados" /> Promover servicios destacados</label>
+          <label><input type="checkbox" class="objetivo" value="Reducir el trabajo del equipo humano" /> Reducir el trabajo del equipo humano</label>
+        `;
+  
+      dynamicContainer.innerHTML = `
+        <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
+        <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? 'MayIA' : 'SofIA'}</strong>:</p>
+  
+        ${objetivosHTML}
+  
+        <label>
+          <input type="checkbox" id="chkOtro" />
+          Otro:
+          <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" style="margin-left:10px;" />
+        </label>
+  
+        <button class="btn" onclick="siguientePaso()">Siguiente</button>
+      `;
+    }
+  
+    // Tu pourras ensuite ajouter ici le bloc `if (currentStep === 2)` pour l’étape suivante (style de communication, FAQ, etc.)
   }
-  
-  // Gestion du choix
-  document.getElementById("mayia").addEventListener("click", () => {
-    selectedAssistant = "mayia";
-    document.getElementById("mayia").classList.add("selected");
-    document.getElementById("sofia").classList.remove("selected");
-    loadFormForMayIA();
-  });
-  
-  document.getElementById("sofia").addEventListener("click", () => {
-    selectedAssistant = "sofia";
-    document.getElementById("sofia").classList.add("selected");
-    document.getElementById("mayia").classList.remove("selected");
-    loadFormForSofIA();
-  });
   
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
