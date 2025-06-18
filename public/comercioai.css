@@ -382,6 +382,40 @@ label {
     max-width: 100%;
   }
 }
+.assistant-selection {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.assistant-option {
+  border: 2px solid #ccc;
+  padding: 20px;
+  text-align: center;
+  width: 220px;
+  border-radius: 12px;
+  transition: transform 0.2s, border-color 0.2s;
+  cursor: pointer;
+  background: white;
+}
+
+.assistant-option:hover {
+  transform: scale(1.03);
+  border-color: #4CAF50;
+}
+
+.assistant-option img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+}
+
+.assistant-option.selected {
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
   margin-top: 3%;
