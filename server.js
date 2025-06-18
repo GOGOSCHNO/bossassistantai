@@ -1162,21 +1162,33 @@ app.post("/api/crear-asistente", async (req, res) => {
 });
 
 app.post('/api/configurar-instrucciones', async (req, res) => {
-  try {
-    const { instructions, assistantData } = req.body;
-    const userId = req.user._id; // nécessite que l’utilisateur soit authentifié
-    const assistantId = req.user.assistant_id;
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No autenticado" });
 
-    await db.collection('users').updateOne(
-      { _id: userId },
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const email = decoded.email;
+
+    const user = await db.collection("users").findOne({ email });
+    if (!user || !user.assistant_id) return res.status(404).json({ error: "Usuario no encontrado o sin asistente" });
+
+    const { instructions, assistantData } = req.body;
+
+    // Mise à jour dans MongoDB
+    await db.collection("users").updateOne(
+      { email },
       {
         $set: {
-          [`assistants.${assistantId}.config.instructions`]: instructions,
-          [`assistants.${assistantId}.config.formulario`]: assistantData
+          [`assistants.${user.assistant_id}.config.instructions`]: instructions,
+          [`assistants.${user.assistant_id}.config.formulario`]: assistantData
         }
-      },
-      { upsert: true }
+      }
     );
+
+    // Mise à jour de l'assistant dans OpenAI
+    await openai.beta.assistants.update(user.assistant_id, {
+      instructions
+    });
 
     res.json({ success: true });
   } catch (err) {
