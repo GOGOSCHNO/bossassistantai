@@ -595,5 +595,84 @@
       }
     });
   </script>
+  <script>
+    async function finalizarFormulario() {
+      const data = {};
+  
+      // Assistant
+      data.assistant = selectedAssistant;
+  
+      // Nombre y tipo
+      data.nombreComercio = document.querySelector("#nombreNegocioMayIA, #nombreNegocioSofIA")?.value || "";
+      data.tipoProducto = document.getElementById("productosVendidos")?.value || document.getElementById("serviciosOfrecidos")?.value || "";
+  
+      // Tipo tienda y ciudades
+      data.tipoTienda = window.tipoTiendaMayIA || "";
+      if (data.tipoTienda !== "linea") {
+        data.ciudades = document.getElementById("ciudadMayIA")?.value || document.getElementById("ciudadSofIA")?.value || "";
+      }
+  
+      // Objetivos
+      data.objetivos = [...document.querySelectorAll(".objetivo-option.selected")].map(el => el.innerText);
+      const otro = document.getElementById("inputOtro")?.value;
+      if (otro) data.objetivos.push(otro);
+  
+      // FAQ
+      data.faq = [...document.querySelectorAll(".faq-item")].map(item => ({
+        pregunta: item.querySelector(".faq-pregunta")?.value || "",
+        respuesta: item.querySelector(".faq-respuesta")?.value || ""
+      }));
+  
+      // Productos / servicios
+      data.productos = [...document.querySelectorAll(".producto-item")].map(item => {
+        const producto = {
+          nombre: item.querySelector(".producto-nombre")?.value || "",
+          precio: item.querySelector(".producto-precio")?.value || "",
+          descripcion: item.querySelector(".producto-descripcion")?.value || ""
+        };
+  
+        // Ajout dynamique des autres champs
+        camposExtra.forEach(campo => {
+          const el = item.querySelector(`.producto-${campo.toLowerCase()}`);
+          if (el) producto[campo.toLowerCase()] = el.value || "";
+        });
+  
+        return producto;
+      });
+  
+      // Horarios
+      data.horarios = {};
+      ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"].forEach(dia => {
+        const id = "horario-" + dia.toLowerCase();
+        data.horarios[dia] = document.getElementById(id)?.value || "";
+      });
+      data.abiertoFestivo = document.getElementById("trabajaFestivos")?.checked || false;
+  
+      // Contacto
+      data.whatsapp = document.getElementById("whatsapp")?.value || "";
+      data.email = document.getElementById("email")?.value || "";
+      data.web = document.getElementById("web")?.value || "";
+  
+      // Instructions générées (tu peux adapter cette partie ou garder l'ancien prompt)
+      const textoInstrucciones = `🧠 Instrucciones de ${data.nombreComercio}\nAsistente: ${data.assistant}\nObjetivos:\n${data.objetivos.map(o => "- " + o).join("\n")}`;
+  
+      // Envoi au backend
+      const res = await fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          instructions: textoInstrucciones,
+          assistantData: data
+        })
+      });
+  
+      if (res.ok) {
+        window.location.href = "dashboard.html";
+      } else {
+        alert("❌ Error al guardar los datos. Intenta nuevamente.");
+      }
+    }
+  </script>
 </body>
 </html>
