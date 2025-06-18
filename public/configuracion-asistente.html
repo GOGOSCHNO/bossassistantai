@@ -596,83 +596,119 @@
     });
   </script>
   <script>
-    async function finalizarFormulario() {
-      const data = {};
+  document.getElementById("finalizarConfiguracionBtn").addEventListener("click", async () => {
+    const token = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("token="))
+      ?.split("=")[1];
   
-      // Assistant
-      data.assistant = selectedAssistant;
+    if (!token) {
+      alert("Por favor inicia sesión primero.");
+      return;
+    }
   
-      // Nombre y tipo
-      data.nombreComercio = document.querySelector("#nombreNegocioMayIA, #nombreNegocioSofIA")?.value || "";
-      data.tipoProducto = document.getElementById("productosVendidos")?.value || document.getElementById("serviciosOfrecidos")?.value || "";
+    // 🧠 On récupère toutes les données
+    const data = {
+      nombre: document.getElementById("nombreComercio").value,
+      tipo: window.tipoNegocio || "No especificado",
+      venta: window.tipoVenta || "No especificado",
+      especialidad: window.especialidad || "No especificado",
+      ciudad: window.ciudad || "No especificada",
+      clientes: window.clientes || "No especificado",
+      objetivos: window.objetivosSeleccionados || [],
+      tono: window.tono || "Amistoso",
+      estilo: window.ejemploEstilo || "No definido",
+      faq: window.faqList || [],
+      productos: window.productos || [],
+      horarios: window.horarios || {},
+      festivos: window.abiertoFestivos || false,
+      whatsapp: window.whatsapp || "",
+      email: window.email || "",
+      web: window.web || ""
+    };
   
-      // Tipo tienda y ciudades
-      data.tipoTienda = window.tipoTiendaMayIA || "";
-      if (data.tipoTienda !== "linea") {
-        data.ciudades = document.getElementById("ciudadMayIA")?.value || document.getElementById("ciudadSofIA")?.value || "";
-      }
+    // 🧠 On génère le texte d'instructions
+    const faqPairs = data.faq.map(f => `- ${f.pregunta}\n  ${f.respuesta}`);
+    const productosFormatted = data.productos.map((prod, i) => {
+      return `Producto ${i+1}:\n` +
+        Object.entries(prod).map(([key, val]) => `  ${key}: ${val}`).join("\n");
+    }).join("\n\n");
   
-      // Objetivos
-      data.objetivos = [...document.querySelectorAll(".objetivo-option.selected")].map(el => el.innerText);
-      const otro = document.getElementById("inputOtro")?.value;
-      if (otro) data.objetivos.push(otro);
+    const horariosText = Object.entries(data.horarios)
+      .map(([dia, h]) => `${dia}: ${h}`).join("\n");
   
-      // FAQ
-      data.faq = [...document.querySelectorAll(".faq-item")].map(item => ({
-        pregunta: item.querySelector(".faq-pregunta")?.value || "",
-        respuesta: item.querySelector(".faq-respuesta")?.value || ""
-      }));
+    const instructions = `
+  I/ Información del Asistente
+  I.i/ Contexto
+  ${data.nombre} es un negocio de ${data.tipo} y que vende ${data.venta}.
+  ${data.nombre} está especializado en la venta de ${data.especialidad}.
+  Los clientes son principalmente ${data.clientes}.
+  ${data.nombre} se encuentra en ${data.ciudad}.
   
-      // Productos / servicios
-      data.productos = [...document.querySelectorAll(".producto-item")].map(item => {
-        const producto = {
-          nombre: item.querySelector(".producto-nombre")?.value || "",
-          precio: item.querySelector(".producto-precio")?.value || "",
-          descripcion: item.querySelector(".producto-descripcion")?.value || ""
-        };
+  I.ii/ Objetivos
+  Los objetivos principales de ${data.nombre} son:
+  ${data.objetivos.map(o => "- " + o).join("\n")}
   
-        // Ajout dynamique des autres champs
-        camposExtra.forEach(campo => {
-          const el = item.querySelector(`.producto-${campo.toLowerCase()}`);
-          if (el) producto[campo.toLowerCase()] = el.value || "";
-        });
+  I.iii/ Estilo de comunicación
+  El estilo de comunicación de ${data.nombre} es:
+  Tono: ${data.tono}
+  Ejemplo: ${data.estilo}
   
-        return producto;
-      });
+  II/ Funciones
+  II.i/ Preguntas frecuentes
+  ${faqPairs.join("\n")}
   
-      // Horarios
-      data.horarios = {};
-      ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"].forEach(dia => {
-        const id = "horario-" + dia.toLowerCase();
-        data.horarios[dia] = document.getElementById(id)?.value || "";
-      });
-      data.abiertoFestivo = document.getElementById("trabajaFestivos")?.checked || false;
+  III/ Información del comercio
+  III.i/ Información de los ${data.venta}
+  ${productosFormatted}
   
-      // Contacto
-      data.whatsapp = document.getElementById("whatsapp")?.value || "";
-      data.email = document.getElementById("email")?.value || "";
-      data.web = document.getElementById("web")?.value || "";
+  III.ii/ Horarios
+  ${horariosText}
+  ${data.nombre} ${data.festivos ? "sí" : "no"} está abierto en días festivos.
   
-      // Instructions générées (tu peux adapter cette partie ou garder l'ancien prompt)
-      const textoInstrucciones = `🧠 Instrucciones de ${data.nombreComercio}\nAsistente: ${data.assistant}\nObjetivos:\n${data.objetivos.map(o => "- " + o).join("\n")}`;
+  III.iii/ Contactos
+  La página web principal es: ${data.web}
+  El número de WhatsApp es: ${data.whatsapp}
+  Email: ${data.email}
   
-      // Envoi au backend
+  IV/ Notas Internas para Clasificación de Conversaciones
+  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
+  Esta nota debe seguir el siguiente formato exacto:
+  
+  --- Nota interna ---
+  Resumen: [Una frase breve que resuma el propósito de la conversación]
+  Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+  ---------------------
+  
+  📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
+  ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente.
+  `;
+  
+    // 📤 Envoi au backend
+    try {
       const res = await fetch("/api/configurar-instrucciones", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
-          instructions: textoInstrucciones,
+          instructions,
           assistantData: data
         })
       });
   
-      if (res.ok) {
-        window.location.href = "dashboard.html";
+      const result = await res.json();
+      if (result.success) {
+        window.location.href = "/dashboard.html";
       } else {
-        alert("❌ Error al guardar los datos. Intenta nuevamente.");
+        alert("❌ Error al guardar la configuración.");
       }
+    } catch (err) {
+      console.error("Erreur finale :", err);
+      alert("❌ Error inesperado.");
     }
+  });
   </script>
 </body>
 </html>
