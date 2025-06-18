@@ -49,6 +49,9 @@
               <p>Perfecta para servicios como belleza, salud, reservas…</p>
             </div>
           </div>
+          <p style="text-align:center; margin-top: 20px;">
+            <button id="btnElegirAsistente" class="cta-button" disabled>Siguiente →</button>
+          </p>
         </div>
         <section id="seccion-informacion" class="form-step active">
           <h2>I. Información del Asistente</h2>
@@ -201,18 +204,28 @@
     });
     let selectedAssistant = null;
   
+    const btnElegir = document.getElementById("btnElegirAsistente");
+    
     document.getElementById("mayia").addEventListener("click", () => {
       selectedAssistant = "mayia";
       document.getElementById("mayia").classList.add("selected");
       document.getElementById("sofia").classList.remove("selected");
-      goToNextStep();
+      btnElegir.disabled = false;
     });
     
     document.getElementById("sofia").addEventListener("click", () => {
       selectedAssistant = "sofia";
       document.getElementById("sofia").classList.add("selected");
       document.getElementById("mayia").classList.remove("selected");
-      goToNextStep();
+      btnElegir.disabled = false;
+    });
+    
+    btnElegir.addEventListener("click", () => {
+      if (selectedAssistant) {
+        currentStep = 1;
+        showStep(currentStep);
+        updateProgressBar(currentStep);
+      }
     });
     
     function goToNextStep() {
