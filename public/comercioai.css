@@ -602,7 +602,17 @@ main p {
   font-weight: bold;
   font-size: 14px;
 }
-
+.producto-resumen {
+  background: rgba(255,255,255,0.1);
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  color: #333;
+}
+.producto-replegado {
+  margin-bottom: 20px;
+}
 /* --- VIDEO CAROUSEL --- */
 .video-carousel {
   display: flex;
