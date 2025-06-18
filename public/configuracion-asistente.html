@@ -191,7 +191,59 @@
         <button class="btn" onclick="siguientePaso()">Siguiente</button>
       `;
     }
-  
+    if (currentStep === 2) {
+      const esMayIA = selectedAssistant === "mayia";
+    
+      const objetivos = esMayIA
+        ? [
+            "Responder preguntas sobre productos",
+            "Promocionar nuevos productos",
+            "Guiar al cliente hacia la compra",
+            "Enviar enlaces a tienda virtual",
+            "Compartir precios y formas de pago",
+            "Ofrecer recomendaciones de productos",
+          ]
+        : [
+            "Responder dudas sobre servicios",
+            "Automatizar reservas o agendamientos",
+            "Confirmar citas automáticamente",
+            "Guiar al cliente al contacto por WhatsApp",
+            "Promover servicios destacados",
+            "Reducir el trabajo del equipo humano",
+          ];
+    
+      dynamicContainer.innerHTML = `
+        <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
+        <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
+    
+        <div class="objetivo-selection">
+          ${objetivos
+            .map(
+              (obj) => `
+              <div class="objetivo-option">${obj}</div>
+            `
+            )
+            .join("")}
+        </div>
+    
+        <label style="margin-top: 20px; display: block;">
+          Otro objetivo:
+          <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
+        </label>
+    
+        <div style="margin-top: 30px;">
+          <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
+          <button class="btn" onclick="siguientePaso()">Siguiente</button>
+        </div>
+      `;
+    
+      // Interactions
+      document.querySelectorAll(".objetivo-option").forEach((opt) => {
+        opt.addEventListener("click", () => {
+          opt.classList.toggle("selected");
+        });
+      });
+    }
     // Tu pourras ensuite ajouter ici le bloc `if (currentStep === 2)` pour l’étape suivante (style de communication, FAQ, etc.)
   }
     
@@ -202,7 +254,15 @@
     dynamicContainer.innerHTML = "";
     updateProgressBar(0);
   }
-    
+  function volverPaso1() {
+    currentStep = 1;
+    updateProgressBar(currentStep);
+    if (selectedAssistant === "mayia") {
+      loadFormForMayIA();
+    } else {
+      loadFormForSofIA();
+    }
+  }
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
     try {
