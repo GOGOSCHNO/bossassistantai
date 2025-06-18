@@ -107,7 +107,8 @@
         <label>Ciudad(es) donde operas</label>
         <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
       </div>
-  
+
+      <button class="btn ca-btn-outline" onclick="volverPaso0()">← Regresar</button>
       <button class="btn" onclick="siguientePaso()">Siguiente</button>
     `;
   
@@ -192,7 +193,15 @@
   
     // Tu pourras ensuite ajouter ici le bloc `if (currentStep === 2)` pour l’étape suivante (style de communication, FAQ, etc.)
   }
-  
+    
+  function volverPaso0() {
+    currentStep = 0;
+    selectedAssistant = null;
+    document.getElementById("step0").style.display = "block";
+    dynamicContainer.innerHTML = "";
+    updateProgressBar(0);
+  }
+    
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -207,13 +216,21 @@
         selectedAssistant = "mayia";
         document.getElementById("mayia").classList.add("selected");
         document.getElementById("sofia").classList.remove("selected");
+      
+        // Masquer l’étape 0
+        document.getElementById("step0").style.display = "none";
+      
         loadFormForMayIA();
       });
-  
+      
       document.getElementById("sofia").addEventListener("click", () => {
         selectedAssistant = "sofia";
         document.getElementById("sofia").classList.add("selected");
         document.getElementById("mayia").classList.remove("selected");
+      
+        // Masquer l’étape 0
+        document.getElementById("step0").style.display = "none";
+      
         loadFormForSofIA();
       });
   
