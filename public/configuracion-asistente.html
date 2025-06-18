@@ -596,118 +596,149 @@
     });
   </script>
   <script>
-  document.getElementById("finalizarConfiguracionBtn").addEventListener("click", async () => {
-    const token = document.cookie
-      .split("; ")
-      .find(row => row.startsWith("token="))
-      ?.split("=")[1];
+  document.addEventListener("DOMContentLoaded", () => {
+    const finalizarBtn = document.getElementById("finalizarConfiguracion");
   
-    if (!token) {
-      alert("Por favor inicia sesión primero.");
-      return;
-    }
+    finalizarBtn.addEventListener("click", async () => {
+      try {
+        // 1. Récupérer le token depuis les cookies
+        const cookies = document.cookie.split(';').reduce((acc, c) => {
+          const [key, val] = c.trim().split('=');
+          acc[key] = val;
+          return acc;
+        }, {});
+        const token = cookies.token;
+        if (!token) {
+          alert("No has iniciado sesión.");
+          return;
+        }
   
-    // 🧠 On récupère toutes les données
-    const data = {
-      nombre: document.getElementById("nombreComercio").value,
-      tipo: window.tipoNegocio || "No especificado",
-      venta: window.tipoVenta || "No especificado",
-      especialidad: window.especialidad || "No especificado",
-      ciudad: window.ciudad || "No especificada",
-      clientes: window.clientes || "No especificado",
-      objetivos: window.objetivosSeleccionados || [],
-      tono: window.tono || "Amistoso",
-      estilo: window.ejemploEstilo || "No definido",
-      faq: window.faqList || [],
-      productos: window.productos || [],
-      horarios: window.horarios || {},
-      festivos: window.abiertoFestivos || false,
-      whatsapp: window.whatsapp || "",
-      email: window.email || "",
-      web: window.web || ""
-    };
+        // 2. Construire le texte final d’instructions
+        const nombre = document.getElementById("nombreComercio").value;
+        const tipo = document.getElementById("tipoProductoServicio").value;
+        const venta = document.querySelector('input[name="tipoTienda"]:checked')?.value || "física";
+        const especialidad = document.getElementById("especialidad").value;
+        const ciudad = document.getElementById("ciudades").value;
+        const clientes = document.getElementById("clientesObjetivo").value;
+        const tono = document.getElementById("tono").value;
+        const estilo = document.getElementById("ejemploEstilo").value;
   
-    // 🧠 On génère le texte d'instructions
-    const faqPairs = data.faq.map(f => `- ${f.pregunta}\n  ${f.respuesta}`);
-    const productosFormatted = data.productos.map((prod, i) => {
-      return `Producto ${i+1}:\n` +
-        Object.entries(prod).map(([key, val]) => `  ${key}: ${val}`).join("\n");
-    }).join("\n\n");
+        const objetivos = Array.from(document.querySelectorAll(".objetivo-card.selected"))
+          .map(card => card.dataset.objetivo);
   
-    const horariosText = Object.entries(data.horarios)
-      .map(([dia, h]) => `${dia}: ${h}`).join("\n");
+        const faqPairs = Array.from(document.querySelectorAll(".faq-item"))
+          .map(faq => {
+            const pregunta = faq.querySelector(".faq-pregunta")?.value || "";
+            const respuesta = faq.querySelector(".faq-respuesta")?.value || "";
+            return `Q: ${pregunta}\nA: ${respuesta}`;
+          });
   
-    const instructions = `
+        const productosData = Array.from(document.querySelectorAll(".producto-block")).map(block => {
+          const nombre = block.querySelector(".producto-nombre").value;
+          const precio = block.querySelector(".producto-precio").value;
+          const otros = {};
+          block.querySelectorAll(".producto-otro").forEach(input => {
+            otros[input.name] = input.value;
+          });
+          return { nombre, precio, ...otros };
+        });
+  
+        const productosTexto = productosData.map(p => {
+          const base = `🛒 ${p.nombre} - $${p.precio}`;
+          const extras = Object.entries(p)
+            .filter(([k]) => !["nombre", "precio"].includes(k))
+            .map(([k, v]) => ` - ${k}: ${v}`)
+            .join("\n");
+          return `${base}\n${extras}`;
+        }).join("\n\n");
+  
+        const horarios = document.getElementById("horarios").value;
+        const festivos = document.getElementById("festivos").checked;
+        const web = document.getElementById("web").value;
+        const whatsapp = document.getElementById("whatsapp").value;
+  
+        const instructions = `
   I/ Información del Asistente
   I.i/ Contexto
-  ${data.nombre} es un negocio de ${data.tipo} y que vende ${data.venta}.
-  ${data.nombre} está especializado en la venta de ${data.especialidad}.
-  Los clientes son principalmente ${data.clientes}.
-  ${data.nombre} se encuentra en ${data.ciudad}.
+  ${nombre} es un negocio de ${tipo} y que vende ${venta}. 
+  ${nombre} está especializado en la venta de ${especialidad}.
+  Los clientes son principalmente ${clientes}.
+  ${nombre} se encuentra en ${ciudad}.
   
   I.ii/ Objetivos
-  Los objetivos principales de ${data.nombre} son:
-  ${data.objetivos.map(o => "- " + o).join("\n")}
+  Los objetivos principales de ${nombre} son:
+  ${objetivos.map(o => "- " + o).join("\n")}
   
   I.iii/ Estilo de comunicación
-  El estilo de comunicación de ${data.nombre} es:
-  Tono: ${data.tono}
-  Ejemplo: ${data.estilo}
+  El estilo de comunicación de ${nombre} es:
+  Tono: ${tono}
+  Ejemplo: ${estilo}
   
   II/ Funciones
   II.i/ Preguntas frecuentes
-  ${faqPairs.join("\n")}
+  ${faqPairs.join("\n\n")}
   
   III/ Información del comercio
-  III.i/ Información de los ${data.venta}
-  ${productosFormatted}
+  III.i/ Información de los ${venta}
+  ${productosTexto}
   
   III.ii/ Horarios
-  ${horariosText}
-  ${data.nombre} ${data.festivos ? "sí" : "no"} está abierto en días festivos.
+  ${horarios}
+  ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
   
   III.iii/ Contactos
-  La página web principal es: ${data.web}
-  El número de WhatsApp es: ${data.whatsapp}
-  Email: ${data.email}
+  La página web principal es: ${web}
+  El número de WhatsApp es: ${whatsapp}
   
   IV/ Notas Internas para Clasificación de Conversaciones
-  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
-  Esta nota debe seguir el siguiente formato exacto:
-  
+  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de ${nombre}.
   --- Nota interna ---
   Resumen: [Una frase breve que resuma el propósito de la conversación]
   Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
   ---------------------
-  
-  📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
-  ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente.
   `;
   
-    // 📤 Envoi au backend
-    try {
-      const res = await fetch("/api/configurar-instrucciones", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          instructions,
-          assistantData: data
-        })
-      });
+        // 3. Construire assistantData structuré
+        const assistantData = {
+          nombre,
+          tipo,
+          venta,
+          especialidad,
+          ciudad,
+          clientes,
+          tono,
+          estilo,
+          objetivos,
+          faq: faqPairs,
+          productos: productosData,
+          horarios,
+          festivos,
+          web,
+          whatsapp
+        };
   
-      const result = await res.json();
-      if (result.success) {
-        window.location.href = "/dashboard.html";
-      } else {
-        alert("❌ Error al guardar la configuración.");
+        // 4. Envoi vers le backend
+        const response = await fetch("/api/configurar-instrucciones", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify({ instructions, assistantData })
+        });
+  
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Error al guardar");
+        }
+  
+        // 5. Redirection
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        console.error("❌ Erreur :", err);
+        alert("Error al guardar la configuración.");
       }
-    } catch (err) {
-      console.error("Erreur finale :", err);
-      alert("❌ Error inesperado.");
-    }
+    });
   });
   </script>
 </body>
