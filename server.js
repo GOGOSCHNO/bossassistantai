@@ -1161,31 +1161,26 @@ app.post("/api/crear-asistente", async (req, res) => {
   }
 });
 
-app.post("/api/configurar-instrucciones", async (req, res) => {
+app.post('/api/configurar-instrucciones', async (req, res) => {
   try {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: "Token no encontrado" });
+    const { instructions, assistantData } = req.body;
+    const userId = req.user._id; // nécessite que l’utilisateur soit authentifié
+    const assistantId = req.user.assistant_id;
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const email = decoded.email;
+    await db.collection('users').updateOne(
+      { _id: userId },
+      {
+        $set: {
+          [`assistants.${assistantId}.config.instructions`]: instructions,
+          [`assistants.${assistantId}.config.formulario`]: assistantData
+        }
+      },
+      { upsert: true }
+    );
 
-    const { instructions } = req.body;
-    if (!instructions || typeof instructions !== "string") {
-      return res.status(400).json({ error: "Instrucciones inválidas." });
-    }
-
-    const user = await db.collection("users").findOne({ email });
-    if (!user || !user.assistant_id) {
-      return res.status(404).json({ error: "Usuario o assistant_id no encontrado." });
-    }
-
-    await openai.beta.assistants.update(user.assistant_id, {
-      instructions,
-    });
-
-    res.status(200).json({ success: true, message: "Instrucciones actualizadas con éxito." });
+    res.json({ success: true });
   } catch (err) {
-    console.error("❌ Error al configurar instrucciones:", err);
-    res.status(500).json({ error: "Error interno." });
+    console.error("❌ Error guardando instrucciones:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
