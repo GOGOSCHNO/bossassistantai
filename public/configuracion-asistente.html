@@ -325,7 +325,8 @@
     // Supprimer le formulaire et garder le résumé
     dernier.innerHTML = "";
     dernier.classList.add("producto-replegado");
-    ultimoProducto.appendChild(resumen);
+    // 🔧 Correction ici
+    dernier.appendChild(resumen);
   }
     
   function volverPaso0() {
