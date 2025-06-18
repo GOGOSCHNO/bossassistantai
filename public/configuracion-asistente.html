@@ -324,7 +324,7 @@
   
     // Supprimer le formulaire et garder le résumé
     dernier.innerHTML = "";
-    ultimoProducto.classList.add("producto-replegado");
+    dernier.classList.add("producto-replegado");
     ultimoProducto.appendChild(resumen);
   }
     
@@ -363,6 +363,8 @@
     siguientePaso(); // recharge l’étape des objectifs
   }
   function agregarProducto() {
+    repliegueUltimoProducto(); // 🔧 Ajoute ici
+  
     const container = document.getElementById("productosServiciosContainer");
     const block = document.createElement("div");
     block.classList.add("producto-item");
@@ -376,6 +378,7 @@
       <input type="text" class="producto-descripcion" placeholder="Ej: Corte moderno para hombre" />
     `;
     container.appendChild(block);
+    actualizarCamposProducto(block); // Garde bien cette ligne aussi
   }
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
