@@ -540,7 +540,32 @@ main p {
 #pruebaGratisForm button:hover {
     background: #3b78b9;
 }
+.objetivo-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
 
+.objetivo-option {
+  padding: 12px 18px;
+  background: #eee;
+  color: #333;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 2px solid transparent;
+}
+
+.objetivo-option:hover {
+  border-color: #4A90E2;
+}
+
+.objetivo-option.selected {
+  background: #4A90E2;
+  color: white;
+  border-color: #4A90E2;
+}
 /* --- CAROUSEL ASSISTANTS --- */
 .carousel-container {
   overflow-x: auto;
