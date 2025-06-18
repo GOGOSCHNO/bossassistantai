@@ -30,7 +30,23 @@
     <main>
       <div class="form-container">
         <h2>⚙️ Configuración del asistente</h2>
-        
+
+        <!-- ÉTAPE 0 : Sélection de l'assistant -->
+        <div class="form-step" id="step0">
+          <h2>¿Cuál asistente deseas usar?</h2>
+          <div class="assistant-selection">
+            <div class="assistant-option" id="mayia">
+              <img src="https://via.placeholder.com/150x150.png?text=MayIA" alt="MayIA">
+              <h3>MayIA</h3>
+              <p>Ideal para negocios de productos físicos o digitales.</p>
+            </div>
+            <div class="assistant-option" id="sofia">
+              <img src="https://via.placeholder.com/150x150.png?text=SofIA" alt="SofIA">
+              <h3>SofIA</h3>
+              <p>Perfecta para servicios como belleza, salud, reservas…</p>
+            </div>
+          </div>
+        </div>
         <section id="seccion-informacion" class="form-step active">
           <h2>I. Información del Asistente</h2>
         
@@ -176,7 +192,30 @@
       currentStep = 2;
       showStep(currentStep);
     });
+    let selectedAssistant = null;
   
+    document.getElementById("mayia").addEventListener("click", () => {
+      selectedAssistant = "mayia";
+      document.getElementById("mayia").classList.add("selected");
+      document.getElementById("sofia").classList.remove("selected");
+      goToNextStep();
+    });
+    
+    document.getElementById("sofia").addEventListener("click", () => {
+      selectedAssistant = "sofia";
+      document.getElementById("sofia").classList.add("selected");
+      document.getElementById("mayia").classList.remove("selected");
+      goToNextStep();
+    });
+    
+    function goToNextStep() {
+      if (!selectedAssistant) return;
+      currentStep = 1;
+      showStep(currentStep);
+    
+      // Astuce : stocker le choix dans une variable globale pour adapter les étapes ensuite
+      window.assistantElegido = selectedAssistant;
+    }
     // Libellé dynamique "productos/servicios"
     document.querySelectorAll('input[name="tipoVenta"]').forEach(radio => {
       radio.addEventListener('change', () => {
