@@ -232,6 +232,57 @@
         </div>
       `;
     }
+    else if (currentStep === 3) {
+      currentStep = 4;
+      updateProgressBar(currentStep);
+  
+      dynamicContainer.innerHTML = `
+        <h3>🏪 Información del comercio</h3>
+      
+        <!-- Produits ou services -->
+        <div id="productosServiciosContainer">
+          <h4>Productos o servicios</h4>
+          <div class="producto-item">
+            <label>Nombre</label>
+            <input type="text" class="producto-nombre" placeholder="Ej: Facial hidratante, Hamburguesa..." />
+            <label>Precio</label>
+            <input type="text" class="producto-precio" placeholder="Ej: $35.000" />
+            <label>Descripción</label>
+            <input type="text" class="producto-descripcion" placeholder="Ej: Limpieza profunda y masaje facial" />
+          </div>
+        </div>
+        <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
+      
+        <!-- Horaires -->
+        <div class="form-subsection">
+          <h4>⏰ Horarios de atención</h4>
+          ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => `
+            <label>${dia}</label>
+            <input type="text" id="horario-${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
+          `).join("")}
+          <label>
+            <input type="checkbox" id="trabajaFestivos" />
+            ¿Tu negocio abre en días festivos?
+          </label>
+        </div>
+      
+        <!-- Contact -->
+        <div class="form-subsection">
+          <h4>📞 Información de contacto</h4>
+          <label>WhatsApp</label>
+          <input type="text" id="whatsapp" placeholder="Ej: +57 3001234567" />
+          <label>Email</label>
+          <input type="text" id="email" placeholder="Ej: contacto@tu-negocio.com" />
+          <label>Sitio web</label>
+          <input type="text" id="web" placeholder="Ej: www.tu-negocio.com" />
+        </div>
+      
+        <div style="margin-top: 30px;">
+          <button class="btn ca-btn-outline" onclick="volverPaso3()">← Regresar</button>
+          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
+        </div>
+      `;
+    }
   }
     
   function volverPaso0() {
@@ -267,6 +318,21 @@
     currentStep = 2;
     updateProgressBar(currentStep);
     siguientePaso(); // recharge l’étape des objectifs
+  }
+  function agregarProducto() {
+    const container = document.getElementById("productosServiciosContainer");
+    const block = document.createElement("div");
+    block.classList.add("producto-item");
+    block.style.marginTop = "20px";
+    block.innerHTML = `
+      <label>Nombre</label>
+      <input type="text" class="producto-nombre" placeholder="Ej: Corte de cabello, Combo #2..." />
+      <label>Precio</label>
+      <input type="text" class="producto-precio" placeholder="Ej: $15.000" />
+      <label>Descripción</label>
+      <input type="text" class="producto-descripcion" placeholder="Ej: Corte moderno para hombre" />
+    `;
+    container.appendChild(block);
   }
   // Vérif auth
   window.addEventListener("DOMContentLoaded", async () => {
