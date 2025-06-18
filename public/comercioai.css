@@ -456,7 +456,11 @@ main p {
   margin: 0 auto 1.5rem auto;
   line-height: 1.5;
 }
-
+.assistant-option h4 {
+  margin-top: 10px;
+  font-size: 1.05rem;
+  color: #222;
+}
 /* --- FORMULAIRE (pruebaGratisForm) --- */
 #pruebaGratisForm {
     max-width: 500px;
