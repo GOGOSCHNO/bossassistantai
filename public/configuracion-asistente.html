@@ -80,19 +80,55 @@
   function loadFormForMayIA() {
     dynamicContainer.innerHTML = `
       <h3>Información básica sobre tu tienda</h3>
+  
       <label>Nombre del negocio</label>
       <input type="text" id="nombreNegocioMayIA" placeholder="Ej: Tienda El Rincón" />
   
       <label>¿Qué tipo de productos vendes?</label>
       <input type="text" id="productosVendidos" placeholder="Ej: Cosméticos, electrodomésticos, comida rápida…" />
   
-      <label>Ciudad donde operas</label>
-      <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
+      <label>¿Qué tipo de tienda tienes?</label>
+      <div class="assistant-selection" id="tipoTiendaSeleccion">
+        <div class="assistant-option" data-tipo="fisica">
+          <img src="https://cdn-icons-png.flaticon.com/512/1076/1076928.png" alt="Tienda física">
+          <h4>Tienda física</h4>
+        </div>
+        <div class="assistant-option" data-tipo="linea">
+          <img src="https://cdn-icons-png.flaticon.com/512/4290/4290854.png" alt="Tienda en línea">
+          <h4>Tienda en línea</h4>
+        </div>
+        <div class="assistant-option" data-tipo="mixta">
+          <img src="https://cdn-icons-png.flaticon.com/512/5732/5732231.png" alt="Ambos">
+          <h4>Ambos</h4>
+        </div>
+      </div>
+  
+      <div id="ciudadContainer" style="display:none;">
+        <label>Ciudad(es) donde operas</label>
+        <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
+      </div>
   
       <button class="btn" onclick="siguientePaso()">Siguiente</button>
     `;
+  
     currentStep = 1;
     updateProgressBar(currentStep);
+  
+    // Gestion du clic sur type de tienda
+    document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(el => el.classList.remove('selected'));
+        option.classList.add('selected');
+        const tipoSeleccionado = option.getAttribute("data-tipo");
+  
+        // Affiche le champ ciudad sauf si tienda en línea
+        const ciudadDiv = document.getElementById("ciudadContainer");
+        ciudadDiv.style.display = (tipoSeleccionado === "linea") ? "none" : "block";
+  
+        // Stocker pour traitement final plus tard
+        window.tipoTiendaMayIA = tipoSeleccionado;
+      });
+    });
   }
   
   function loadFormForSofIA() {
