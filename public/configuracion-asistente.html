@@ -61,6 +61,28 @@
     </footer>
   </div>
   <script>
+  let camposExtra = [];
+
+  function agregarCampoExtra() {
+    const nombreCampo = prompt("Nombre del nuevo campo (ej: Duración, Categoría):");
+    if (nombreCampo) {
+      camposExtra.push(nombreCampo);
+      actualizarCamposProducto(document.querySelector(".producto-item:last-child"));
+    }
+  }
+  
+  function actualizarCamposProducto(contenedor) {
+    camposExtra.forEach(campo => {
+      const label = document.createElement("label");
+      label.textContent = campo;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = `producto-${campo.toLowerCase()}`;
+      input.placeholder = `Ej: valor para ${campo}`;
+      contenedor.appendChild(label);
+      contenedor.appendChild(input);
+    });
+  }
   let currentStep = 0;
   let selectedAssistant = null;
   const progressBar = document.getElementById("progress-bar");
@@ -251,6 +273,7 @@
             <input type="text" class="producto-descripcion" placeholder="Ej: Limpieza profunda y masaje facial" />
           </div>
         </div>
+        <button class="btn ca-btn-outline" onclick="agregarCampoExtra()">➕ Añadir campo personalizado</button>
         <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
       
         <!-- Horaires -->
@@ -283,6 +306,26 @@
         </div>
       `;
     }
+  }
+  function repliegueUltimoProducto() {
+    const items = document.querySelectorAll("#productosServiciosContainer .producto-item");
+    const dernier = items[items.length - 1];
+  
+    const nombre = dernier.querySelector(".producto-nombre")?.value || "";
+    const precio = dernier.querySelector(".producto-precio")?.value || "";
+    const descripcion = dernier.querySelector(".producto-descripcion")?.value || "";
+  
+    const resumen = document.createElement("div");
+    resumen.classList.add("producto-resumen");
+    resumen.innerHTML = `
+      <p><strong>${nombre}</strong> – ${precio}</p>
+      <p>${descripcion}</p>
+    `;
+  
+    // Supprimer le formulaire et garder le résumé
+    dernier.innerHTML = "";
+    ultimoProducto.classList.add("producto-replegado");
+    ultimoProducto.appendChild(resumen);
   }
     
   function volverPaso0() {
