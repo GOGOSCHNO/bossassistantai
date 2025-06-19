@@ -458,6 +458,7 @@
       actualizarCamposProducto(block); // Garde bien cette ligne aussi
     }
     // Vérif auth
+    window.addEventListener("DOMContentLoaded", async () => {
       try {
         const res = await fetch("/api/me", { credentials: "include" });
         if (!res.ok) throw new Error("No autenticado");
@@ -491,6 +492,7 @@
       } catch (err) {
         window.location.href = "login.html";
       }
+    });
       async function finalizarFormulario() {
         try {
           const cookies = document.cookie.split(';').reduce((acc, c) => {
