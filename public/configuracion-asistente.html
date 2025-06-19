@@ -492,15 +492,6 @@
     }
   });
   function finalizarFormulario() {
-    const token = document.cookie
-      .split("; ")
-      .find(row => row.startsWith("token="))
-      ?.split("=")[1];
-    
-    if (!token) {
-      alert("No hay token, por favor inicia sesión.");
-      return;
-    }
     try {
       // 1. Section I – Info de negocio
       const nombre = document.getElementById("nombreNegocioMayIA")?.value.trim() || 
@@ -591,14 +582,14 @@
   `.trim();
   
       // 5. Envoi au backend
-        fetch("/api/configurar-instrucciones", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` // ✅ indispensable
-          },
-          body: JSON.stringify({ instructions: textoFinal })
-        })
+      fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include", // ✅ ENVOIE le cookie HTTP-only automatiquement
+        body: JSON.stringify({ instructions: textoFinal })
+      });
       .then(res => {
         if (res.ok) {
           alert("✅ Instrucciones actualizadas correctamente.");
