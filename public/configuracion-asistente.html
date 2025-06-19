@@ -584,8 +584,10 @@
       // 5. Envoi au backend
       fetch("/api/configurar-instrucciones", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include", // ✅ ENVOIE le cookie HTTP-only automatiquement
         body: JSON.stringify({ instructions: textoFinal })
       })
       .then(res => {
