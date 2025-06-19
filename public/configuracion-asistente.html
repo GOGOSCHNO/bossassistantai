@@ -491,6 +491,121 @@
       window.location.href = "login.html";
     }
   });
+  function finalizarFormulario() {
+    try {
+      // 1. Section I – Info de negocio
+      const nombre = document.getElementById("nombreNegocioMayIA")?.value.trim() || 
+                     document.getElementById("nombreNegocioSofIA")?.value.trim() || "";
+      const productos = document.getElementById("productosList")?.value.trim().split("\n").filter(Boolean).map(p => `- ${p}`).join("\n") || "";
+  
+      const ciudad = document.getElementById("ciudadMayIA")?.value.trim() ||
+                     document.getElementById("ciudadSofIA")?.value.trim() || "";
+  
+      const whatsapp = document.getElementById("whatsapp")?.value.trim() || "";
+      const email = document.getElementById("email")?.value.trim() || "";
+      const web = document.getElementById("web")?.value.trim() || "";
+  
+      // Détection de SofIA ou MayIA
+      const esMayIA = selectedAssistant === "mayia";
+  
+      const tipo = esMayIA ? "productos físicos o digitales" : "servicios";
+      const venta = esMayIA ? "productos" : "servicios";
+      const especialidad = esMayIA
+        ? document.getElementById("productosVendidos")?.value.trim() || ""
+        : document.getElementById("serviciosOfrecidos")?.value.trim() || "";
+  
+      const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected")).map(el => el.textContent.trim());
+      const inputOtro = document.getElementById("inputOtro")?.value.trim();
+      if (inputOtro) objetivosSeleccionados.push(inputOtro);
+  
+      const tono = window.tono || "Amistoso";
+      const estilo = window.ejemploEstilo || "No definido";
+  
+      // 2. FAQ
+      const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
+        const q = faq.querySelector(".faq-pregunta")?.value.trim();
+        const a = faq.querySelector(".faq-respuesta")?.value.trim();
+        return q && a ? `- ${q}\n  → ${a}` : null;
+      }).filter(Boolean);
+  
+      // 3. Horarios
+      const dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+      const horarios = dias.map(dia => `${dia.charAt(0).toUpperCase() + dia.slice(1)}: ${document.getElementById(`horario-${dia}`)?.value.trim() || "No definido"}`).join("\n");
+      const festivos = document.getElementById("trabajaFestivos")?.checked || false;
+  
+      // 4. Prompt final
+      const textoFinal = `
+  I/ Información del Asistente
+  I.i/ Contexto
+  ${nombre} es un negocio de ${tipo} y que vende ${venta}. 
+  ${nombre} está especializado en la venta de ${especialidad}.
+  Los clientes son principalmente personas interesadas en ${venta}.
+  ${nombre} se encuentra en ${ciudad}.
+  
+  I.ii/ Objetivos
+  Los objetivos principales de ${nombre} son:
+  ${objetivosSeleccionados.map(o => "- " + o).join("\n")}
+  
+  I.iii/ Estilo de comunicación
+  El estilo de comunicación de ${nombre} es:
+  Tono: ${tono}
+  Ejemplo: ${estilo}
+  
+  II/ Funciones
+  II.i/ Preguntas frecuentes
+  ${faqPairs.join("\n")}
+  
+  III/ Información del comercio
+  III.i/ Información de los ${venta}
+  ${productos}
+  
+  III.ii/ Horarios
+  ${horarios}
+  ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
+  
+  III.iii/ Contactos
+  La página web principal es: ${web}
+  El número de WhatsApp es: ${whatsapp}
+  Email: ${email}
+  
+  IV/ Notas Internas para Clasificación de Conversaciones
+  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
+  Esta nota debe seguir el siguiente formato exacto:
+  
+  --- Nota interna ---
+  Resumen: [Una frase breve que resuma el propósito de la conversación]
+  Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+  ---------------------
+  
+  📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
+  ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente para uso interno.
+  `.trim();
+  
+      // 5. Envoi au backend
+      fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ instructions: textoFinal })
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("✅ Instrucciones actualizadas correctamente.");
+          window.location.href = "/dashboard.html";
+        } else {
+          alert("❌ Error al guardar las instrucciones.");
+        }
+      })
+      .catch(err => {
+        console.error("❌ Error inesperado:", err);
+        alert("❌ Error inesperado.");
+      });
+  
+    } catch (err) {
+      console.error("❌ Error interno:", err);
+      alert("❌ No se pudo generar la configuración.");
+    }
+  }
   </script>
   <script>
     document.getElementById("generarInstruccionesBtn").addEventListener("click", async () => {
