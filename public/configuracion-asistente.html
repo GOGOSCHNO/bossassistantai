@@ -61,310 +61,125 @@
     </footer>
   </div>
   <script>
-    let camposExtra = [];
-  
-    function agregarCampoExtra() {
-      const nombreCampo = prompt("Nombre del nuevo campo (ej: Duración, Categoría):");
-      if (nombreCampo) {
-        camposExtra.push(nombreCampo);
-        actualizarCamposProducto(document.querySelector(".producto-item:last-child"));
-      }
+  let camposExtra = [];
+
+  function agregarCampoExtra() {
+    const nombreCampo = prompt("Nombre del nuevo campo (ej: Duración, Categoría):");
+    if (nombreCampo) {
+      camposExtra.push(nombreCampo);
+      actualizarCamposProducto(document.querySelector(".producto-item:last-child"));
     }
-    
-    function actualizarCamposProducto(contenedor) {
-      camposExtra.forEach(campo => {
-        const label = document.createElement("label");
-        label.textContent = campo;
-        const input = document.createElement("input");
-        input.type = "text";
-        input.className = `producto-${campo.toLowerCase()}`;
-        input.placeholder = `Ej: valor para ${campo}`;
-        contenedor.appendChild(label);
-        contenedor.appendChild(input);
+  }
+  
+  function actualizarCamposProducto(contenedor) {
+    camposExtra.forEach(campo => {
+      const label = document.createElement("label");
+      label.textContent = campo;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = `producto-${campo.toLowerCase()}`;
+      input.placeholder = `Ej: valor para ${campo}`;
+      contenedor.appendChild(label);
+      contenedor.appendChild(input);
+    });
+  }
+  let currentStep = 0;
+  let selectedAssistant = null;
+  const progressBar = document.getElementById("progress-bar");
+  const dynamicContainer = document.getElementById("dynamic-form-container");
+  
+  function updateProgressBar(stepIndex) {
+    const percent = Math.min((stepIndex / 4) * 100, 100);
+    progressBar.style.width = `${percent}%`;
+  }
+  
+  function showStep0() {
+    document.getElementById("step0").style.display = "block";
+    dynamicContainer.innerHTML = "";
+    updateProgressBar(0);
+  }
+  
+  function loadFormForMayIA() {
+    dynamicContainer.innerHTML = `
+      <h3>Información básica sobre tu tienda</h3>
+  
+      <label>Nombre del negocio</label>
+      <input type="text" id="nombreNegocioMayIA" placeholder="Ej: Tienda El Rincón" />
+  
+      <label>¿Qué tipo de productos vendes?</label>
+      <input type="text" id="productosVendidos" placeholder="Ej: Cosméticos, electrodomésticos, comida rápida…" />
+  
+      <label>¿Qué tipo de tienda tienes?</label>
+      <div class="assistant-selection" id="tipoTiendaSeleccion">
+        <div class="assistant-option" data-tipo="fisica">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendafisica.png" alt="Tienda física">
+          <h4>Tienda física</h4>
+        </div>
+        <div class="assistant-option" data-tipo="linea">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendalinea.png" alt="Tienda en línea">
+          <h4>Tienda en línea</h4>
+        </div>
+        <div class="assistant-option" data-tipo="mixta">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendalosdos.png" alt="Ambos">
+          <h4>Ambos</h4>
+        </div>
+      </div>
+  
+      <div id="ciudadContainer" style="display:none;">
+        <label>Ciudad(es) donde operas</label>
+        <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
+      </div>
+
+      <button class="btn ca-btn-outline" onclick="volverPaso0()">← Regresar</button>
+      <button class="btn" onclick="siguientePaso()">Siguiente</button>
+    `;
+  
+    currentStep = 1;
+    updateProgressBar(currentStep);
+  
+    // Gestion du clic sur type de tienda
+    document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(el => el.classList.remove('selected'));
+        option.classList.add('selected');
+        const tipoSeleccionado = option.getAttribute("data-tipo");
+  
+        // Affiche le champ ciudad sauf si tienda en línea
+        const ciudadDiv = document.getElementById("ciudadContainer");
+        ciudadDiv.style.display = (tipoSeleccionado === "linea") ? "none" : "block";
+  
+        // Stocker pour traitement final plus tard
+        window.tipoTiendaMayIA = tipoSeleccionado;
       });
-    }
-    let currentStep = 0;
-    let selectedAssistant = null;
-    const progressBar = document.getElementById("progress-bar");
-    const dynamicContainer = document.getElementById("dynamic-form-container");
-    
-    function updateProgressBar(stepIndex) {
-      const percent = Math.min((stepIndex / 4) * 100, 100);
-      progressBar.style.width = `${percent}%`;
-    }
-    
-    function showStep0() {
-      document.getElementById("step0").style.display = "block";
-      dynamicContainer.innerHTML = "";
-      updateProgressBar(0);
-    }
-    
-    function loadFormForMayIA() {
-      dynamicContainer.innerHTML = `
-        <h3>Información básica sobre tu tienda</h3>
-    
-        <label>Nombre del negocio</label>
-        <input type="text" id="nombreNegocioMayIA" placeholder="Ej: Tienda El Rincón" />
-    
-        <label>¿Qué tipo de productos vendes?</label>
-        <input type="text" id="productosVendidos" placeholder="Ej: Cosméticos, electrodomésticos, comida rápida…" />
-    
-        <label>¿Qué tipo de tienda tienes?</label>
-        <div class="assistant-selection" id="tipoTiendaSeleccion">
-          <div class="assistant-option" data-tipo="fisica">
-            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendafisica.png" alt="Tienda física">
-            <h4>Tienda física</h4>
-          </div>
-          <div class="assistant-option" data-tipo="linea">
-            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendalinea.png" alt="Tienda en línea">
-            <h4>Tienda en línea</h4>
-          </div>
-          <div class="assistant-option" data-tipo="mixta">
-            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/tiendalosdos.png" alt="Ambos">
-            <h4>Ambos</h4>
-          </div>
-        </div>
-    
-        <div id="ciudadContainer" style="display:none;">
-          <label>Ciudad(es) donde operas</label>
-          <input type="text" id="ciudadMayIA" placeholder="Ej: Medellín, Bogotá" />
-        </div>
+    });
+  }
   
-        <button class="btn ca-btn-outline" onclick="volverPaso0()">← Regresar</button>
-        <button class="btn" onclick="siguientePaso()">Siguiente</button>
-      `;
-    
-      currentStep = 1;
-      updateProgressBar(currentStep);
-    
-      // Gestion du clic sur type de tienda
-      document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(option => {
-        option.addEventListener('click', () => {
-          document.querySelectorAll('#tipoTiendaSeleccion .assistant-option').forEach(el => el.classList.remove('selected'));
-          option.classList.add('selected');
-          const tipoSeleccionado = option.getAttribute("data-tipo");
-    
-          // Affiche le champ ciudad sauf si tienda en línea
-          const ciudadDiv = document.getElementById("ciudadContainer");
-          ciudadDiv.style.display = (tipoSeleccionado === "linea") ? "none" : "block";
-    
-          // Stocker pour traitement final plus tard
-          window.tipoTiendaMayIA = tipoSeleccionado;
-        });
-      });
-    }
-    
-    function loadFormForSofIA() {
-      dynamicContainer.innerHTML = `
-        <h3>Información básica sobre tu servicio</h3>
-        <label>Nombre del negocio</label>
-        <input type="text" id="nombreNegocioSofIA" placeholder="Ej: Estética Sofi Belleza" />
-    
-        <label>¿Qué servicios ofreces?</label>
-        <input type="text" id="serviciosOfrecidos" placeholder="Ej: Uñas, pestañas, masajes, reservas…" />
-    
-        <label>Ciudad donde operas</label>
-        <input type="text" id="ciudadSofIA" placeholder="Ej: Barranquilla, Cali" />
+  function loadFormForSofIA() {
+    dynamicContainer.innerHTML = `
+      <h3>Información básica sobre tu servicio</h3>
+      <label>Nombre del negocio</label>
+      <input type="text" id="nombreNegocioSofIA" placeholder="Ej: Estética Sofi Belleza" />
   
-        <button class="btn ca-btn-outline" onclick="volverPaso0()">← Regresar</button>
-        <button class="btn" onclick="siguientePaso()">Siguiente</button>
-      `;
-      currentStep = 1;
-      updateProgressBar(currentStep);
-    }
-    
-    function siguientePaso() {
-      if (currentStep === 1) {
-        currentStep = 2;
-        updateProgressBar(currentStep);
-    
-        const esMayIA = selectedAssistant === "mayia";
-    
-        const objetivos = esMayIA
-          ? [
-              "Responder preguntas sobre productos",
-              "Promocionar nuevos productos",
-              "Guiar al cliente hacia la compra",
-              "Enviar enlaces a tienda virtual",
-              "Compartir precios y formas de pago",
-              "Ofrecer recomendaciones de productos",
-            ]
-          : [
-              "Responder dudas sobre servicios",
-              "Automatizar reservas o agendamientos",
-              "Confirmar citas automáticamente",
-              "Guiar al cliente al contacto por WhatsApp",
-              "Promover servicios destacados",
-              "Reducir el trabajo del equipo humano",
-            ];
-    
-        dynamicContainer.innerHTML = `
-          <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
-          <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
-    
-          <div class="objetivo-selection">
-            ${objetivos
-              .map(
-                (obj) => `
-                <div class="objetivo-option">${obj}</div>
-              `
-              )
-              .join("")}
-          </div>
-    
-          <label style="margin-top: 20px; display: block;">
-            Otro objetivo:
-            <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
-          </label>
-    
-          <div style="margin-top: 30px;">
-            <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
-            <button class="btn" onclick="siguientePaso()">Siguiente</button>
-          </div>
-        `;
-    
-        document.querySelectorAll(".objetivo-option").forEach((opt) => {
-          opt.addEventListener("click", () => {
-            opt.classList.toggle("selected");
-          });
-        });
-      }
-    
-      else if (currentStep === 2) {
-        currentStep = 3;
-        updateProgressBar(currentStep);
-    
-        dynamicContainer.innerHTML = `
-          <h3>❓ Preguntas frecuentes (FAQ)</h3>
-          <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
-    
-          <div id="faqContainer">
-            <div class="faq-item">
-              <label>Pregunta</label>
-              <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuánto cuesta el envío?" />
-              <label>Respuesta</label>
-              <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
-            </div>
-          </div>
-    
-          <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
-          <div style="margin-top: 30px;">
-            <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
-            <button class="btn" onclick="siguientePaso()">Siguiente</button>
-          </div>
-        `;
-      }
-      else if (currentStep === 3) {
-        currentStep = 4;
-        updateProgressBar(currentStep);
-    
-        dynamicContainer.innerHTML = `
-          <h3>🏪 Información del comercio</h3>
-        
-          <!-- Produits ou services -->
-          <div id="productosServiciosContainer">
-            <h4>Productos o servicios</h4>
-            <div class="producto-item">
-              <label>Nombre</label>
-              <input type="text" class="producto-nombre" placeholder="Ej: Facial hidratante, Hamburguesa..." />
-              <label>Precio</label>
-              <input type="text" class="producto-precio" placeholder="Ej: $35.000" />
-              <label>Descripción</label>
-              <input type="text" class="producto-descripcion" placeholder="Ej: Limpieza profunda y masaje facial" />
-            </div>
-          </div>
-          <button class="btn ca-btn-outline" onclick="agregarCampoExtra()">➕ Añadir campo personalizado</button>
-          <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
-        
-          <!-- Horaires -->
-          <div class="form-subsection">
-            <h4>⏰ Horarios de atención</h4>
-            ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => `
-              <label>${dia}</label>
-              <input type="text" id="horario-${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
-            `).join("")}
-            <label>
-              <input type="checkbox" id="trabajaFestivos" />
-              ¿Tu negocio abre en días festivos?
-            </label>
-          </div>
-        
-          <!-- Contact -->
-          <div class="form-subsection">
-            <h4>📞 Información de contacto</h4>
-            <label>WhatsApp</label>
-            <input type="text" id="whatsapp" placeholder="Ej: +57 3001234567" />
-            <label>Email</label>
-            <input type="text" id="email" placeholder="Ej: contacto@tu-negocio.com" />
-            <label>Sitio web</label>
-            <input type="text" id="web" placeholder="Ej: www.tu-negocio.com" />
-          </div>
-        
-          <div style="margin-top: 30px;">
-            <button class="btn ca-btn-outline" onclick="volverPaso3()">← Regresar</button>
-            <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
-          </div>
-        `;
-        }, 0);
-      }
-    }
-    function repliegueUltimoProducto() {
-      const items = document.querySelectorAll("#productosServiciosContainer .producto-item");
-      const dernier = items[items.length - 1];
-    
-      const nombre = dernier.querySelector(".producto-nombre")?.value || "";
-      const precio = dernier.querySelector(".producto-precio")?.value || "";
-      const descripcion = dernier.querySelector(".producto-descripcion")?.value || "";
-    
-      const resumen = document.createElement("div");
-      resumen.classList.add("producto-resumen");
-      resumen.innerHTML = `
-        <p><strong>${nombre}</strong> – ${precio}</p>
-        <p>${descripcion}</p>
-      `;
-    
-      // Supprimer le formulaire et garder le résumé
-      dernier.innerHTML = "";
-      dernier.classList.add("producto-replegado");
-      // 🔧 Correction ici
-      dernier.appendChild(resumen);
-    }
-      
-    function volverPaso0() {
-      currentStep = 0;
-      selectedAssistant = null;
-      document.getElementById("step0").style.display = "block";
-      dynamicContainer.innerHTML = "";
-      updateProgressBar(0);
-    }
-    function volverPaso1() {
-      currentStep = 1;
-      updateProgressBar(currentStep);
-      if (selectedAssistant === "mayia") {
-        loadFormForMayIA();
-      } else {
-        loadFormForSofIA();
-      }
-    }
-    function agregarFaq() {
-      const container = document.getElementById("faqContainer");
-      const faqHTML = `
-        <div class="faq-item" style="margin-top: 20px;">
-          <label>Pregunta</label>
-          <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuál es el horario de atención?" />
-          <label>Respuesta</label>
-          <input type="text" class="faq-respuesta" placeholder="Ej: De lunes a sábado, de 9am a 6pm." />
-        </div>
-      `;
-      container.insertAdjacentHTML("beforeend", faqHTML);
-    }
-    
-    function volverPaso2() {
+      <label>¿Qué servicios ofreces?</label>
+      <input type="text" id="serviciosOfrecidos" placeholder="Ej: Uñas, pestañas, masajes, reservas…" />
+  
+      <label>Ciudad donde operas</label>
+      <input type="text" id="ciudadSofIA" placeholder="Ej: Barranquilla, Cali" />
+
+      <button class="btn ca-btn-outline" onclick="volverPaso0()">← Regresar</button>
+      <button class="btn" onclick="siguientePaso()">Siguiente</button>
+    `;
+    currentStep = 1;
+    updateProgressBar(currentStep);
+  }
+  
+  function siguientePaso() {
+    if (currentStep === 1) {
       currentStep = 2;
       updateProgressBar(currentStep);
-    
+  
       const esMayIA = selectedAssistant === "mayia";
-    
+  
       const objetivos = esMayIA
         ? [
             "Responder preguntas sobre productos",
@@ -382,11 +197,11 @@
             "Promover servicios destacados",
             "Reducir el trabajo del equipo humano",
           ];
-    
+  
       dynamicContainer.innerHTML = `
         <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
         <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
-    
+  
         <div class="objetivo-selection">
           ${objetivos
             .map(
@@ -396,32 +211,33 @@
             )
             .join("")}
         </div>
-    
+  
         <label style="margin-top: 20px; display: block;">
           Otro objetivo:
           <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
         </label>
-    
+  
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
           <button class="btn" onclick="siguientePaso()">Siguiente</button>
         </div>
       `;
-    
+  
       document.querySelectorAll(".objetivo-option").forEach((opt) => {
         opt.addEventListener("click", () => {
           opt.classList.toggle("selected");
         });
       });
     }
-    function volverPaso3() {
+  
+    else if (currentStep === 2) {
       currentStep = 3;
       updateProgressBar(currentStep);
-    
+  
       dynamicContainer.innerHTML = `
         <h3>❓ Preguntas frecuentes (FAQ)</h3>
         <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
-    
+  
         <div id="faqContainer">
           <div class="faq-item">
             <label>Pregunta</label>
@@ -430,7 +246,7 @@
             <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
           </div>
         </div>
-    
+  
         <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
@@ -438,183 +254,461 @@
         </div>
       `;
     }
-    function agregarProducto() {
-      repliegueUltimoProducto(); // 🔧 Ajoute ici
-    
-      const container = document.getElementById("productosServiciosContainer");
-      const block = document.createElement("div");
-      block.classList.add("producto-item");
-      block.style.marginTop = "20px";
-      block.innerHTML = `
-        <label>Nombre</label>
-        <input type="text" class="producto-nombre" placeholder="Ej: Corte de cabello, Combo #2..." />
-        <label>Precio</label>
-        <input type="text" class="producto-precio" placeholder="Ej: $15.000" />
-        <label>Descripción</label>
-        <input type="text" class="producto-descripcion" placeholder="Ej: Corte moderno para hombre" />
+    else if (currentStep === 3) {
+      currentStep = 4;
+      updateProgressBar(currentStep);
+  
+      dynamicContainer.innerHTML = `
+        <h3>🏪 Información del comercio</h3>
+      
+        <!-- Produits ou services -->
+        <div id="productosServiciosContainer">
+          <h4>Productos o servicios</h4>
+          <div class="producto-item">
+            <label>Nombre</label>
+            <input type="text" class="producto-nombre" placeholder="Ej: Facial hidratante, Hamburguesa..." />
+            <label>Precio</label>
+            <input type="text" class="producto-precio" placeholder="Ej: $35.000" />
+            <label>Descripción</label>
+            <input type="text" class="producto-descripcion" placeholder="Ej: Limpieza profunda y masaje facial" />
+          </div>
+        </div>
+        <button class="btn ca-btn-outline" onclick="agregarCampoExtra()">➕ Añadir campo personalizado</button>
+        <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
+      
+        <!-- Horaires -->
+        <div class="form-subsection">
+          <h4>⏰ Horarios de atención</h4>
+          ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => `
+            <label>${dia}</label>
+            <input type="text" id="horario-${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
+          `).join("")}
+          <label>
+            <input type="checkbox" id="trabajaFestivos" />
+            ¿Tu negocio abre en días festivos?
+          </label>
+        </div>
+      
+        <!-- Contact -->
+        <div class="form-subsection">
+          <h4>📞 Información de contacto</h4>
+          <label>WhatsApp</label>
+          <input type="text" id="whatsapp" placeholder="Ej: +57 3001234567" />
+          <label>Email</label>
+          <input type="text" id="email" placeholder="Ej: contacto@tu-negocio.com" />
+          <label>Sitio web</label>
+          <input type="text" id="web" placeholder="Ej: www.tu-negocio.com" />
+        </div>
+      
+        <div style="margin-top: 30px;">
+          <button class="btn ca-btn-outline" onclick="volverPaso3()">← Regresar</button>
+          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
+        </div>
       `;
-      container.appendChild(block);
-      actualizarCamposProducto(block); // Garde bien cette ligne aussi
     }
-    // Vérif auth
-    window.addEventListener("DOMContentLoaded", async () => {
-      try {
-        const res = await fetch("/api/me", { credentials: "include" });
-        if (!res.ok) throw new Error("No autenticado");
-        const data = await res.json();
-        document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
-        showStep0();
+  }
+  function repliegueUltimoProducto() {
+    const items = document.querySelectorAll("#productosServiciosContainer .producto-item");
+    const dernier = items[items.length - 1];
+  
+    const nombre = dernier.querySelector(".producto-nombre")?.value || "";
+    const precio = dernier.querySelector(".producto-precio")?.value || "";
+    const descripcion = dernier.querySelector(".producto-descripcion")?.value || "";
+  
+    const resumen = document.createElement("div");
+    resumen.classList.add("producto-resumen");
+    resumen.innerHTML = `
+      <p><strong>${nombre}</strong> – ${precio}</p>
+      <p>${descripcion}</p>
+    `;
+  
+    // Supprimer le formulaire et garder le résumé
+    dernier.innerHTML = "";
+    dernier.classList.add("producto-replegado");
+    // 🔧 Correction ici
+    dernier.appendChild(resumen);
+  }
     
-        // 🔁 Ajoute ceci
-        document.getElementById("mayia").addEventListener("click", () => {
-          selectedAssistant = "mayia";
-          document.getElementById("mayia").classList.add("selected");
-          document.getElementById("sofia").classList.remove("selected");
-        
-          // Masquer l’étape 0
-          document.getElementById("step0").style.display = "none";
-        
-          loadFormForMayIA();
-        });
-        
-        document.getElementById("sofia").addEventListener("click", () => {
-          selectedAssistant = "sofia";
-          document.getElementById("sofia").classList.add("selected");
-          document.getElementById("mayia").classList.remove("selected");
-        
-          // Masquer l’étape 0
-          document.getElementById("step0").style.display = "none";
-        
-          loadFormForSofIA();
-        });
-    
-      } catch (err) {
-        window.location.href = "login.html";
+  function volverPaso0() {
+    currentStep = 0;
+    selectedAssistant = null;
+    document.getElementById("step0").style.display = "block";
+    dynamicContainer.innerHTML = "";
+    updateProgressBar(0);
+  }
+  function volverPaso1() {
+    currentStep = 1;
+    updateProgressBar(currentStep);
+    if (selectedAssistant === "mayia") {
+      loadFormForMayIA();
+    } else {
+      loadFormForSofIA();
+    }
+  }
+  function agregarFaq() {
+    const container = document.getElementById("faqContainer");
+    const faqHTML = `
+      <div class="faq-item" style="margin-top: 20px;">
+        <label>Pregunta</label>
+        <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuál es el horario de atención?" />
+        <label>Respuesta</label>
+        <input type="text" class="faq-respuesta" placeholder="Ej: De lunes a sábado, de 9am a 6pm." />
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", faqHTML);
+  }
+  
+  function volverPaso2() {
+    currentStep = 2;
+    updateProgressBar(currentStep);
+  
+    const esMayIA = selectedAssistant === "mayia";
+  
+    const objetivos = esMayIA
+      ? [
+          "Responder preguntas sobre productos",
+          "Promocionar nuevos productos",
+          "Guiar al cliente hacia la compra",
+          "Enviar enlaces a tienda virtual",
+          "Compartir precios y formas de pago",
+          "Ofrecer recomendaciones de productos",
+        ]
+      : [
+          "Responder dudas sobre servicios",
+          "Automatizar reservas o agendamientos",
+          "Confirmar citas automáticamente",
+          "Guiar al cliente al contacto por WhatsApp",
+          "Promover servicios destacados",
+          "Reducir el trabajo del equipo humano",
+        ];
+  
+    dynamicContainer.innerHTML = `
+      <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
+      <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
+  
+      <div class="objetivo-selection">
+        ${objetivos
+          .map(
+            (obj) => `
+            <div class="objetivo-option">${obj}</div>
+          `
+          )
+          .join("")}
+      </div>
+  
+      <label style="margin-top: 20px; display: block;">
+        Otro objetivo:
+        <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
+      </label>
+  
+      <div style="margin-top: 30px;">
+        <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
+        <button class="btn" onclick="siguientePaso()">Siguiente</button>
+      </div>
+    `;
+  
+    document.querySelectorAll(".objetivo-option").forEach((opt) => {
+      opt.addEventListener("click", () => {
+        opt.classList.toggle("selected");
+      });
+    });
+  }
+  function volverPaso3() {
+    currentStep = 3;
+    updateProgressBar(currentStep);
+  
+    dynamicContainer.innerHTML = `
+      <h3>❓ Preguntas frecuentes (FAQ)</h3>
+      <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
+  
+      <div id="faqContainer">
+        <div class="faq-item">
+          <label>Pregunta</label>
+          <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuánto cuesta el envío?" />
+          <label>Respuesta</label>
+          <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
+        </div>
+      </div>
+  
+      <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
+      <div style="margin-top: 30px;">
+        <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
+        <button class="btn" onclick="siguientePaso()">Siguiente</button>
+      </div>
+    `;
+  }
+  function agregarProducto() {
+    repliegueUltimoProducto(); // 🔧 Ajoute ici
+  
+    const container = document.getElementById("productosServiciosContainer");
+    const block = document.createElement("div");
+    block.classList.add("producto-item");
+    block.style.marginTop = "20px";
+    block.innerHTML = `
+      <label>Nombre</label>
+      <input type="text" class="producto-nombre" placeholder="Ej: Corte de cabello, Combo #2..." />
+      <label>Precio</label>
+      <input type="text" class="producto-precio" placeholder="Ej: $15.000" />
+      <label>Descripción</label>
+      <input type="text" class="producto-descripcion" placeholder="Ej: Corte moderno para hombre" />
+    `;
+    container.appendChild(block);
+    actualizarCamposProducto(block); // Garde bien cette ligne aussi
+  }
+  // Vérif auth
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const res = await fetch("/api/me", { credentials: "include" });
+      if (!res.ok) throw new Error("No autenticado");
+      const data = await res.json();
+      document.getElementById("auth-buttons").innerHTML = `👋 Hola, ${data.name}`;
+      showStep0();
+  
+      // 🔁 Ajoute ceci
+      document.getElementById("mayia").addEventListener("click", () => {
+        selectedAssistant = "mayia";
+        document.getElementById("mayia").classList.add("selected");
+        document.getElementById("sofia").classList.remove("selected");
+      
+        // Masquer l’étape 0
+        document.getElementById("step0").style.display = "none";
+      
+        loadFormForMayIA();
+      });
+      
+      document.getElementById("sofia").addEventListener("click", () => {
+        selectedAssistant = "sofia";
+        document.getElementById("sofia").classList.add("selected");
+        document.getElementById("mayia").classList.remove("selected");
+      
+        // Masquer l’étape 0
+        document.getElementById("step0").style.display = "none";
+      
+        loadFormForSofIA();
+      });
+  
+    } catch (err) {
+      window.location.href = "login.html";
+    }
+  });
+  </script>
+  <script>
+    document.getElementById("generarInstruccionesBtn").addEventListener("click", async () => {
+      // 1. Récupération des champs Section I
+      const nombre = document.getElementById("nombreNegocio").value.trim();
+      const tipo = document.getElementById("tipoNegocio").value.trim();
+      const venta = document.querySelector('input[name="tipoVenta"]:checked')?.value || "";
+      const especialidad = document.getElementById("especializacion").value.trim();
+      const clientes = document.querySelector('input[name="tipoCliente"]:checked')?.value || "";
+      const ciudad = document.getElementById("ciudad").value.trim();
+  
+      const objetivos = Array.from(document.querySelectorAll('.objetivo:checked')).map(el => el.value);
+      if (chkOtro.checked && inputOtro.value.trim()) {
+        objetivos.push(inputOtro.value.trim());
+      }
+  
+      const tono = document.getElementById("tono").value.trim();
+      const estilo = document.getElementById("ejemploEstilo").value.trim();
+  
+      // 2. Section II – FAQ
+      const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
+        const q = faq.querySelector(".faq-pregunta")?.value.trim();
+        const a = faq.querySelector(".faq-respuesta")?.value.trim();
+        return q && a ? `- ${q}\n  → ${a}` : null;
+      }).filter(Boolean);
+  
+      // 3. Section III
+      const productos = document.getElementById("productosList").value.trim().split("\n").filter(Boolean).map(p => `- ${p}`).join("\n");
+      const horarios = [
+        `Lunes: ${document.getElementById("lunes").value.trim()}`,
+        `Martes: ${document.getElementById("martes").value.trim()}`,
+        `Miércoles: ${document.getElementById("miercoles").value.trim()}`,
+        `Jueves: ${document.getElementById("jueves").value.trim()}`,
+        `Viernes: ${document.getElementById("viernes").value.trim()}`,
+        `Sábado: ${document.getElementById("sabado").value.trim()}`,
+        `Domingo: ${document.getElementById("domingo").value.trim()}`,
+      ].join("\n");
+      const festivos = document.getElementById("trabajaFestivos").checked;
+  
+      const web = document.getElementById("paginaWeb").value.trim();
+      const whatsapp = document.getElementById("whatsapp").value.trim();
+  
+      // 4. Construction du prompt
+      const textoFinal = `
+  I/ Información del Asistente
+  I.i/ Contexto
+  ${nombre} es un negocio de ${tipo} y que vende ${venta}. 
+  ${nombre} está especializado en la venta de ${especialidad}.
+  Los clientes son principalmente ${clientes}.
+  ${nombre} se encuentra en ${ciudad}.
+  
+  I.ii/ Objetivos
+  Los objetivos principales de ${nombre} son:
+  ${objetivos.map(o => "- " + o).join("\n")}
+  
+  I.iii/ Estilo de comunicación
+  El estilo de comunicación de ${nombre} es:
+  Tono: ${tono}
+  Ejemplo: ${estilo}
+  
+  II/ Funciones
+  II.i/ Preguntas frecuentes
+  ${faqPairs.join("\n")}
+  
+  III/ Información del comercio
+  III.i/ Información de los ${venta}
+  ${productos}
+  
+  III.ii/ Horarios
+  ${horarios}
+  ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
+  
+  III.iii/ Contactos
+  La página web principal es: ${web}
+  El número de WhatsApp es: ${whatsapp}
+  
+  IV/ Notas Internas para Clasificación de Conversaciones
+  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
+  Esta nota debe seguir el siguiente formato exacto:
+  
+  --- Nota interna ---
+  Resumen: [Una frase breve que resuma el propósito de la conversación]
+  Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+  ---------------------
+  
+  📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
+  ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente para uso interno.
+      `.trim();
+  
+      // 5. Envoi au backend
+      const res = await fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ instructions: textoFinal })
+      });
+  
+      if (res.ok) {
+        alert("✅ Instrucciones actualizadas correctamente en tu asistente.");
+      } else {
+        alert("❌ Error al guardar las instrucciones.");
       }
     });
-      async function finalizarFormulario() {
-        try {
-          const cookies = document.cookie.split(';').reduce((acc, c) => {
-            const [key, val] = c.trim().split('=');
-            acc[key] = val;
-            return acc;
-          }, {});
-          const token = cookies.token;
-          if (!token) {
-            alert("No has iniciado sesión.");
-            return;
-          }
-      
-          const nombre = document.getElementById("nombreNegocioMayIA")?.value || document.getElementById("nombreNegocioSofIA")?.value;
-          const tipo = selectedAssistant === "mayia"
-            ? document.getElementById("productosVendidos").value
-            : document.getElementById("serviciosOfrecidos").value;
-          const ciudad = selectedAssistant === "mayia"
-            ? document.getElementById("ciudadMayIA")?.value || "toda Colombia"
-            : document.getElementById("ciudadSofIA")?.value;
-          const venta = window.tipoTiendaMayIA || "física";
-      
-          const objetivos = Array.from(document.querySelectorAll(".objetivo-option.selected")).map(el => el.textContent.trim());
-          const otro = document.getElementById("inputOtro")?.value;
-          if (otro) objetivos.push(otro);
-      
-          const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
-            const pregunta = faq.querySelector(".faq-pregunta").value;
-            const respuesta = faq.querySelector(".faq-respuesta").value;
-            return `Q: ${pregunta}\nA: ${respuesta}`;
-          });
-      
-          const productosData = Array.from(document.querySelectorAll(".producto-item")).map(block => {
-            const nombre = block.querySelector(".producto-nombre")?.value || "";
-            const precio = block.querySelector(".producto-precio")?.value || "";
-            const descripcion = block.querySelector(".producto-descripcion")?.value || "";
-            const otros = {};
-            block.querySelectorAll("input").forEach(input => {
-              if (!["producto-nombre", "producto-precio", "producto-descripcion"].some(cls => input.classList.contains(cls))) {
-                otros[input.className] = input.value;
-              }
-            });
-            return { nombre, precio, descripcion, ...otros };
-          });
-      
-          const productosTexto = productosData.map(p => {
-            const extras = Object.entries(p)
-              .filter(([k]) => !["nombre", "precio", "descripcion"].includes(k))
-              .map(([k, v]) => ` - ${k}: ${v}`)
-              .join("\n");
-            return `🛒 ${p.nombre} – ${p.precio}\n${p.descripcion}\n${extras}`;
-          }).join("\n\n");
-      
-          const horarios = [
-            "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
-          ].map(dia =>
-            `${dia.charAt(0).toUpperCase() + dia.slice(1)}: ${document.getElementById("horario-" + dia)?.value || "No definido"}`
-          ).join("\n");
-      
-          const festivos = document.getElementById("trabajaFestivos").checked;
-          const whatsapp = document.getElementById("whatsapp").value;
-          const email = document.getElementById("email").value;
-          const web = document.getElementById("web").value;
-      
-          const instructions = `
-      I/ Información del Asistente
-      I.i/ Contexto
-      ${nombre} es un negocio de ${tipo} y que vende ${venta}.
-      ${nombre} se encuentra en ${ciudad}.
-      
-      I.ii/ Objetivos
-      Los objetivos principales de ${nombre} son:
-      ${objetivos.map(o => "- " + o).join("\n")}
-      
-      II/ Funciones
-      II.i/ Preguntas frecuentes
-      ${faqPairs.join("\n\n")}
-      
-      III/ Información del comercio
-      III.i/ Información de los ${venta}
-      ${productosTexto}
-      
-      III.ii/ Horarios
-      ${horarios}
-      ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
-      
-      III.iii/ Contactos
-      WhatsApp: ${whatsapp}
-      Email: ${email}
-      Sitio Web: ${web}
-      
-      IV/ Notas Internas para Clasificación de Conversaciones
-      --- Nota interna ---
-      Resumen: [Una frase breve que resuma el propósito de la conversación]
-      Estado: [Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
-      ---------------------
-      `.trim();
-      
-          const assistantData = {
-            nombre, tipo, ciudad, venta, objetivos, faq: faqPairs,
-            productos: productosData, horarios, festivos, whatsapp, email, web
-          };
-      
-          const response = await fetch("/api/configurar-instrucciones", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify({ instructions, assistantData })
-          });
-      
-          if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || "Error desconocido");
-          }
-      
-          window.location.href = "dashboard.html";
-        } catch (e) {
-          console.error("❌ Error en finalizarFormulario():", e);
-          alert("Error al guardar la configuración.");
-        }
+  </script>
+  <script>
+  document.getElementById("finalizarConfiguracionBtn").addEventListener("click", async () => {
+    const token = document.cookie
+      .split("; ")
+      .find(row => row.startsWith("token="))
+      ?.split("=")[1];
+  
+    if (!token) {
+      alert("Por favor inicia sesión primero.");
+      return;
+    }
+  
+    // 🧠 On récupère toutes les données
+    const data = {
+      nombre: document.getElementById("nombreComercio").value,
+      tipo: window.tipoNegocio || "No especificado",
+      venta: window.tipoVenta || "No especificado",
+      especialidad: window.especialidad || "No especificado",
+      ciudad: window.ciudad || "No especificada",
+      clientes: window.clientes || "No especificado",
+      objetivos: window.objetivosSeleccionados || [],
+      tono: window.tono || "Amistoso",
+      estilo: window.ejemploEstilo || "No definido",
+      faq: window.faqList || [],
+      productos: window.productos || [],
+      horarios: window.horarios || {},
+      festivos: window.abiertoFestivos || false,
+      whatsapp: window.whatsapp || "",
+      email: window.email || "",
+      web: window.web || ""
+    };
+  
+    // 🧠 On génère le texte d'instructions
+    const faqPairs = data.faq.map(f => `- ${f.pregunta}\n  ${f.respuesta}`);
+    const productosFormatted = data.productos.map((prod, i) => {
+      return `Producto ${i+1}:\n` +
+        Object.entries(prod).map(([key, val]) => `  ${key}: ${val}`).join("\n");
+    }).join("\n\n");
+  
+    const horariosText = Object.entries(data.horarios)
+      .map(([dia, h]) => `${dia}: ${h}`).join("\n");
+  
+    const instructions = `
+  I/ Información del Asistente
+  I.i/ Contexto
+  ${data.nombre} es un negocio de ${data.tipo} y que vende ${data.venta}.
+  ${data.nombre} está especializado en la venta de ${data.especialidad}.
+  Los clientes son principalmente ${data.clientes}.
+  ${data.nombre} se encuentra en ${data.ciudad}.
+  
+  I.ii/ Objetivos
+  Los objetivos principales de ${data.nombre} son:
+  ${data.objetivos.map(o => "- " + o).join("\n")}
+  
+  I.iii/ Estilo de comunicación
+  El estilo de comunicación de ${data.nombre} es:
+  Tono: ${data.tono}
+  Ejemplo: ${data.estilo}
+  
+  II/ Funciones
+  II.i/ Preguntas frecuentes
+  ${faqPairs.join("\n")}
+  
+  III/ Información del comercio
+  III.i/ Información de los ${data.venta}
+  ${productosFormatted}
+  
+  III.ii/ Horarios
+  ${horariosText}
+  ${data.nombre} ${data.festivos ? "sí" : "no"} está abierto en días festivos.
+  
+  III.iii/ Contactos
+  La página web principal es: ${data.web}
+  El número de WhatsApp es: ${data.whatsapp}
+  Email: ${data.email}
+  
+  IV/ Notas Internas para Clasificación de Conversaciones
+  Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
+  Esta nota debe seguir el siguiente formato exacto:
+  
+  --- Nota interna ---
+  Resumen: [Una frase breve que resuma el propósito de la conversación]
+  Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+  ---------------------
+  
+  📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
+  ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente.
+  `;
+  
+    // 📤 Envoi au backend
+    try {
+      const res = await fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          instructions,
+          assistantData: data
+        })
+      });
+  
+      const result = await res.json();
+      if (result.success) {
+        window.location.href = "/dashboard.html";
+      } else {
+        alert("❌ Error al guardar la configuración.");
       }
+    } catch (err) {
+      console.error("Erreur finale :", err);
+      alert("❌ Error inesperado.");
+    }
+  });
   </script>
 </body>
 </html>
