@@ -263,7 +263,17 @@
   
     else if (currentStep === 2) {
       // Étape 2 – Objectifs, style et fonctionnalités
-      datosFormulario.objetivos = document.getElementById("objetivos").value.trim();
+      // 🟢 Récupère les objectifs sélectionnés
+      const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected"))
+        .map(el => el.textContent.trim());
+    
+      // 🟢 Ajoute aussi le champ "Otro objetivo"
+      const inputOtro = document.getElementById("inputOtro");
+      if (inputOtro && inputOtro.value.trim()) {
+        objetivosSeleccionados.push(inputOtro.value.trim());
+      }
+    
+      datosFormulario.objetivos = objetivosSeleccionados;
       datosFormulario.tono = document.getElementById("tono").value.trim();
       datosFormulario.ejemplo = document.getElementById("ejemplo").value.trim();
   
