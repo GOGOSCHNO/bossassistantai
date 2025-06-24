@@ -1168,12 +1168,21 @@ app.post('/api/configurar-instrucciones', async (req, res) => {
   const { instructions, rawData } = req.body;
 
   try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user || !user.assistant_id) {
+      return res.status(404).json({ error: "Asistente no encontrado para este usuario." });
+    }
+
+    const assistantId = user.assistant_id;
+
     // 1. Mise à jour des instructions système
     await openai.beta.assistants.update(assistantId, { instructions });
 
-    // 2. Enregistrement des données brutes en base (optionnel mais recommandé)
+    // 2. Enregistrement des données brutes en base
     await db.collection("form_data").updateOne(
-      { userToken: token },  // ou un autre identifiant utilisateur
+      { email: decoded.email },  // tu peux aussi utiliser user.email
       { $set: { rawData, updatedAt: new Date() } },
       { upsert: true }
     );
