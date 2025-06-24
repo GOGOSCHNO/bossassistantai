@@ -1165,34 +1165,23 @@ app.post('/api/configurar-instrucciones', async (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: "No autenticado" });
 
+  const { instructions, rawData } = req.body;
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const email = decoded.email;
+    // 1. Mise à jour des instructions système
+    await openai.beta.assistants.update(assistantId, { instructions });
 
-    const user = await db.collection("users").findOne({ email });
-    if (!user || !user.assistant_id) return res.status(404).json({ error: "Usuario no encontrado o sin asistente" });
-
-    const { instructions, assistantData } = req.body;
-
-    // Mise à jour dans MongoDB
-    await db.collection("users").updateOne(
-      { email },
-      {
-        $set: {
-          [`assistants.${user.assistant_id}.config.instructions`]: instructions,
-          [`assistants.${user.assistant_id}.config.formulario`]: assistantData
-        }
-      }
+    // 2. Enregistrement des données brutes en base (optionnel mais recommandé)
+    await db.collection("form_data").updateOne(
+      { userToken: token },  // ou un autre identifiant utilisateur
+      { $set: { rawData, updatedAt: new Date() } },
+      { upsert: true }
     );
-
-    // Mise à jour de l'assistant dans OpenAI
-    await openai.beta.assistants.update(user.assistant_id, {
-      instructions
-    });
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Error guardando instrucciones:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
+    console.error("Erreur lors de la mise à jour de l'assistant :", err);
+    res.status(500).json({ error: "Erreur interne" });
   }
 });
+
