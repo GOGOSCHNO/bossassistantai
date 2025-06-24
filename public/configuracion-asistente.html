@@ -61,6 +61,25 @@
     </footer>
   </div>
   <script>
+  let datosFormulario = {
+    nombre: "",
+    tipo: "",
+    venta: "",
+    especialidad: "",
+    clientes: "",
+    ciudad: "",
+    objetivos: [],
+    tono: "",
+    estilo: "",
+    faq: [],
+    productos: [],
+    horarios: {
+      lunes: "", martes: "", miercoles: "", jueves: "", viernes: "", sabado: "", domingo: ""
+    },
+    festivos: false,
+    web: "",
+    whatsapp: ""
+  };
   let camposExtra = [];
 
   function agregarCampoExtra() {
@@ -306,6 +325,52 @@
         </div>
       `;
     }
+    if (currentStep === 1) {
+      datosFormulario.nombre = document.getElementById("nombreNegocio").value.trim();
+      datosFormulario.tipo = document.getElementById("tipoNegocio").value.trim();
+      datosFormulario.venta = document.querySelector('input[name="tipoVenta"]:checked')?.value || "";
+      datosFormulario.especialidad = document.getElementById("especializacion").value.trim();
+      datosFormulario.clientes = document.querySelector('input[name="tipoCliente"]:checked')?.value || "";
+      datosFormulario.ciudad = document.getElementById("ciudad").value.trim();
+      currentStep = 2;
+    }
+    else if (currentStep === 2) {
+      datosFormulario.objetivos = Array.from(document.querySelectorAll(".objetivo:checked")).map(el => el.value);
+      if (document.getElementById("chkOtro")?.checked) {
+        const otro = document.getElementById("inputOtro")?.value.trim();
+        if (otro) datosFormulario.objetivos.push(otro);
+      }
+      currentStep = 3;
+    }
+    else if (currentStep === 3) {
+      datosFormulario.tono = document.getElementById("tono").value.trim();
+      datosFormulario.estilo = document.getElementById("ejemploEstilo").value.trim();
+      currentStep = 4;
+    }
+    else if (currentStep === 4) {
+      datosFormulario.faq = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
+        const q = faq.querySelector(".faq-pregunta")?.value.trim();
+        const a = faq.querySelector(".faq-respuesta")?.value.trim();
+        return q && a ? { pregunta: q, respuesta: a } : null;
+      }).filter(Boolean);
+      currentStep = 5;
+    }
+    else if (currentStep === 5) {
+      datosFormulario.productos = document.getElementById("productosList").value.trim().split("\n").filter(Boolean);
+      datosFormulario.horarios = {
+        lunes: document.getElementById("lunes").value.trim(),
+        martes: document.getElementById("martes").value.trim(),
+        miercoles: document.getElementById("miercoles").value.trim(),
+        jueves: document.getElementById("jueves").value.trim(),
+        viernes: document.getElementById("viernes").value.trim(),
+        sabado: document.getElementById("sabado").value.trim(),
+        domingo: document.getElementById("domingo").value.trim()
+      };
+      datosFormulario.festivos = document.getElementById("trabajaFestivos")?.checked || false;
+      datosFormulario.whatsapp = document.getElementById("whatsapp").value.trim();
+      datosFormulario.web = document.getElementById("paginaWeb").value.trim();
+      currentStep = 6;
+    }
   }
   function repliegueUltimoProducto() {
     const items = document.querySelectorAll("#productosServiciosContainer .producto-item");
@@ -491,60 +556,25 @@
       window.location.href = "login.html";
     }
   });
+    
   async function finalizarFormulario() {
-    try {
-      // [1] Construction du prompt comme tu l’as déjà fait…
-      const nombre = document.getElementById("nombreNegocioMayIA")?.value.trim() || 
-                     document.getElementById("nombreNegocioSofIA")?.value.trim() || "";
-      const productos = document.querySelectorAll(".producto-item");
-      const productosList = Array.from(productos).map(prod => {
-        const nombre = prod.querySelector(".producto-nombre")?.value || "";
-        const precio = prod.querySelector(".producto-precio")?.value || "";
-        const descripcion = prod.querySelector(".producto-descripcion")?.value || "";
-        return `- ${nombre} (${precio}): ${descripcion}`;
-      }).join("\n");
+    const {
+      nombre, tipo, venta, especialidad, clientes, ciudad,
+      objetivos, tono, estilo, faq, productos, horarios,
+      festivos, web, whatsapp
+    } = datosFormulario;
   
-      const ciudad = document.getElementById("ciudadMayIA")?.value.trim() ||
-                     document.getElementById("ciudadSofIA")?.value.trim() || "";
-      const whatsapp = document.getElementById("whatsapp")?.value.trim() || "";
-      const email = document.getElementById("email")?.value.trim() || "";
-      const web = document.getElementById("web")?.value.trim() || "";
-  
-      const esMayIA = selectedAssistant === "mayia";
-      const tipo = esMayIA ? "productos físicos o digitales" : "servicios";
-      const venta = esMayIA ? "productos" : "servicios";
-      const especialidad = esMayIA
-        ? document.getElementById("productosVendidos")?.value.trim() || ""
-        : document.getElementById("serviciosOfrecidos")?.value.trim() || "";
-  
-      const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected")).map(el => el.textContent.trim());
-      const inputOtro = document.getElementById("inputOtro")?.value.trim();
-      if (inputOtro) objetivosSeleccionados.push(inputOtro);
-  
-      const tono = window.tono || "Amistoso";
-      const estilo = window.ejemploEstilo || "No definido";
-  
-      const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
-        const q = faq.querySelector(".faq-pregunta")?.value.trim();
-        const a = faq.querySelector(".faq-respuesta")?.value.trim();
-        return q && a ? `- ${q}\n  → ${a}` : null;
-      }).filter(Boolean);
-  
-      const dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
-      const horarios = dias.map(dia => `${dia.charAt(0).toUpperCase() + dia.slice(1)}: ${document.getElementById(`horario-${dia}`)?.value.trim() || "No definido"}`).join("\n");
-      const festivos = document.getElementById("trabajaFestivos")?.checked || false;
-  
-      const textoFinal = `
+    const textoFinal = `
   I/ Información del Asistente
   I.i/ Contexto
   ${nombre} es un negocio de ${tipo} y que vende ${venta}. 
   ${nombre} está especializado en la venta de ${especialidad}.
-  Los clientes son principalmente personas interesadas en ${venta}.
+  Los clientes son principalmente ${clientes}.
   ${nombre} se encuentra en ${ciudad}.
   
   I.ii/ Objetivos
   Los objetivos principales de ${nombre} son:
-  ${objetivosSeleccionados.map(o => "- " + o).join("\n")}
+  ${objetivos.map(o => "- " + o).join("\n")}
   
   I.iii/ Estilo de comunicación
   El estilo de comunicación de ${nombre} es:
@@ -553,20 +583,25 @@
   
   II/ Funciones
   II.i/ Preguntas frecuentes
-  ${faqPairs.join("\n")}
+  ${faq.map(f => `- ${f.pregunta}\n  → ${f.respuesta}`).join("\n")}
   
   III/ Información del comercio
   III.i/ Información de los ${venta}
-  ${productosList}
+  ${productos.map(p => `- ${p}`).join("\n")}
   
   III.ii/ Horarios
-  ${horarios}
+  Lunes: ${horarios.lunes || "No definido"}
+  Martes: ${horarios.martes || "No definido"}
+  Miércoles: ${horarios.miercoles || "No definido"}
+  Jueves: ${horarios.jueves || "No definido"}
+  Viernes: ${horarios.viernes || "No definido"}
+  Sábado: ${horarios.sabado || "No definido"}
+  Domingo: ${horarios.domingo || "No definido"}
   ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
   
   III.iii/ Contactos
   La página web principal es: ${web}
   El número de WhatsApp es: ${whatsapp}
-  Email: ${email}
   
   IV/ Notas Internas para Clasificación de Conversaciones
   Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
@@ -581,25 +616,22 @@
   ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente para uso interno.
   `.trim();
   
-      // [2] Envoi
+    try {
       const res = await fetch("/api/configurar-instrucciones", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
         credentials: "include",
-        body: JSON.stringify({ instructions: textoFinal })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instructions: textoFinal, rawData: datosFormulario })
       });
   
       if (res.ok) {
         alert("✅ Instrucciones actualizadas correctamente.");
-        window.location.href = "/dashboard.html";
       } else {
         alert("❌ Error al guardar las instrucciones.");
       }
     } catch (err) {
-      console.error("❌ Error interno:", err);
-      alert("❌ No se pudo generar la configuración.");
+      console.error("❌ Error de red o de conexión:", err);
+      alert("❌ Error de red.");
     }
   }
   </script>
