@@ -577,6 +577,9 @@
     }
   }
   function generarDatosFormulario() {
+    const chkOtro = document.getElementById("otroObjetivo");
+    const inputOtro = document.getElementById("inputOtro");
+    
     const objetivos = Array.from(document.querySelectorAll('.objetivo:checked')).map(el => el.value);
     if (chkOtro.checked && inputOtro.value.trim()) {
       objetivos.push(inputOtro.value.trim());
