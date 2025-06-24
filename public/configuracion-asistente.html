@@ -558,50 +558,100 @@
   });
     
   async function finalizarFormulario() {
-    const {
-      nombre, tipo, venta, especialidad, clientes, ciudad,
-      objetivos, tono, estilo, faq, productos, horarios,
-      festivos, web, whatsapp
-    } = datosFormulario;
+    const rawData = generarDatosFormulario(); // 🔍 collecte toutes les valeurs
   
-    const textoFinal = `
+    // 👉 Tu construis ici le texte final à partir de rawData
+    const textoFinal = construirTextoFinal(rawData); // on verra ce helper ci-dessous
+  
+    const res = await fetch("/api/configurar-instrucciones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ instructions: textoFinal, rawData })
+    });
+  
+    if (res.ok) {
+      alert("✅ Instrucciones actualizadas correctamente.");
+    } else {
+      alert("❌ Error al guardar las instrucciones.");
+    }
+  }
+  function generarDatosFormulario() {
+    const objetivos = Array.from(document.querySelectorAll('.objetivo:checked')).map(el => el.value);
+    if (chkOtro.checked && inputOtro.value.trim()) {
+      objetivos.push(inputOtro.value.trim());
+    }
+  
+    const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => ({
+      pregunta: faq.querySelector(".faq-pregunta")?.value.trim(),
+      respuesta: faq.querySelector(".faq-respuesta")?.value.trim()
+    })).filter(faq => faq.pregunta && faq.respuesta);
+  
+    return {
+      nombre: document.getElementById("nombreNegocio").value.trim(),
+      tipo: document.getElementById("tipoNegocio").value.trim(),
+      venta: document.querySelector('input[name="tipoVenta"]:checked')?.value || "",
+      especialidad: document.getElementById("especializacion").value.trim(),
+      clientes: document.querySelector('input[name="tipoCliente"]:checked')?.value || "",
+      ciudad: document.getElementById("ciudad").value.trim(),
+      objetivos,
+      tono: document.getElementById("tono").value.trim(),
+      estilo: document.getElementById("ejemploEstilo").value.trim(),
+      faq: faqPairs,
+      productos: document.getElementById("productosList").value.trim().split("\n").filter(Boolean),
+      horarios: {
+        lunes: document.getElementById("lunes").value.trim(),
+        martes: document.getElementById("martes").value.trim(),
+        miercoles: document.getElementById("miercoles").value.trim(),
+        jueves: document.getElementById("jueves").value.trim(),
+        viernes: document.getElementById("viernes").value.trim(),
+        sabado: document.getElementById("sabado").value.trim(),
+        domingo: document.getElementById("domingo").value.trim(),
+        festivos: document.getElementById("trabajaFestivos").checked
+      },
+      web: document.getElementById("paginaWeb").value.trim(),
+      whatsapp: document.getElementById("whatsapp").value.trim()
+    };
+  }
+  function construirTextoFinal(data) {
+    return `
   I/ Información del Asistente
   I.i/ Contexto
-  ${nombre} es un negocio de ${tipo} y que vende ${venta}. 
-  ${nombre} está especializado en la venta de ${especialidad}.
-  Los clientes son principalmente ${clientes}.
-  ${nombre} se encuentra en ${ciudad}.
+  ${data.nombre} es un negocio de ${data.tipo} y que vende ${data.venta}. 
+  ${data.nombre} está especializado en la venta de ${data.especialidad}.
+  Los clientes son principalmente ${data.clientes}.
+  ${data.nombre} se encuentra en ${data.ciudad}.
   
   I.ii/ Objetivos
-  Los objetivos principales de ${nombre} son:
-  ${objetivos.map(o => "- " + o).join("\n")}
+  Los objetivos principales de ${data.nombre} son:
+  ${data.objetivos.map(o => "- " + o).join("\n")}
   
   I.iii/ Estilo de comunicación
-  El estilo de comunicación de ${nombre} es:
-  Tono: ${tono}
-  Ejemplo: ${estilo}
+  El estilo de comunicación de ${data.nombre} es:
+  Tono: ${data.tono}
+  Ejemplo: ${data.estilo}
   
   II/ Funciones
   II.i/ Preguntas frecuentes
-  ${faq.map(f => `- ${f.pregunta}\n  → ${f.respuesta}`).join("\n")}
+  ${data.faq.map(f => `- ${f.pregunta}\n  → ${f.respuesta}`).join("\n")}
   
   III/ Información del comercio
-  III.i/ Información de los ${venta}
-  ${productos.map(p => `- ${p}`).join("\n")}
+  III.i/ Información de los ${data.venta}
+  ${data.productos.map(p => "- " + p).join("\n")}
   
   III.ii/ Horarios
-  Lunes: ${horarios.lunes || "No definido"}
-  Martes: ${horarios.martes || "No definido"}
-  Miércoles: ${horarios.miercoles || "No definido"}
-  Jueves: ${horarios.jueves || "No definido"}
-  Viernes: ${horarios.viernes || "No definido"}
-  Sábado: ${horarios.sabado || "No definido"}
-  Domingo: ${horarios.domingo || "No definido"}
-  ${nombre} ${festivos ? "sí" : "no"} está abierto en días festivos.
+  Lunes: ${data.horarios.lunes}
+  Martes: ${data.horarios.martes}
+  Miércoles: ${data.horarios.miercoles}
+  Jueves: ${data.horarios.jueves}
+  Viernes: ${data.horarios.viernes}
+  Sábado: ${data.horarios.sabado}
+  Domingo: ${data.horarios.domingo}
+  ${data.nombre} ${data.horarios.festivos ? "sí" : "no"} está abierto en días festivos.
   
   III.iii/ Contactos
-  La página web principal es: ${web}
-  El número de WhatsApp es: ${whatsapp}
+  La página web principal es: ${data.web}
+  El número de WhatsApp es: ${data.whatsapp}
   
   IV/ Notas Internas para Clasificación de Conversaciones
   Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema de Dolcezza.
@@ -614,25 +664,7 @@
   
   📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
   ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente para uso interno.
-  `.trim();
-  
-    try {
-      const res = await fetch("/api/configurar-instrucciones", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instructions: textoFinal, rawData: datosFormulario })
-      });
-  
-      if (res.ok) {
-        alert("✅ Instrucciones actualizadas correctamente.");
-      } else {
-        alert("❌ Error al guardar las instrucciones.");
-      }
-    } catch (err) {
-      console.error("❌ Error de red o de conexión:", err);
-      alert("❌ Error de red.");
-    }
+    `.trim();
   }
   </script>
 </body>
