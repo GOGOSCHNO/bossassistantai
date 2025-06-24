@@ -194,6 +194,18 @@
   
   function siguientePaso() {
     if (currentStep === 1) {
+    // Étape 1 – Informations générales
+      datosFormulario.nombre = document.getElementById("nombre").value.trim();
+      datosFormulario.precio = document.getElementById("precio").value.trim();
+      datosFormulario.descripcion = document.getElementById("descripcion").value.trim();
+  
+      const tipoNegocio = document.querySelector('input[name="tipoNegocio"]:checked');
+      datosFormulario.tipoNegocio = tipoNegocio ? tipoNegocio.value : "";
+  
+      datosFormulario.especialidad = document.getElementById("especialidad").value.trim();
+      datosFormulario.tipoCliente = document.getElementById("tipoCliente").value.trim();
+      datosFormulario.ubicacion = document.getElementById("ubicacion").value.trim();
+      
       currentStep = 2;
       updateProgressBar(currentStep);
   
@@ -250,6 +262,14 @@
     }
   
     else if (currentStep === 2) {
+      // Étape 2 – Objectifs, style et fonctionnalités
+      datosFormulario.objetivos = document.getElementById("objetivos").value.trim();
+      datosFormulario.tono = document.getElementById("tono").value.trim();
+      datosFormulario.ejemplo = document.getElementById("ejemplo").value.trim();
+  
+      const preguntas = document.getElementById("preguntas").value.trim();
+      datosFormulario.preguntas = preguntas.split("\n").filter(p => p.trim() !== "");
+      
       currentStep = 3;
       updateProgressBar(currentStep);
   
@@ -274,6 +294,33 @@
       `;
     }
     else if (currentStep === 3) {
+      // Étape 3 – Services, horaires, contact
+      const servicios = document.querySelectorAll(".servicio");
+      datosFormulario.servicios = [];
+      servicios.forEach((serv) => {
+        const nombre = serv.querySelector(".nombre-servicio")?.value?.trim() || "";
+        const precio = serv.querySelector(".precio-servicio")?.value?.trim() || "";
+        const descripcion = serv.querySelector(".descripcion-servicio")?.value?.trim() || "";
+        if (nombre) {
+          datosFormulario.servicios.push({ nombre, precio, descripcion });
+        }
+      });
+  
+      const dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+      datosFormulario.horarios = {};
+      dias.forEach((dia) => {
+        const input = document.getElementById(dia);
+        datosFormulario.horarios[dia] = input ? input.value.trim() : "No definido";
+      });
+  
+      const chkFestivo = document.getElementById("chkFestivo");
+      datosFormulario.diasFestivos = chkFestivo && chkFestivo.checked;
+  
+      datosFormulario.contacto = {
+        whatsapp: document.getElementById("whatsapp").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        sitioWeb: document.getElementById("sitioWeb").value.trim()
+      };
       currentStep = 4;
       updateProgressBar(currentStep);
   
@@ -324,52 +371,6 @@
           <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
         </div>
       `;
-    }
-    if (currentStep === 1) {
-      datosFormulario.nombre = document.getElementById("nombreNegocio").value.trim();
-      datosFormulario.tipo = document.getElementById("tipoNegocio").value.trim();
-      datosFormulario.venta = document.querySelector('input[name="tipoVenta"]:checked')?.value || "";
-      datosFormulario.especialidad = document.getElementById("especializacion").value.trim();
-      datosFormulario.clientes = document.querySelector('input[name="tipoCliente"]:checked')?.value || "";
-      datosFormulario.ciudad = document.getElementById("ciudad").value.trim();
-      currentStep = 2;
-    }
-    else if (currentStep === 2) {
-      datosFormulario.objetivos = Array.from(document.querySelectorAll(".objetivo:checked")).map(el => el.value);
-      if (document.getElementById("chkOtro")?.checked) {
-        const otro = document.getElementById("inputOtro")?.value.trim();
-        if (otro) datosFormulario.objetivos.push(otro);
-      }
-      currentStep = 3;
-    }
-    else if (currentStep === 3) {
-      datosFormulario.tono = document.getElementById("tono").value.trim();
-      datosFormulario.estilo = document.getElementById("ejemploEstilo").value.trim();
-      currentStep = 4;
-    }
-    else if (currentStep === 4) {
-      datosFormulario.faq = Array.from(document.querySelectorAll(".faq-item")).map(faq => {
-        const q = faq.querySelector(".faq-pregunta")?.value.trim();
-        const a = faq.querySelector(".faq-respuesta")?.value.trim();
-        return q && a ? { pregunta: q, respuesta: a } : null;
-      }).filter(Boolean);
-      currentStep = 5;
-    }
-    else if (currentStep === 5) {
-      datosFormulario.productos = document.getElementById("productosList").value.trim().split("\n").filter(Boolean);
-      datosFormulario.horarios = {
-        lunes: document.getElementById("lunes").value.trim(),
-        martes: document.getElementById("martes").value.trim(),
-        miercoles: document.getElementById("miercoles").value.trim(),
-        jueves: document.getElementById("jueves").value.trim(),
-        viernes: document.getElementById("viernes").value.trim(),
-        sabado: document.getElementById("sabado").value.trim(),
-        domingo: document.getElementById("domingo").value.trim()
-      };
-      datosFormulario.festivos = document.getElementById("trabajaFestivos")?.checked || false;
-      datosFormulario.whatsapp = document.getElementById("whatsapp").value.trim();
-      datosFormulario.web = document.getElementById("paginaWeb").value.trim();
-      currentStep = 6;
     }
   }
   function repliegueUltimoProducto() {
@@ -578,6 +579,11 @@
   }
   function generarDatosFormulario() {
     const chkOtro = document.getElementById("otroObjetivo");
+    if (chkOtro && chkOtro.checked) {
+      datosFormulario.diasFestivos = true;
+    } else {
+      datosFormulario.diasFestivos = false;
+    }
     const inputOtro = document.getElementById("inputOtro");
     
     const objetivos = Array.from(document.querySelectorAll('.objetivo:checked')).map(el => el.value);
