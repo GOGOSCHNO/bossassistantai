@@ -194,23 +194,22 @@
   
   function siguientePaso() {
     if (currentStep === 1) {
-    // Étape 1 – Informations générales
-      datosFormulario.nombre = document.getElementById("nombre").value.trim();
-      datosFormulario.precio = document.getElementById("precio").value.trim();
-      datosFormulario.descripcion = document.getElementById("descripcion").value.trim();
+      // Étape 1 – Infos générales (adaptée selon l'assistant)
+      if (selectedAssistant === "mayia") {
+        datosFormulario.nombre = document.getElementById("nombreNegocioMayIA")?.value?.trim() || "";
+        datosFormulario.venta = document.getElementById("productosVendidos")?.value?.trim() || "";
+        datosFormulario.tipo = window.tipoTiendaMayIA || "";
+        datosFormulario.ciudad = document.getElementById("ciudadMayIA")?.value?.trim() || "";
+      } else if (selectedAssistant === "sofia") {
+        datosFormulario.nombre = document.getElementById("nombreNegocioSofIA")?.value?.trim() || "";
+        datosFormulario.servicios = document.getElementById("serviciosOfrecidos")?.value?.trim() || "";
+        datosFormulario.ciudad = document.getElementById("ciudadSofIA")?.value?.trim() || "";
+      }
   
-      const tipoNegocio = document.querySelector('input[name="tipoNegocio"]:checked');
-      datosFormulario.tipoNegocio = tipoNegocio ? tipoNegocio.value : "";
-  
-      datosFormulario.especialidad = document.getElementById("especialidad").value.trim();
-      datosFormulario.tipoCliente = document.getElementById("tipoCliente").value.trim();
-      datosFormulario.ubicacion = document.getElementById("ubicacion").value.trim();
-      
       currentStep = 2;
       updateProgressBar(currentStep);
   
       const esMayIA = selectedAssistant === "mayia";
-  
       const objetivos = esMayIA
         ? [
             "Responder preguntas sobre productos",
@@ -218,7 +217,7 @@
             "Guiar al cliente hacia la compra",
             "Enviar enlaces a tienda virtual",
             "Compartir precios y formas de pago",
-            "Ofrecer recomendaciones de productos",
+            "Ofrecer recomendaciones de productos"
           ]
         : [
             "Responder dudas sobre servicios",
@@ -226,28 +225,19 @@
             "Confirmar citas automáticamente",
             "Guiar al cliente al contacto por WhatsApp",
             "Promover servicios destacados",
-            "Reducir el trabajo del equipo humano",
+            "Reducir el trabajo del equipo humano"
           ];
   
       dynamicContainer.innerHTML = `
         <h3>🎯 ¿Cuáles son los objetivos de tu asistente?</h3>
         <p>Selecciona los objetivos que deseas lograr con <strong>${esMayIA ? "MayIA" : "SofIA"}</strong>:</p>
-  
         <div class="objetivo-selection">
-          ${objetivos
-            .map(
-              (obj) => `
-              <div class="objetivo-option">${obj}</div>
-            `
-            )
-            .join("")}
+          ${objetivos.map(obj => `<div class="objetivo-option">${obj}</div>`).join("")}
         </div>
-  
         <label style="margin-top: 20px; display: block;">
           Otro objetivo:
           <input type="text" id="inputOtro" placeholder="Especifica tu objetivo" />
         </label>
-  
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
           <button class="btn" onclick="siguientePaso()">Siguiente</button>
@@ -255,38 +245,33 @@
       `;
   
       document.querySelectorAll(".objetivo-option").forEach((opt) => {
-        opt.addEventListener("click", () => {
-          opt.classList.toggle("selected");
-        });
+        opt.addEventListener("click", () => opt.classList.toggle("selected"));
       });
     }
   
     else if (currentStep === 2) {
-      // Étape 2 – Objectifs, style et fonctionnalités
-      // 🟢 Récupère les objectifs sélectionnés
+      // Étape 2 – Objectifs, style, FAQ rapide
       const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected"))
         .map(el => el.textContent.trim());
-    
-      // 🟢 Ajoute aussi le champ "Otro objetivo"
+  
       const inputOtro = document.getElementById("inputOtro");
-      if (inputOtro && inputOtro.value.trim()) {
+      if (inputOtro?.value?.trim()) {
         objetivosSeleccionados.push(inputOtro.value.trim());
       }
-    
-      datosFormulario.objetivos = objetivosSeleccionados;
-      datosFormulario.tono = document.getElementById("tono").value.trim();
-      datosFormulario.ejemplo = document.getElementById("ejemplo").value.trim();
   
-      const preguntas = document.getElementById("preguntas").value.trim();
-      datosFormulario.preguntas = preguntas.split("\n").filter(p => p.trim() !== "");
-      
+      datosFormulario.objetivos = objetivosSeleccionados;
+      datosFormulario.tono = document.getElementById("tono")?.value?.trim() || "";
+      datosFormulario.ejemplo = document.getElementById("ejemplo")?.value?.trim() || "";
+  
+      const preguntas = document.getElementById("preguntas")?.value?.trim() || "";
+      datosFormulario.preguntas = preguntas.split("\n").filter(p => p.trim());
+  
       currentStep = 3;
       updateProgressBar(currentStep);
   
       dynamicContainer.innerHTML = `
         <h3>❓ Preguntas frecuentes (FAQ)</h3>
         <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
-  
         <div id="faqContainer">
           <div class="faq-item">
             <label>Pregunta</label>
@@ -295,7 +280,6 @@
             <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
           </div>
         </div>
-  
         <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
@@ -303,11 +287,12 @@
         </div>
       `;
     }
+  
     else if (currentStep === 3) {
-      // Étape 3 – Services, horaires, contact
+      // Étape 3 – Produits/Services, horaires, contact
       const servicios = document.querySelectorAll(".servicio");
       datosFormulario.servicios = [];
-      servicios.forEach((serv) => {
+      servicios.forEach(serv => {
         const nombre = serv.querySelector(".nombre-servicio")?.value?.trim() || "";
         const precio = serv.querySelector(".precio-servicio")?.value?.trim() || "";
         const descripcion = serv.querySelector(".descripcion-servicio")?.value?.trim() || "";
@@ -318,26 +303,25 @@
   
       const dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
       datosFormulario.horarios = {};
-      dias.forEach((dia) => {
+      dias.forEach(dia => {
         const input = document.getElementById(dia);
-        datosFormulario.horarios[dia] = input ? input.value.trim() : "No definido";
+        datosFormulario.horarios[dia] = input?.value?.trim() || "No definido";
       });
   
-      const chkFestivo = document.getElementById("chkFestivo");
-      datosFormulario.diasFestivos = chkFestivo && chkFestivo.checked;
+      const chkFestivo = document.getElementById("chkFestivo") || document.getElementById("trabajaFestivos");
+      datosFormulario.diasFestivos = chkFestivo?.checked || false;
   
       datosFormulario.contacto = {
-        whatsapp: document.getElementById("whatsapp").value.trim(),
-        email: document.getElementById("email").value.trim(),
-        sitioWeb: document.getElementById("sitioWeb").value.trim()
+        whatsapp: document.getElementById("whatsapp")?.value?.trim() || "",
+        email: document.getElementById("email")?.value?.trim() || "",
+        sitioWeb: document.getElementById("web")?.value?.trim() || ""
       };
+  
       currentStep = 4;
       updateProgressBar(currentStep);
   
       dynamicContainer.innerHTML = `
         <h3>🏪 Información del comercio</h3>
-      
-        <!-- Produits ou services -->
         <div id="productosServiciosContainer">
           <h4>Productos o servicios</h4>
           <div class="producto-item">
@@ -351,21 +335,19 @@
         </div>
         <button class="btn ca-btn-outline" onclick="agregarCampoExtra()">➕ Añadir campo personalizado</button>
         <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
-      
-        <!-- Horaires -->
+  
         <div class="form-subsection">
           <h4>⏰ Horarios de atención</h4>
           ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => `
             <label>${dia}</label>
-            <input type="text" id="horario-${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
+            <input type="text" id="${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
           `).join("")}
           <label>
             <input type="checkbox" id="trabajaFestivos" />
             ¿Tu negocio abre en días festivos?
           </label>
         </div>
-      
-        <!-- Contact -->
+  
         <div class="form-subsection">
           <h4>📞 Información de contacto</h4>
           <label>WhatsApp</label>
@@ -375,7 +357,7 @@
           <label>Sitio web</label>
           <input type="text" id="web" placeholder="Ej: www.tu-negocio.com" />
         </div>
-      
+  
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso3()">← Regresar</button>
           <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
@@ -383,6 +365,7 @@
       `;
     }
   }
+
   function repliegueUltimoProducto() {
     const items = document.querySelectorAll("#productosServiciosContainer .producto-item");
     const dernier = items[items.length - 1];
