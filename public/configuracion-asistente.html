@@ -570,51 +570,49 @@
       alert("❌ Error al guardar las instrucciones.");
     }
   }
-  function generarDatosFormulario() {
-    const chkOtro = document.getElementById("otroObjetivo");
-    if (chkOtro && chkOtro.checked) {
-      datosFormulario.diasFestivos = true;
-    } else {
-      datosFormulario.diasFestivos = false;
-    }
-    const inputOtro = document.getElementById("inputOtro");
     
-    const objetivos = Array.from(document.querySelectorAll('.objetivo:checked')).map(el => el.value);
-    if (chkOtro.checked && inputOtro.value.trim()) {
-      objetivos.push(inputOtro.value.trim());
-    }
-  
+  function generarDatosFormulario() {
     const faqPairs = Array.from(document.querySelectorAll(".faq-item")).map(faq => ({
       pregunta: faq.querySelector(".faq-pregunta")?.value.trim(),
       respuesta: faq.querySelector(".faq-respuesta")?.value.trim()
     })).filter(faq => faq.pregunta && faq.respuesta);
   
+    const productos = Array.from(document.querySelectorAll(".producto-item")).map(item => {
+      const nombre = item.querySelector(".producto-nombre")?.value.trim();
+      const precio = item.querySelector(".producto-precio")?.value.trim();
+      const descripcion = item.querySelector(".producto-descripcion")?.value.trim();
+      return `${nombre} – ${precio}: ${descripcion}`;
+    }).filter(Boolean);
+  
+    const horarios = {
+      lunes: document.getElementById("lunes")?.value.trim() || "",
+      martes: document.getElementById("martes")?.value.trim() || "",
+      miercoles: document.getElementById("miercoles")?.value.trim() || "",
+      jueves: document.getElementById("jueves")?.value.trim() || "",
+      viernes: document.getElementById("viernes")?.value.trim() || "",
+      sabado: document.getElementById("sabado")?.value.trim() || "",
+      domingo: document.getElementById("domingo")?.value.trim() || "",
+      festivos: document.getElementById("trabajaFestivos")?.checked || false
+    };
+  
     return {
-      nombre: document.getElementById("nombreNegocio").value.trim(),
-      tipo: document.getElementById("tipoNegocio").value.trim(),
-      venta: document.querySelector('input[name="tipoVenta"]:checked')?.value || "",
-      especialidad: document.getElementById("especializacion").value.trim(),
-      clientes: document.querySelector('input[name="tipoCliente"]:checked')?.value || "",
-      ciudad: document.getElementById("ciudad").value.trim(),
-      objetivos,
-      tono: document.getElementById("tono").value.trim(),
-      estilo: document.getElementById("ejemploEstilo").value.trim(),
+      nombre: datosFormulario.nombre || "",                     // Récupéré plus haut
+      tipo: datosFormulario.tipo || "",                         // (MayIA seulement)
+      venta: datosFormulario.venta || "",                       // (MayIA)
+      especialidad: datosFormulario.servicios || "",            // (SofIA → renommé ici)
+      clientes: "clientes no definidos",                        // tu peux ajouter un champ
+      ciudad: datosFormulario.ciudad || "",
+      objetivos: datosFormulario.objetivos || [],
+      tono: datosFormulario.tono || "",
+      estilo: datosFormulario.ejemplo || "",
       faq: faqPairs,
-      productos: document.getElementById("productosList").value.trim().split("\n").filter(Boolean),
-      horarios: {
-        lunes: document.getElementById("lunes").value.trim(),
-        martes: document.getElementById("martes").value.trim(),
-        miercoles: document.getElementById("miercoles").value.trim(),
-        jueves: document.getElementById("jueves").value.trim(),
-        viernes: document.getElementById("viernes").value.trim(),
-        sabado: document.getElementById("sabado").value.trim(),
-        domingo: document.getElementById("domingo").value.trim(),
-        festivos: document.getElementById("trabajaFestivos").checked
-      },
-      web: document.getElementById("paginaWeb").value.trim(),
-      whatsapp: document.getElementById("whatsapp").value.trim()
+      productos: productos,
+      horarios: horarios,
+      web: document.getElementById("web")?.value.trim() || "",
+      whatsapp: document.getElementById("whatsapp")?.value.trim() || ""
     };
   }
+
   function construirTextoFinal(data) {
     return `
   I/ Información del Asistente
