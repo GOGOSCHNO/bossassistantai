@@ -194,7 +194,7 @@
   
   function siguientePaso() {
     if (currentStep === 1) {
-      // Étape 1 – Infos générales (adaptée selon l'assistant)
+      // Étape 1 – Infos générales
       if (selectedAssistant === "mayia") {
         datosFormulario.nombre = document.getElementById("nombreNegocioMayIA")?.value?.trim() || "";
         datosFormulario.venta = document.getElementById("productosVendidos")?.value?.trim() || "";
@@ -240,129 +240,13 @@
         </label>
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
-          <button class="btn" onclick="siguientePaso()">Siguiente</button>
+          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
         </div>
       `;
   
       document.querySelectorAll(".objetivo-option").forEach((opt) => {
         opt.addEventListener("click", () => opt.classList.toggle("selected"));
       });
-    }
-  
-    else if (currentStep === 2) {
-      // Étape 2 – Objectifs, style, FAQ rapide
-      const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected"))
-        .map(el => el.textContent.trim());
-  
-      const inputOtro = document.getElementById("inputOtro");
-      if (inputOtro?.value?.trim()) {
-        objetivosSeleccionados.push(inputOtro.value.trim());
-      }
-  
-      datosFormulario.objetivos = objetivosSeleccionados;
-      datosFormulario.tono = document.getElementById("tono")?.value?.trim() || "";
-      datosFormulario.ejemplo = document.getElementById("ejemplo")?.value?.trim() || "";
-  
-      const preguntas = document.getElementById("preguntas")?.value?.trim() || "";
-      datosFormulario.preguntas = preguntas.split("\n").filter(p => p.trim());
-  
-      currentStep = 3;
-      updateProgressBar(currentStep);
-  
-      dynamicContainer.innerHTML = `
-        <h3>❓ Preguntas frecuentes (FAQ)</h3>
-        <p>Añade las preguntas que suelen hacer tus clientes y cómo deseas que el asistente responda.</p>
-        <div id="faqContainer">
-          <div class="faq-item">
-            <label>Pregunta</label>
-            <input type="text" class="faq-pregunta" placeholder="Ej: ¿Cuánto cuesta el envío?" />
-            <label>Respuesta</label>
-            <input type="text" class="faq-respuesta" placeholder="Ej: El envío cuesta entre $8.000 y $12.000 según tu ciudad." />
-          </div>
-        </div>
-        <button class="btn ca-btn-outline" onclick="agregarFaq()">➕ Añadir otra pregunta</button>
-        <div style="margin-top: 30px;">
-          <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
-          <button class="btn" onclick="siguientePaso()">Siguiente</button>
-        </div>
-      `;
-    }
-  
-    else if (currentStep === 3) {
-      // Étape 3 – Produits/Services, horaires, contact
-      const servicios = document.querySelectorAll(".servicio");
-      datosFormulario.servicios = [];
-      servicios.forEach(serv => {
-        const nombre = serv.querySelector(".nombre-servicio")?.value?.trim() || "";
-        const precio = serv.querySelector(".precio-servicio")?.value?.trim() || "";
-        const descripcion = serv.querySelector(".descripcion-servicio")?.value?.trim() || "";
-        if (nombre) {
-          datosFormulario.servicios.push({ nombre, precio, descripcion });
-        }
-      });
-  
-      const dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
-      datosFormulario.horarios = {};
-      dias.forEach(dia => {
-        const input = document.getElementById(dia);
-        datosFormulario.horarios[dia] = input?.value?.trim() || "No definido";
-      });
-  
-      const chkFestivo = document.getElementById("chkFestivo") || document.getElementById("trabajaFestivos");
-      datosFormulario.diasFestivos = chkFestivo?.checked || false;
-  
-      datosFormulario.contacto = {
-        whatsapp: document.getElementById("whatsapp")?.value?.trim() || "",
-        email: document.getElementById("email")?.value?.trim() || "",
-        sitioWeb: document.getElementById("web")?.value?.trim() || ""
-      };
-  
-      currentStep = 4;
-      updateProgressBar(currentStep);
-  
-      dynamicContainer.innerHTML = `
-        <h3>🏪 Información del comercio</h3>
-        <div id="productosServiciosContainer">
-          <h4>Productos o servicios</h4>
-          <div class="producto-item">
-            <label>Nombre</label>
-            <input type="text" class="producto-nombre" placeholder="Ej: Facial hidratante, Hamburguesa..." />
-            <label>Precio</label>
-            <input type="text" class="producto-precio" placeholder="Ej: $35.000" />
-            <label>Descripción</label>
-            <input type="text" class="producto-descripcion" placeholder="Ej: Limpieza profunda y masaje facial" />
-          </div>
-        </div>
-        <button class="btn ca-btn-outline" onclick="agregarCampoExtra()">➕ Añadir campo personalizado</button>
-        <button class="btn ca-btn-outline" onclick="agregarProducto()">➕ Añadir otro producto o servicio</button>
-  
-        <div class="form-subsection">
-          <h4>⏰ Horarios de atención</h4>
-          ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => `
-            <label>${dia}</label>
-            <input type="text" id="${dia.toLowerCase()}" placeholder="Ej: 9:00 - 18:00 o Cerrado" />
-          `).join("")}
-          <label>
-            <input type="checkbox" id="trabajaFestivos" />
-            ¿Tu negocio abre en días festivos?
-          </label>
-        </div>
-  
-        <div class="form-subsection">
-          <h4>📞 Información de contacto</h4>
-          <label>WhatsApp</label>
-          <input type="text" id="whatsapp" placeholder="Ej: +57 3001234567" />
-          <label>Email</label>
-          <input type="text" id="email" placeholder="Ej: contacto@tu-negocio.com" />
-          <label>Sitio web</label>
-          <input type="text" id="web" placeholder="Ej: www.tu-negocio.com" />
-        </div>
-  
-        <div style="margin-top: 30px;">
-          <button class="btn ca-btn-outline" onclick="volverPaso3()">← Regresar</button>
-          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
-        </div>
-      `;
     }
   }
 
