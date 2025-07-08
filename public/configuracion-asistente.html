@@ -240,12 +240,58 @@
         </label>
         <div style="margin-top: 30px;">
           <button class="btn ca-btn-outline" onclick="volverPaso1()">← Regresar</button>
-          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
+          <button class="btn" onclick="siguientePaso()">Siguiente</button>
         </div>
       `;
   
       document.querySelectorAll(".objetivo-option").forEach((opt) => {
         opt.addEventListener("click", () => opt.classList.toggle("selected"));
+      });
+    }
+  
+    else if (currentStep === 2) {
+      // Étape 2 – Sauvegarder les objectifs
+      const objetivosSeleccionados = Array.from(document.querySelectorAll(".objetivo-option.selected"))
+        .map(el => el.textContent.trim());
+      const inputOtro = document.getElementById("inputOtro")?.value?.trim();
+      if (inputOtro) objetivosSeleccionados.push(inputOtro);
+  
+      datosFormulario.objetivos = objetivosSeleccionados;
+  
+      currentStep = 3;
+      updateProgressBar(currentStep);
+  
+      dynamicContainer.innerHTML = `
+        <h3>🎙️ ¿Qué tono deseas para tu asistente?</h3>
+        <p>Elige un estilo de comunicación que represente mejor a tu negocio.</p>
+        <div class="assistant-selection" id="tonoSeleccion">
+          <div class="assistant-option" data-tono="Muy formal">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ton%20muy%20formal.png" alt="Muy formal">
+          </div>
+          <div class="assistant-option" data-tono="Formal">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ton%20formal.png" alt="Formal">
+          </div>
+          <div class="assistant-option" data-tono="Amigable">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ton%20amigable.png" alt="Amigable">
+          </div>
+          <div class="assistant-option" data-tono="Muy amigable">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ton%20muy%20amigable.png" alt="Muy amigable">
+          </div>
+        </div>
+  
+        <div style="margin-top: 30px;">
+          <button class="btn ca-btn-outline" onclick="volverPaso2()">← Regresar</button>
+          <button class="btn" onclick="finalizarFormulario()">Finalizar configuración</button>
+        </div>
+      `;
+  
+      // Gestion de la sélection du ton
+      document.querySelectorAll('#tonoSeleccion .assistant-option').forEach(option => {
+        option.addEventListener('click', () => {
+          document.querySelectorAll('#tonoSeleccion .assistant-option').forEach(el => el.classList.remove('selected'));
+          option.classList.add('selected');
+          datosFormulario.tono = option.getAttribute("data-tono");
+        });
       });
     }
   }
