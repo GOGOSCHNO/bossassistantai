@@ -1181,10 +1181,14 @@ app.post('/api/configurar-instrucciones', async (req, res) => {
     await openai.beta.assistants.update(assistantId, { instructions });
 
     // 2. Enregistrement des données brutes en base
-    await db.collection("form_data").updateOne(
-      { email: decoded.email },  // tu peux aussi utiliser user.email
-      { $set: { rawData, updatedAt: new Date() } },
-      { upsert: true }
+    await db.collection("users").updateOne(
+      { email: decoded.email },
+      {
+        $set: {
+          configuracion_asistente: rawData,
+          updatedAt: new Date()
+        }
+      }
     );
 
     res.json({ success: true });
