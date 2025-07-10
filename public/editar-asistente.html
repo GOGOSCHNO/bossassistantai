@@ -99,7 +99,42 @@
         console.error(err);
       }
     });
-
+    function construirTextoFinal(data) {
+      return `
+    I/ Información del Asistente
+    I.i/ Contexto
+    ${data.nombre} es un negocio de ${data.tipo} y que vende ${data.venta}. 
+    ${data.nombre} está especializado en la venta de ${data.especialidad}.
+    Los clientes son principalmente ${data.clientes || "clientes no definidos"}.
+    ${data.nombre} se encuentra en ${data.ciudad}.
+    
+    I.ii/ Objetivos
+    Los objetivos principales de ${data.nombre} son:
+    ${data.objetivos.map(o => "- " + o).join("\n")}
+    
+    I.iii/ Estilo de comunicación
+    El estilo de comunicación de ${data.nombre} es:
+    Tono: ${data.tono}
+    Ejemplo: ${data.estilo || "No especificado"}
+    
+    III/ Información del comercio
+    III.i/ Página web: ${data.web}
+    III.ii/ Número de WhatsApp: ${data.whatsapp}
+    
+    IV/ Notas Internas para Clasificación de Conversaciones
+    Después de cada respuesta dirigida al cliente, debes agregar una nota interna de toda la conversación estructurada que no será visible para el cliente, pero será utilizada para clasificar la conversación en el sistema.
+    
+    Esta nota debe seguir el siguiente formato exacto:
+    
+    --- Nota interna ---
+    Resumen: [Una frase breve que resuma el propósito de la conversación]
+    Estado: [Una de las siguientes opciones: Acción requerida / Nada que hacer / Conversación informativa / Potencial cliente / Seguimiento recomendado]
+    ---------------------
+    
+    📌 Importante: Esta nota debe ir al final del mensaje, después de responder al cliente.
+    ⚠️ No incluyas esta nota en el mensaje de WhatsApp al cliente. El sistema la detectará automáticamente para uso interno.
+    `.trim();
+    }
     async function guardarCambios() {
       const rawData = {
         nombre: document.getElementById("nombre").value.trim(),
@@ -110,21 +145,26 @@
         objetivos: document.getElementById("objetivos").value.split(",").map(x => x.trim()).filter(Boolean),
         tono: document.getElementById("tono").value.trim(),
         web: document.getElementById("web").value.trim(),
-        whatsapp: document.getElementById("whatsapp").value.trim()
+        whatsapp: document.getElementById("whatsapp").value.trim(),
+        clientes: "clientes no definidos",       // Tu peux rendre cela dynamique plus tard
+        estilo: "",                              // Pour l’instant vide, à rendre éditable si besoin
+        faq: [],
+        productos: [],
+        horarios: {
+          lunes: "", martes: "", miercoles: "", jueves: "", viernes: "", sabado: "", domingo: "",
+          festivos: false
+        }
       };
-
-      const instructions = "Instrucciones actualizadas del asistente:\n" +
-        `Nombre: ${rawData.nombre}\nTipo: ${rawData.tipo}\nVenta: ${rawData.venta}\n` +
-        `Especialidad: ${rawData.especialidad}\nCiudad: ${rawData.ciudad}\n` +
-        `Objetivos: ${rawData.objetivos.join(", ")}\nTono: ${rawData.tono}`;
-
+    
+      const instructions = construirTextoFinal(rawData);
+    
       const res = await fetch("/api/configurar-instrucciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ instructions, rawData })
       });
-
+    
       if (res.ok) {
         alert("✅ Cambios guardados con éxito");
         window.location.href = "dashboard.html";
