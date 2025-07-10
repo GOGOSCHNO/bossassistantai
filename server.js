@@ -1249,7 +1249,7 @@ app.post("/api/enviar-recordatorio", async (req, res) => {
             { type: "text", text: nombre }, // {{1}}
             { type: "text", text: fecha },  // {{2}}
             { type: "text", text: hora },   // {{3}}
-            { type: "text", text: "" }      // {{4}} = vide
+            { type: "text", text: " " }      // {{4}} = vide
           ]
         }
       ]
