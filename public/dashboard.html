@@ -67,6 +67,7 @@
     </footer>
   </div>
   <script>
+    let selectedUserNumber = null;
     let allConversations = [];
   
     async function loadUserName() {
@@ -124,6 +125,7 @@
   
     function displayConversation(index) {
       const conv = allConversations[index];
+      selectedUserNumber = conv.userNumber; // ✅ mémorise le numéro sélectionné
       const messagesDiv = document.getElementById("conversationMessages");
       const estadoSpan = document.getElementById("estadoInfo");
       const resumenSpan = document.getElementById("resumenInfo");
@@ -172,9 +174,7 @@
         return;
       }
     
-      const userNumber = allConversations.find(c => 
-        c.userNumber === document.querySelector(".conversation-item.active")?.textContent
-      )?.userNumber;
+      const userNumber = selectedUserNumber;
     
       if (!userNumber) {
         alert("❌ No se pudo determinar el número del cliente.");
