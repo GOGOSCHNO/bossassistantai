@@ -1198,3 +1198,24 @@ app.post('/api/configurar-instrucciones', async (req, res) => {
   }
 });
 
+app.get("/api/formulario", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const email = decoded.email;
+
+    const doc = await db.collection("form_data").findOne({ email });
+
+    if (!doc) {
+      return res.status(404).json({ error: "No se encontraron datos del formulario" });
+    }
+
+    res.json({ rawData: doc.rawData || {} });
+  } catch (err) {
+    console.error("❌ Error en /api/formulario:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
