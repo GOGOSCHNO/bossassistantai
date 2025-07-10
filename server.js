@@ -1218,4 +1218,50 @@ app.get("/api/formulario", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+app.post("/api/enviar-recordatorio", async (req, res) => {
+  const { nombre, fecha, hora, numero } = req.body;
 
+  if (!nombre || !fecha || !hora || !numero) {
+    return res.status(400).json({ error: "Faltan datos obligatorios." });
+  }
+
+  const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
+    "Content-Type": "application/json"
+  };
+
+  const messageData = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: numero,
+    type: "template",
+    template: {
+      name: "recordatorio", // ✅ Ton modèle Meta validé
+      language: {
+        policy: "deterministic",
+        code: "es"
+      },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: nombre }, // {{1}}
+            { type: "text", text: fecha },  // {{2}}
+            { type: "text", text: hora },   // {{3}}
+            { type: "text", text: "" }      // {{4}} = vide
+          ]
+        }
+      ]
+    }
+  };
+
+  try {
+    await axios.post(apiUrl, messageData, { headers });
+    console.log(`✅ Recordatorio enviado a ${numero}`);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Error al enviar recordatorio:", err.response?.data || err.message);
+    res.status(500).json({ error: "Error al enviar recordatorio." });
+  }
+});
