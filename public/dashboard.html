@@ -161,6 +161,42 @@
   
     loadUserName();
     loadConversations();
+    
+    document.getElementById("btnRecordatorio").addEventListener("click", async () => {
+      const nombre = document.getElementById("appointmentName").textContent.trim();
+      const fecha = document.getElementById("appointmentDate").textContent.trim();
+      const hora = document.getElementById("appointmentTime").textContent.trim();
+    
+      if (!nombre || !fecha || !hora) {
+        alert("⚠️ No hay cita registrada para este cliente.");
+        return;
+      }
+    
+      const userNumber = allConversations.find(c => 
+        c.userNumber === document.querySelector(".conversation-item.active")?.textContent
+      )?.userNumber;
+    
+      if (!userNumber) {
+        alert("❌ No se pudo determinar el número del cliente.");
+        return;
+      }
+    
+      const res = await fetch("/api/enviar-recordatorio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          nombre, fecha, hora, numero: userNumber
+        })
+      });
+    
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ Recordatorio enviado con éxito.");
+      } else {
+        alert("❌ Error al enviar el recordatorio: " + (data.error || "Desconocido"));
+      }
+    });
     function getEstadoClassForList(status) {
       switch (status?.toLowerCase()) {
         case "potencial cliente": return "estado-potencial";
