@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Asistente – Comercio AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="comercioai.css">
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" type="image/x-icon">
+</head>
+<body>
+  <div class="overlay">
+    <header class="ca-header">
+      <div class="ca-header-3col">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <nav class="ca-header-center">
+          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
+          <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
+        </nav>
+        <div id="auth-buttons" class="ca-header-right"></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="form-container">
+        <h2>✏️ Editar configuración del asistente</h2>
+
+        <label for="nombre">Nombre del negocio</label>
+        <input type="text" id="nombre">
+
+        <label for="tipo">Tipo de negocio</label>
+        <input type="text" id="tipo">
+
+        <label for="venta">¿Qué vendes?</label>
+        <input type="text" id="venta">
+
+        <label for="especialidad">Especialidad / Servicios</label>
+        <input type="text" id="especialidad">
+
+        <label for="ciudad">Ciudad</label>
+        <input type="text" id="ciudad">
+
+        <label for="objetivos">Objetivos del asistente (separados por coma)</label>
+        <input type="text" id="objetivos">
+
+        <label for="tono">Tono del asistente</label>
+        <input type="text" id="tono">
+
+        <label for="web">Página web</label>
+        <input type="text" id="web">
+
+        <label for="whatsapp">Número WhatsApp</label>
+        <input type="text" id="whatsapp">
+
+        <button class="btn" onclick="guardarCambios()">Guardar cambios</button>
+      </div>
+    </main>
+
+    <footer class="ca-footer">
+      &copy; 2025 Comercio AI – Todos los derechos reservados.
+      <a href="contacto.html">Contáctanos</a>
+      <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+    </footer>
+  </div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        if (!res.ok) throw new Error("No autenticado");
+        const user = await res.json();
+
+        const rawDataRes = await fetch("/api/formulario", {
+          method: "GET",
+          credentials: "include"
+        });
+
+        const data = await rawDataRes.json();
+        const raw = data.rawData || {};
+
+        document.getElementById("nombre").value = raw.nombre || "";
+        document.getElementById("tipo").value = raw.tipo || "";
+        document.getElementById("venta").value = raw.venta || "";
+        document.getElementById("especialidad").value = raw.especialidad || "";
+        document.getElementById("ciudad").value = raw.ciudad || "";
+        document.getElementById("objetivos").value = (raw.objetivos || []).join(", ");
+        document.getElementById("tono").value = raw.tono || "";
+        document.getElementById("web").value = raw.web || "";
+        document.getElementById("whatsapp").value = raw.whatsapp || "";
+
+      } catch (err) {
+        alert("⚠️ Error cargando los datos del asistente");
+        console.error(err);
+      }
+    });
+
+    async function guardarCambios() {
+      const rawData = {
+        nombre: document.getElementById("nombre").value.trim(),
+        tipo: document.getElementById("tipo").value.trim(),
+        venta: document.getElementById("venta").value.trim(),
+        especialidad: document.getElementById("especialidad").value.trim(),
+        ciudad: document.getElementById("ciudad").value.trim(),
+        objetivos: document.getElementById("objetivos").value.split(",").map(x => x.trim()).filter(Boolean),
+        tono: document.getElementById("tono").value.trim(),
+        web: document.getElementById("web").value.trim(),
+        whatsapp: document.getElementById("whatsapp").value.trim()
+      };
+
+      const instructions = "Instrucciones actualizadas del asistente:\n" +
+        `Nombre: ${rawData.nombre}\nTipo: ${rawData.tipo}\nVenta: ${rawData.venta}\n` +
+        `Especialidad: ${rawData.especialidad}\nCiudad: ${rawData.ciudad}\n` +
+        `Objetivos: ${rawData.objetivos.join(", ")}\nTono: ${rawData.tono}`;
+
+      const res = await fetch("/api/configurar-instrucciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ instructions, rawData })
+      });
+
+      if (res.ok) {
+        alert("✅ Cambios guardados con éxito");
+        window.location.href = "dashboard.html";
+      } else {
+        alert("❌ Error guardando los cambios");
+      }
+    }
+  </script>
+</body>
+</html>
