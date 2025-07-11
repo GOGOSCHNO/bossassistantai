@@ -1265,3 +1265,42 @@ app.post("/api/enviar-recordatorio", async (req, res) => {
     res.status(500).json({ error: "Error al enviar recordatorio." });
   }
 });
+app.get("/api/auto-reply-status", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    res.json({ autoReplyEnabled: user.autoReplyEnabled !== false }); // true par défaut
+  } catch (err) {
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+app.post("/api/auto-reply-toggle", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  const { autoReplyEnabled } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    await db.collection("users").updateOne(
+      { email: decoded.email },
+      { $set: { autoReplyEnabled: !!autoReplyEnabled } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error al actualizar autoReplyEnabled:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
