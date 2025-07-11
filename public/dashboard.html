@@ -26,7 +26,16 @@
         <div id="auth-buttons" class="ca-header-right"></div>
       </div>
     </header>
-
+    <div style="display: flex; justify-content: center; align-items: center; margin-top: 1rem;">
+      <div class="auto-reply-toggle" style="text-align: center;">
+        <h3>🤖 Respuestas automáticas del asistente</h3>
+        <label class="switch">
+          <input type="checkbox" id="autoReplySwitch">
+          <span class="slider round"></span>
+        </label>
+        <p id="autoReplyStatus" style="margin-top: 6px;">Cargando estado...</p>
+      </div>
+    </div>
     <main>
       <div class="dashboard-wrapper">
         <!-- Section 1: Liste des conversations -->
