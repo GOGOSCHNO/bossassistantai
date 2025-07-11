@@ -272,6 +272,10 @@
         console.error("Error cargando el estado autoReply:", err);
       }
     }
+    // 🔁 Appel automatique après chargement de la page
+    document.addEventListener("DOMContentLoaded", () => {
+      cargarEstadoAutoReply();
+    });
   </script>
 </body>
 </html>
