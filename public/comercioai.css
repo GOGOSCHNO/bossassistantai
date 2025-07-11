@@ -254,6 +254,10 @@ label {
   background-color: rgba(200, 200, 200, 0.2);
   border-left: 4px solid #aaa;
 }
+.estado-agendada {
+  background-color: rgba(200, 200, 200, 0.25);
+  border-left: 4px solid #FFFF00;
+}
 /* ======== DASHBOARD CRM LAYOUT ======== */
 
 .dashboard-wrapper {
