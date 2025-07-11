@@ -217,6 +217,61 @@
         default: return "";
       }
     }
+    async function cargarEstadoAutoReply() {
+      try {
+        const res = await fetch("/api/auto-reply-status", {
+          credentials: "include"
+        });
+        const data = await res.json();
+    
+        if (res.ok) {
+          const switchInput = document.getElementById("autoReplySwitch");
+          const statusText = document.getElementById("autoReplyStatus");
+          const title = document.getElementById("autoReplyTitle");
+    
+          // 🔁 Fonction pour appliquer les styles
+          function actualizarVisual(autoReplyEnabled) {
+            if (autoReplyEnabled) {
+              statusText.textContent = "on";
+              statusText.classList.remove("auto-reply-off");
+              statusText.classList.add("auto-reply-on");
+              title.classList.remove("auto-reply-off");
+              title.classList.add("auto-reply-on");
+            } else {
+              statusText.textContent = "off";
+              statusText.classList.remove("auto-reply-on");
+              statusText.classList.add("auto-reply-off");
+              title.classList.remove("auto-reply-on");
+              title.classList.add("auto-reply-off");
+            }
+          }
+    
+          // Initialisation
+          switchInput.checked = data.autoReplyEnabled;
+          actualizarVisual(data.autoReplyEnabled);
+    
+          // Listener de changement
+          switchInput.addEventListener("change", async () => {
+            const nuevoEstado = switchInput.checked;
+            const updateRes = await fetch("/api/auto-reply-toggle", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ autoReplyEnabled: nuevoEstado })
+            });
+    
+            if (updateRes.ok) {
+              actualizarVisual(nuevoEstado);
+            } else {
+              alert("❌ Error actualizando el estado");
+              switchInput.checked = !nuevoEstado; // revertir
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Error cargando el estado autoReply:", err);
+      }
+    }
   </script>
 </body>
 </html>
