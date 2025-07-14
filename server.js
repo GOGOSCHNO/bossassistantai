@@ -230,21 +230,25 @@ transporter.verify(function(error, success) {
 
 // Fonction pour récupérer ou créer un thread
 async function getOrCreateThreadId(userNumber) {
-  try {
-    const collection = db.collection('threads');
-    let thread = await collection.findOne({ userNumber });
-    if (!thread) {
-      const threadResponse = await openai.beta.threads.create();
-      const threadId = threadResponse.id;
+  const existingThread = await db.collection("threads").findOne({ userNumber });
 
-      await collection.insertOne({ userNumber, threadId, responses: [] });
-      return threadId;
-    }
-    return thread.threadId;
-  } catch (error) {
-    console.error('Erreur lors de la récupération ou création du thread:', error);
-    throw error;
+  // ⚠️ Si threadId = "na", on en génère un nouveau
+  if (existingThread && existingThread.threadId !== "na") {
+    return existingThread.threadId;
   }
+
+  const threadId = `thread_${uuidv4()}`; // Utilise uuid (n'oublie pas de l'importer si besoin)
+
+  await db.collection("threads").updateOne(
+    { userNumber },
+    {
+      $set: { threadId },
+      $setOnInsert: { responses: [] }
+    },
+    { upsert: true }
+  );
+
+  return threadId;
 }
 
 // Fonction pour interagir avec OpenAI
@@ -764,42 +768,32 @@ async function sendResponseToWhatsApp(response, userNumber) {
   }
 }
 
-app.post('/whatsapp', async (req, res) => {
-  // 📩 Requête reçue : log simplifié
+app.post("/whatsapp", async (req, res) => {
   try {
-    // 📌 Déclaration variables
-    const entry = req.body?.entry?.[0];
+    const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
     const value = changes?.value;
-    const field = changes?.field;
-  
-    // 🚫 Ignorer si ce n'est pas un message entrant
-    if (field !== "messages" || !value.messages || !value.messages[0]) {
-      return res.status(200).send("Pas un message entrant à traiter.");
-    }
-  
-    // 📌 Déclaration message
-    const message = value.messages[0];
-    const from = message.from; // numéro du client
-    const messageId = message.id; // ID unique du message
-    const name = value.contacts?.[0]?.profile?.name || "Inconnu";
-    const body = message?.text?.body || "🟡 Aucun contenu texte";
-  
-    // ✅ Log propre et lisible
-    console.log(`📥 Message reçu de ${name} (${from}) : "${body}"`);
+    const messages = value?.messages;
 
-    // ✅ Vérifier si ce message a déjà été traité
+    if (!messages || messages.length === 0) return res.sendStatus(200);
+
+    const message = messages[0];
+    const userNumber = message.from;
+    const messageId = message.id;
+
+    // ✅ 1. Vérification anti-doublon
     const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
     if (alreadyProcessed) {
       console.log("⚠️ Message déjà traité, on ignore :", messageId);
       return res.status(200).send("Message déjà traité.");
     }
+
     await db.collection('processedMessages').insertOne({
       messageId,
       createdAt: new Date()
     });
 
-    // 🧠 Extraire le contenu utilisateur
+    // ✅ 2. Extraction propre du message selon le type
     let userMessage = '';
     if (message.type === 'text' && message.text.body) {
       userMessage = message.text.body.trim();
@@ -815,14 +809,39 @@ app.post('/whatsapp', async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 🔄 Envoyer le message à handleMessage (qui appelle OpenAI + répond au client)
-    await handleMessage(userMessage, from);
+    // ✅ 3. Récupération ou création du thread avec threadId valide
+    const threadId = await getOrCreateThreadId(userNumber);
 
-    res.status(200).send('Message reçu et en cours de traitement.');
+    // ✅ 4. Enregistrement du message du client dans le thread
+    await db.collection("threads").updateOne(
+      { userNumber },
+      {
+        $set: { threadId },
+        $push: {
+          responses: {
+            userMessage,
+            timestamp: new Date(),
+            assistantResponse: null
+          }
+        }
+      }
+    );
 
-  } catch (error) {
-    console.error("❌ Erreur lors du traitement du message WhatsApp :", error);
-    res.status(500).json({ error: "Erreur serveur." });
+    // ✅ 5. Vérification de l'état de l'assistant via l'assistant_id
+    const userDoc = await db.collection("users").findOne({ assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I" });
+
+    if (!userDoc || userDoc.autoReplyEnabled === false) {
+      console.log("⛔️ Assistant désactivé pour ce commerçant – aucun traitement.");
+      return res.sendStatus(200);
+    }
+
+    // ✅ 6. Assistant activé → traitement normal
+    await handleMessage(userMessage, userNumber);
+    res.sendStatus(200);
+
+  } catch (err) {
+    console.error("❌ Erreur dans /whatsapp :", err);
+    res.sendStatus(500);
   }
 });
 
