@@ -27,7 +27,8 @@
     "openai": "^4.38.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "twilio": "^5.4.2"
+    "twilio": "^5.4.2",
+    "uuid": "^9.0.1"
   },
   "engines": {
     "node": "20.x"
