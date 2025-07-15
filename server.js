@@ -78,7 +78,6 @@ async function handleMessage(userMessage, userNumber) {
   messageQueue.get(userNumber).push(userMessage);
   console.log(`🧾 Message ajouté à la file pour ${userNumber} : "${userMessage}"`);
 
-  // Si un traitement est déjà en cours, on ne relance rien
   if (locks.get(userNumber)) return;
 
   locks.set(userNumber, true);
@@ -86,66 +85,62 @@ async function handleMessage(userMessage, userNumber) {
 
   try {
     const initialQueue = [...messageQueue.get(userNumber)];
+    console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
     messageQueue.set(userNumber, []);
+
     const combinedMessage = initialQueue.join(". ");
 
+    // 🕐 Générer le timestamp unique lié à ce message utilisateur
+    const messageTimestamp = new Date();
+
+    // 🗃️ Enregistrer d’abord le message utilisateur avec assistantResponse null
+    await db.collection('threads').updateOne(
+      { userNumber },
+      {
+        $push: {
+          responses: {
+            userMessage: combinedMessage,
+            assistantResponse: null,
+            timestamp: messageTimestamp
+          }
+        }
+      },
+      { upsert: true }
+    );
+
+    // 🤖 Interaction avec l’assistant
     const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
+    console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
+    console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
     activeRuns.set(userNumber, { threadId, runId });
 
     const newMessages = messageQueue.get(userNumber) || [];
     if (newMessages.length > 0) {
+      console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
       messageQueue.set(userNumber, [...initialQueue, ...newMessages]);
       locks.set(userNumber, false);
       return await handleMessage("", userNumber);
     }
 
     const messages = await pollForCompletion(threadId, runId);
+    console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
     await sendResponseToWhatsApp(messages, userNumber);
 
-    // 🔄 Mise à jour du dernier message sans assistantResponse
-    const lastResponse = await db.collection('threads').findOne(
-      { userNumber },
-      { projection: { responses: { $slice: -1 } } }
+    // 🔁 Mettre à jour l’entrée précédente (assistantResponse: null) avec la réponse
+    await db.collection('threads').updateOne(
+      { userNumber, "responses.timestamp": messageTimestamp },
+      {
+        $set: {
+          "responses.$.assistantResponse": {
+            text: messages.text,
+            note: messages.note
+          },
+          threadId
+        }
+      }
     );
 
-    const responses = lastResponse?.responses || [];
-    const lastIndex = responses.length - 1;
-    const lastEntry = responses[lastIndex];
-
-    if (lastEntry && lastEntry.assistantResponse === null) {
-      const updateField = {};
-      updateField[`responses.${lastIndex}.assistantResponse`] = {
-        text: messages.text,
-        note: messages.note
-      };
-      updateField[`responses.${lastIndex}.timestamp`] = new Date();
-
-      await db.collection('threads').updateOne(
-        { userNumber },
-        { $set: updateField }
-      );
-      console.log("🗃️ Dernier message mis à jour avec réponse assistant.");
-    } else {
-      // 🔁 Si pas de message à compléter, créer une nouvelle entrée
-      await db.collection('threads').updateOne(
-        { userNumber },
-        {
-          $set: { threadId },
-          $push: {
-            responses: {
-              userMessage: combinedMessage,
-              assistantResponse: {
-                text: messages.text,
-                note: messages.note
-              },
-              timestamp: new Date()
-            }
-          }
-        },
-        { upsert: true }
-      );
-      console.log("🗃️ Nouvelle réponse enregistrée.");
-    }
+    console.log("🗃️ Réponse enregistrée dans MongoDB pour", userNumber);
 
   } catch (error) {
     console.error("❌ Erreur dans handleMessage :", error);
@@ -158,9 +153,11 @@ async function handleMessage(userMessage, userNumber) {
       const next = remaining.shift();
       messageQueue.set(userNumber, [next, ...remaining]);
       await handleMessage("", userNumber);
+      console.log(`➡️ Message restant détecté, relance de handleMessage() pour ${userNumber}`);
     }
   }
 }
+
 
 app.use(cors({
   origin: function (origin, callback) {
