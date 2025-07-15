@@ -231,25 +231,24 @@ transporter.verify(function(error, success) {
 
 // Fonction pour récupérer ou créer un thread
 async function getOrCreateThreadId(userNumber) {
-  const existingThread = await db.collection("threads").findOne({ userNumber });
+  const existing = await db.collection("threads").findOne({ userNumber });
 
-  // ⚠️ Si threadId = "na", on en génère un nouveau
-  if (existingThread && existingThread.threadId !== "na") {
-    return existingThread.threadId;
+  // Si un thread OpenAI est déjà associé
+  if (existing && existing.threadId && existing.threadId !== "na") {
+    return existing.threadId;
   }
 
-  const threadId = `thread_${uuidv4()}`; // Utilise uuid (n'oublie pas de l'importer si besoin)
+  // Sinon, on crée un nouveau thread sur OpenAI
+  const thread = await openai.beta.threads.create();
+  const newThreadId = thread.id;
 
+  // On met à jour MongoDB avec le vrai threadId
   await db.collection("threads").updateOne(
     { userNumber },
-    {
-      $set: { threadId },
-      $setOnInsert: { responses: [] }
-    },
-    { upsert: true }
+    { $set: { threadId: newThreadId } }
   );
 
-  return threadId;
+  return newThreadId;
 }
 
 // Fonction pour interagir avec OpenAI
@@ -782,7 +781,7 @@ app.post("/whatsapp", async (req, res) => {
     const userNumber = message.from;
     const messageId = message.id;
 
-    // ✅ 1. Vérification anti-doublon
+    // ✅ 1. Anti-doublon
     const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
     if (alreadyProcessed) {
       console.log("⚠️ Message déjà traité, on ignore :", messageId);
@@ -794,7 +793,7 @@ app.post("/whatsapp", async (req, res) => {
       createdAt: new Date()
     });
 
-    // ✅ 2. Extraction propre du message selon le type
+    // ✅ 2. Extraction du message
     let userMessage = '';
     if (message.type === 'text' && message.text.body) {
       userMessage = message.text.body.trim();
@@ -810,33 +809,47 @@ app.post("/whatsapp", async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // ✅ 3. Récupération ou création du thread avec threadId valide
-    const threadId = await getOrCreateThreadId(userNumber);
+    // ✅ 3. Enregistrement du message dans MongoDB
+    const existingThread = await db.collection("threads").findOne({ userNumber });
 
-    // ✅ 4. Enregistrement du message du client dans le thread
-    await db.collection("threads").updateOne(
-      { userNumber },
-      {
-        $set: { threadId },
-        $push: {
-          responses: {
-            userMessage,
-            timestamp: new Date(),
-            assistantResponse: null
+    if (existingThread) {
+      // Ajouter dans le tableau `responses`
+      await db.collection("threads").updateOne(
+        { userNumber },
+        {
+          $push: {
+            responses: {
+              userMessage,
+              timestamp: new Date(),
+              assistantResponse: null
+            }
           }
         }
-      }
-    );
+      );
+    } else {
+      // Créer nouveau thread avec threadId "na"
+      await db.collection("threads").insertOne({
+        userNumber,
+        threadId: "na",
+        responses: [{
+          userMessage,
+          timestamp: new Date(),
+          assistantResponse: null
+        }]
+      });
+    }
 
-    // ✅ 5. Vérification de l'état de l'assistant via l'assistant_id
-    const userDoc = await db.collection("users").findOne({ assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I" });
+    // ✅ 4. Vérification assistant activé
+    const userDoc = await db.collection("users").findOne({
+      assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I"
+    });
 
     if (!userDoc || userDoc.autoReplyEnabled === false) {
-      console.log("⛔️ Assistant désactivé pour ce commerçant – aucun traitement.");
+      console.log("⛔️ Assistant désactivé – réponse automatique ignorée.");
       return res.sendStatus(200);
     }
 
-    // ✅ 6. Assistant activé → traitement normal
+    // ✅ 5. Assistant activé → traitement normal
     await handleMessage(userMessage, userNumber);
     res.sendStatus(200);
 
