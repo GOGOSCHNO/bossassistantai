@@ -86,34 +86,15 @@ async function handleMessage(userMessage, userNumber) {
   try {
     const initialQueue = [...messageQueue.get(userNumber)];
     console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
-    messageQueue.set(userNumber, []);
+    messageQueue.set(userNumber, []); // vider temporairement
 
     const combinedMessage = initialQueue.join(". ");
-
-    // 🕐 Générer le timestamp unique lié à ce message utilisateur
-    const messageTimestamp = new Date();
-
-    // 🗃️ Enregistrer d’abord le message utilisateur avec assistantResponse null
-    await db.collection('threads').updateOne(
-      { userNumber },
-      {
-        $push: {
-          responses: {
-            userMessage: combinedMessage,
-            assistantResponse: null,
-            timestamp: messageTimestamp
-          }
-        }
-      },
-      { upsert: true }
-    );
-
-    // 🤖 Interaction avec l’assistant
     const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
     console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
     console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
     activeRuns.set(userNumber, { threadId, runId });
 
+    // Vérifier si de nouveaux messages sont arrivés pendant le run
     const newMessages = messageQueue.get(userNumber) || [];
     if (newMessages.length > 0) {
       console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
@@ -126,22 +107,26 @@ async function handleMessage(userMessage, userNumber) {
     console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
     await sendResponseToWhatsApp(messages, userNumber);
 
-    // 🔁 Mettre à jour l’entrée précédente (assistantResponse: null) avec la réponse
+    // Enregistrement dynamique de la réponse de l’assistant
     await db.collection('threads').updateOne(
-      { userNumber, "responses.timestamp": messageTimestamp },
+      { userNumber },
       {
-        $set: {
-          "responses.$.assistantResponse": {
-            text: messages.text,
-            note: messages.note
-          },
-          threadId
-        }
+        $push: {
+          responses: {
+            assistantResponse: {
+              text: messages.text,
+              note: {
+                summary: messages.note?.summary || null,
+                status: messages.note?.status || null
+              },
+              timestamp: new Date()
+            }
+          }
+        },
+        $set: { threadId }
       }
     );
-
-    console.log("🗃️ Réponse enregistrée dans MongoDB pour", userNumber);
-
+    console.log("🗃️ Réponse de l’assistant enregistrée dans MongoDB pour", userNumber);
   } catch (error) {
     console.error("❌ Erreur dans handleMessage :", error);
   } finally {
@@ -157,7 +142,6 @@ async function handleMessage(userMessage, userNumber) {
     }
   }
 }
-
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -783,32 +767,25 @@ async function sendResponseToWhatsApp(response, userNumber) {
   }
 }
 
-app.post("/whatsapp", async (req, res) => {
+app.post('/whatsapp', async (req, res) => {
   try {
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const messages = value?.messages;
+    const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    if (!entry) return res.sendStatus(200);
 
-    if (!messages || messages.length === 0) return res.sendStatus(200);
-
-    const message = messages[0];
+    const message = entry;
     const userNumber = message.from;
     const messageId = message.id;
 
-    // ✅ 1. Anti-doublon
+    // 🔄 Vérifier si le message a déjà été traité
     const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
     if (alreadyProcessed) {
       console.log("⚠️ Message déjà traité, on ignore :", messageId);
       return res.status(200).send("Message déjà traité.");
     }
 
-    await db.collection('processedMessages').insertOne({
-      messageId,
-      createdAt: new Date()
-    });
+    await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
 
-    // ✅ 2. Extraction du message
+    // 🧠 Extraire le contenu utilisateur
     let userMessage = '';
     if (message.type === 'text' && message.text.body) {
       userMessage = message.text.body.trim();
@@ -824,52 +801,35 @@ app.post("/whatsapp", async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // ✅ 3. Enregistrement du message dans MongoDB
-    const existingThread = await db.collection("threads").findOne({ userNumber });
-
-    if (existingThread) {
-      // Ajouter dans le tableau `responses`
-      await db.collection("threads").updateOne(
-        { userNumber },
-        {
-          $push: {
-            responses: {
-              userMessage,
-              timestamp: new Date(),
-              assistantResponse: null
-            }
+    // 🧾 Enregistrer le message utilisateur seul
+    await db.collection('threads').updateOne(
+      { userNumber },
+      {
+        $setOnInsert: { threadId: 'na' },
+        $push: {
+          responses: {
+            userMessage,
+            timestamp: new Date()
           }
         }
-      );
-    } else {
-      // Créer nouveau thread avec threadId "na"
-      await db.collection("threads").insertOne({
-        userNumber,
-        threadId: "na",
-        responses: [{
-          userMessage,
-          timestamp: new Date(),
-          assistantResponse: null
-        }]
-      });
-    }
+      },
+      { upsert: true }
+    );
+    console.log("🗃️ Message utilisateur enregistré pour", userNumber);
 
-    // ✅ 4. Vérification assistant activé
-    const userDoc = await db.collection("users").findOne({
-      assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I"
-    });
-
-    if (!userDoc || userDoc.autoReplyEnabled === false) {
-      console.log("⛔️ Assistant désactivé – réponse automatique ignorée.");
+    // 🔧 Vérifier l’état de l’assistant
+    const user = await db.collection('users').findOne({ assistant_id: entry?.metadata?.phone_number_id });
+    if (!user || user.autoReplyEnabled === false) {
+      console.log("⏹️ Assistant désactivé pour ce compte.");
       return res.sendStatus(200);
     }
 
-    // ✅ 5. Assistant activé → traitement normal
+    // ▶️ Appel au traitement complet
     await handleMessage(userMessage, userNumber);
-    res.sendStatus(200);
 
-  } catch (err) {
-    console.error("❌ Erreur dans /whatsapp :", err);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("❌ Erreur dans /whatsapp :", error);
     res.sendStatus(500);
   }
 });
