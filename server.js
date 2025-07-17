@@ -782,7 +782,6 @@ app.post('/whatsapp', async (req, res) => {
       console.log("⚠️ Message déjà traité, on ignore :", messageId);
       return res.status(200).send("Message déjà traité.");
     }
-
     await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
 
     // 🧠 Extraire le contenu utilisateur
@@ -801,7 +800,7 @@ app.post('/whatsapp', async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 🧾 Enregistrer le message utilisateur seul
+    // 🗃️ Enregistrement du message utilisateur (sans assistantResponse)
     await db.collection('threads').updateOne(
       { userNumber },
       {
@@ -817,14 +816,18 @@ app.post('/whatsapp', async (req, res) => {
     );
     console.log("🗃️ Message utilisateur enregistré pour", userNumber);
 
-    // 🔧 Vérifier l’état de l’assistant
-    const user = await db.collection('users').findOne({ assistant_id: entry?.metadata?.phone_number_id });
+    // ✅ assistant_id défini en dur ici
+    const assistantId = "asst_CWMnVSuxZscjzCB2KngUXn5I";
+
+    // 🔎 Recherche du user correspondant à cet assistant_id
+    const user = await db.collection('users').findOne({ assistant_id: assistantId });
+
     if (!user || user.autoReplyEnabled === false) {
       console.log("⏹️ Assistant désactivé pour ce compte.");
       return res.sendStatus(200);
     }
 
-    // ▶️ Appel au traitement complet
+    // ▶️ Traitement normal si assistant activé
     await handleMessage(userMessage, userNumber);
 
     res.sendStatus(200);
