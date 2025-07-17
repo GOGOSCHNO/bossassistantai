@@ -313,10 +313,8 @@ label {
   max-width: 100%;
 }
 .message-block {
-  background: rgba(255, 255, 255, 0.12);
   padding: 12px;
   border-radius: 8px;
-  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
 }
