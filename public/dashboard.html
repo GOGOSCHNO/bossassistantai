@@ -144,13 +144,13 @@
           return `
             <div class="message-block">
               <div class="message-client">${entry.userMessage}</div>
-              <div class="message-time">${new Date(entry.timestamp).toLocaleString("es-CO")}</div>
+              <div class="message-time">${entry.timestamp ? new Date(entry.timestamp).toLocaleString("es-CO") : ""}</div>
             </div>`;
         } else if (entry.assistantResponse) {
           return `
             <div class="message-block">
               <div class="message-assistant">${entry.assistantResponse.text || ""}</div>
-              <div class="message-time">${new Date(entry.timestamp).toLocaleString("es-CO")}</div>
+              <div class="message-time">${entry.timestamp ? new Date(entry.timestamp).toLocaleString("es-CO") : ""}</div>
             </div>`;
         } else {
           return "";
