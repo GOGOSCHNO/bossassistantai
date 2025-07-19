@@ -1315,3 +1315,33 @@ app.post("/api/auto-reply-toggle", async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 });
+app.post("/api/enviar-mensaje-manual", async (req, res) => {
+  const { numero, mensaje } = req.body;
+
+  if (!numero || !mensaje) {
+    return res.status(400).json({ error: "Número y mensaje requeridos." });
+  }
+
+  const apiUrl = `https://graph.facebook.com/v16.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const headers = {
+    Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
+    "Content-Type": "application/json"
+  };
+
+  const payload = {
+    messaging_product: "whatsapp",
+    to: numero,
+    type: "text",
+    text: { body: mensaje }
+  };
+
+  try {
+    await axios.post(apiUrl, payload, { headers });
+    console.log(`✅ Mensaje manual enviado a ${numero}`);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Error al enviar mensaje manual:", err.response?.data || err.message);
+    res.status(500).json({ error: "Error al enviar mensaje manual." });
+  }
+});
+
