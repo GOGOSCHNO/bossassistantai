@@ -1346,9 +1346,11 @@ app.post("/api/enviar-mensaje-manual", async (req, res) => {
       {
         $push: {
           responses: {
-            userMessage: mensaje,
-            fromComerciante: true,
-            timestamp: new Date()
+            assistantResponse: {
+              text: mensaje,
+              fromComerciante: true,
+              timestamp: new Date()
+            }
           }
         },
         $setOnInsert: { threadId: "na" }
