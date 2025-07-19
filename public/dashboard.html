@@ -48,6 +48,18 @@
         <section class="conversation-details">
           <h3>💬 Detalles de la conversación</h3>
           <div id="conversationMessages"></div>
+          <!-- 🟦 Bouton pour afficher la boîte d'envoi -->
+          <div id="mostrarMensajeManual" style="margin-top: 12px;">
+            <button id="btnMostrarMensajeManual" class="ca-btn ca-btn-outline">✍️ Enviar un mensaje</button>
+          </div>
+          
+          <!-- ✉️ Zone de message manuel (cachée par défaut) -->
+          <div id="manualMessageBox" style="display: none; margin-top: 1rem;">
+            <h4>✉️ Enviar mensaje manual</h4>
+            <textarea id="mensajeManual" placeholder="Escribe tu mensaje..." rows="3" style="width: 100%; border-radius: 8px; padding: 10px;"></textarea>
+            <button id="btnEnviarManual" class="ca-btn ca-btn-primary" style="margin-top: 8px;">Enviar por WhatsApp</button>
+            <p id="manualWarning" style="color: red; font-size: 0.85rem; display: none;">⚠️ No puedes enviar mensajes manuales si pasaron más de 24h desde el último mensaje del cliente.</p>
+          </div>
         </section>
 
         <!-- Section 3: Informations supplémentaires -->
@@ -285,6 +297,61 @@
     // 🔁 Appel automatique après chargement de la page
     document.addEventListener("DOMContentLoaded", () => {
       cargarEstadoAutoReply();
+    });
+    // 👉 Afficher la boîte de message manuel
+    document.getElementById("btnMostrarMensajeManual").addEventListener("click", () => {
+      document.getElementById("mostrarMensajeManual").style.display = "none";
+      document.getElementById("manualMessageBox").style.display = "block";
+    });
+    
+    // 👉 Envoi du message WhatsApp manuel
+    document.getElementById("btnEnviarManual").addEventListener("click", async () => {
+      const mensaje = document.getElementById("mensajeManual").value.trim();
+      if (!mensaje) {
+        alert("✋ Escribe un mensaje antes de enviarlo.");
+        return;
+      }
+    
+      if (!selectedUserNumber) {
+        alert("❌ Selecciona una conversación primero.");
+        return;
+      }
+    
+      // 🕐 Vérifie si le dernier message du client a moins de 24h
+      const conv = allConversations.find(c => c.userNumber === selectedUserNumber);
+      const lastUserMessage = [...conv.responses].reverse().find(r => r.userMessage);
+      const lastTime = new Date(lastUserMessage?.timestamp || 0);
+      const ahora = new Date();
+      const diffHoras = (ahora - lastTime) / (1000 * 60 * 60);
+    
+      if (diffHoras > 24) {
+        document.getElementById("manualWarning").style.display = "block";
+        return;
+      }
+    
+      try {
+        const res = await fetch("/api/enviar-mensaje-manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            numero: selectedUserNumber,
+            mensaje
+          })
+        });
+    
+        const data = await res.json();
+        if (res.ok) {
+          alert("✅ Mensaje enviado con éxito.");
+          document.getElementById("mensajeManual").value = "";
+          document.getElementById("manualWarning").style.display = "none";
+        } else {
+          alert("❌ Error al enviar mensaje: " + (data.error || "desconocido"));
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        alert("❌ Error de red al enviar el mensaje.");
+      }
     });
   </script>
 </body>
