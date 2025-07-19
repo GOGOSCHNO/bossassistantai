@@ -1336,8 +1336,27 @@ app.post("/api/enviar-mensaje-manual", async (req, res) => {
   };
 
   try {
+    // 1. 🟢 Envoi WhatsApp
     await axios.post(apiUrl, payload, { headers });
     console.log(`✅ Mensaje manual enviado a ${numero}`);
+
+    // 2. 🗃️ Enregistrement MongoDB
+    await db.collection("threads").updateOne(
+      { userNumber: numero },
+      {
+        $push: {
+          responses: {
+            userMessage: mensaje,
+            fromComerciante: true,
+            timestamp: new Date()
+          }
+        },
+        $setOnInsert: { threadId: "na" }
+      },
+      { upsert: true }
+    );
+    console.log("🗃️ Mensaje del comerciante guardado en MongoDB para", numero);
+
     res.status(200).json({ success: true });
   } catch (err) {
     console.error("❌ Error al enviar mensaje manual:", err.response?.data || err.message);
