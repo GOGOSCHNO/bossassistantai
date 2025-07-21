@@ -71,6 +71,19 @@ label {
 .form-subsection {
   margin-bottom: 40px;
 }
+#calendar {
+  max-width: 90%;
+  margin: 30px auto;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.2);
+}
+h2.agenda-title {
+  text-align: center;
+  margin-top: 2rem;
+  color: #4A90E2;
+}
 /* =============================== */
 /* === Header (3 parties Linear) ==*/
 /* =============================== */
