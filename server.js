@@ -1366,3 +1366,24 @@ app.post("/api/enviar-mensaje-manual", async (req, res) => {
   }
 });
 
+app.get('/api/mis-citas', async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user || !user.appointmentsCollection) {
+      return res.status(404).json({ error: "appointmentsCollection no definido para este usuario." });
+    }
+
+    const collectionName = user.appointmentsCollection;
+    const citas = await db.collection(collectionName).find({}).toArray();
+
+    res.json(citas);
+  } catch (err) {
+    console.error("❌ Error en /api/mis-citas:", err);
+    res.status(500).json({ error: "Error interno del servidor." });
+  }
+});
