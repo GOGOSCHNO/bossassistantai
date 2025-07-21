@@ -171,8 +171,12 @@
       
       // Scroll vers le bas après chargement des messages
       setTimeout(() => {
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }, 100);
+        const allMessages = messagesDiv.querySelectorAll(".message-block");
+        const lastMessage = allMessages[allMessages.length - 1];
+        if (lastMessage) {
+          lastMessage.scrollIntoView({ behavior: "auto", block: "end" });
+        }
+      }, 50);
       
       const lastAssistant = [...conv.responses].reverse().find(r => r.assistantResponse);
       resumenSpan.textContent = lastAssistant?.assistantResponse?.note?.summary || "---";
