@@ -134,7 +134,6 @@
           const lastAssistant = [...(conv.responses || [])].reverse().find(r => r.assistantResponse?.note?.status);
           const estado = (lastAssistant?.assistantResponse?.note?.status || "").toLowerCase();
           const estadoClass = getEstadoClassForList(estado);
-          const estadoClass = getEstadoClassForList(estado);
           li.className = `conversation-item ${estadoClass}`;
           li.textContent = conv.userNumber;
           li.addEventListener("click", () => displayConversation(index));
