@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda – Comercio AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="comercioai.css">
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png">
+</head>
+<body>
+  <div class="overlay">
+    <header class="ca-header">
+      <div class="ca-header-3col">
+        <div class="ca-header-left">
+          <a href="index.html" class="ca-logo-icon">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+          </a>
+          <a href="index.html" class="ca-logo-text-img">
+            <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+          </a>
+        </div>
+        <nav class="ca-header-center">
+          <a href="dashboard.html" class="ca-btn nav-btn">Dashboard</a>
+          <a href="editar-asistente.html" class="ca-btn nav-btn">Editar Asistente</a>
+        </nav>
+        <div id="auth-buttons" class="ca-header-right"></div>
+      </div>
+    </header>
+
+    <main>
+      <h2 class="agenda-title">📅 Agenda de tus Citas</h2>
+      <div id='calendar'></div>
+    </main>
+
+    <footer class="ca-footer">
+      &copy; 2025 Comercio AI – Todos los derechos reservados.
+      <a href="contacto.html">Contáctanos</a>
+      <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+      <a href="eliminar-datos.html" target="_blank">Eliminar mis datos</a>
+    </footer>
+  </div>
+
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      const calendarEl = document.getElementById('calendar');
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        locale: 'es',
+        events: await cargarEventos()
+      });
+
+      calendar.render();
+    });
+
+    async function cargarEventos() {
+      try {
+        const res = await fetch('/api/mis-citas', { credentials: 'include' });
+        const data = await res.json();
+        if (!Array.isArray(data)) return [];
+        return data.map(evt => ({
+          title: evt.customerName + ' – ' + evt.service,
+          start: evt.date + 'T' + evt.startTime,
+          end: evt.date + 'T' + evt.endTime
+        }));
+      } catch (err) {
+        console.error('❌ Error al cargar eventos:', err);
+        return [];
+      }
+    }
+  </script>
+</body>
+</html>
