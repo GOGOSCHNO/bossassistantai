@@ -168,7 +168,12 @@
           return "";
         }
       }).join("");
-  
+      
+      // Scroll vers le bas après chargement des messages
+      setTimeout(() => {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }, 100);
+      
       const lastAssistant = [...conv.responses].reverse().find(r => r.assistantResponse);
       resumenSpan.textContent = lastAssistant?.assistantResponse?.note?.summary || "---";
       estadoSpan.textContent = lastAssistant?.assistantResponse?.note?.status || "---";
