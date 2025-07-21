@@ -56,6 +56,15 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         locale: 'es',
+        
+        // 🔽 AJOUTE ICI L'ÉVÉNEMENT AU CLIC
+        eventClick: function(info) {
+          const numero = info.event.extendedProps.phoneNumber;
+          if (numero) {
+            window.location.href = `dashboard.html?phone=${encodeURIComponent(numero)}`;
+          }
+        },
+        
         events: await cargarEventos()
       });
 
@@ -70,7 +79,8 @@
         return data.map(evt => ({
           title: evt.customerName + ' – ' + evt.service,
           start: evt.date + 'T' + evt.startTime,
-          end: evt.date + 'T' + evt.endTime
+          end: evt.date + 'T' + evt.endTime,
+          phoneNumber: evt.phoneNumber // 👈 important
         }));
       } catch (err) {
         console.error('❌ Error al cargar eventos:', err);
