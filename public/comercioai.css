@@ -84,6 +84,26 @@ h2.agenda-title {
   margin-top: 2rem;
   color: #4A90E2;
 }
+/* Pour améliorer l'apparence du calendrier FullCalendar */
+.fc {
+  background-color: white;
+  border-radius: 12px;
+  padding: 10px;
+  color: #333;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.5rem;
+  color: #4A90E2;
+}
+
+.fc-daygrid-event {
+  background-color: #4A90E2;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
 /* =============================== */
 /* === Header (3 parties Linear) ==*/
 /* =============================== */
