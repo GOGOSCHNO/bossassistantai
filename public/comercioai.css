@@ -363,6 +363,14 @@ h2.agenda-title {
   font-size: 0.8rem;
   color: #ccc;
 }
+.message-left {
+  align-items: flex-start;
+}
+
+.message-right {
+  align-items: flex-end;
+}
+.message-admin,
 .message-client,
 .message-assistant {
   max-width: 75%;
