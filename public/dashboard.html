@@ -306,6 +306,17 @@
     // 🔁 Appel automatique après chargement de la page
     document.addEventListener("DOMContentLoaded", () => {
       cargarEstadoAutoReply();
+      
+      // Si un numéro est dans l'URL, simuler un clic dessus
+      const params = new URLSearchParams(window.location.search);
+      const numero = params.get("phone");
+    
+      if (numero && allConversations.length > 0) {
+        const index = allConversations.findIndex(c => c.userNumber === numero);
+        if (index >= 0) {
+          displayConversation(index);
+        }
+      }
     });
     // 👉 Afficher la boîte de message manuel
     document.getElementById("btnMostrarMensajeManual").addEventListener("click", () => {
