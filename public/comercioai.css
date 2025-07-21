@@ -383,14 +383,12 @@ h2.agenda-title {
   margin-bottom: 5px;
 }
 .message-client {
-  align-self: flex-end;
   background: #4A90E2;
   color: white;
   border-bottom-right-radius: 0;
 }
 
 .message-assistant {
-  align-self: flex-start;
   background: rgba(255, 255, 255, 0.12);
   color: white;
   border-bottom-left-radius: 0;
@@ -542,7 +540,6 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 .message-admin {
-  align-self: flex-end;
   background: rgba(255, 230, 120, 0.25); /* Jaune clair transparent */
   color: white;
   border-radius: 18px;
