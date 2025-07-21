@@ -139,6 +139,18 @@
           li.addEventListener("click", () => displayConversation(index));
           list.appendChild(li);
         });
+        // 🔎 Redirection automatique si l'URL contient ?phone=...
+        const params = new URLSearchParams(window.location.search);
+        const numeroURL = params.get("phone");
+        
+        if (numeroURL) {
+          const index = allConversations.findIndex(c => c.userNumber === numeroURL);
+          if (index >= 0) {
+            displayConversation(index); // 👈 affiche automatiquement la conversation
+          } else {
+            console.warn("❗ Número no encontrado:", numeroURL);
+          }
+        }
       } catch (err) {
         console.error("Error al cargar las conversaciones:", err);
       }
