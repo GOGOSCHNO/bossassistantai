@@ -1346,9 +1346,8 @@ app.post("/api/enviar-mensaje-manual", async (req, res) => {
       {
         $push: {
           responses: {
-            assistantResponse: {
+            adminResponse: {
               text: mensaje,
-              fromComerciante: true,
               timestamp: new Date()
             }
           }
