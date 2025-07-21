@@ -311,6 +311,11 @@ label {
   flex: 2;
   min-width: 450px;
   max-width: 100%;
+  -ms-overflow-style: none;  /* IE et Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.conversation-details::-webkit-scrollbar {
+  display: none;
 }
 .message-block {
   padding: 12px;
