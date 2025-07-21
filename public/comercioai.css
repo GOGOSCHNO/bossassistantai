@@ -385,16 +385,17 @@ h2.agenda-title {
 .message-client {
   background: #4A90E2;
   color: white;
-  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .message-assistant {
   background: rgba(255, 255, 255, 0.12);
   color: white;
-  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .message-time {
+  align-self: center;
   font-size: 0.75rem;
   color: #ccc;
   text-align: center;
