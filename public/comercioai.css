@@ -533,6 +533,19 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(24px);
 }
+.message-admin {
+  align-self: flex-end;
+  background: rgba(255, 230, 120, 0.25); /* Jaune clair transparent */
+  color: white;
+  border-radius: 18px;
+  border-bottom-right-radius: 0;
+  padding: 10px 14px;
+  max-width: 75%;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin-bottom: 5px;
+}
 /* --- HERO SECTION / SECTIONS GENERALES --- */
 main {
   margin-top: 3%;
