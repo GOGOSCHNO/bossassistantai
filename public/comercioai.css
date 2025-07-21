@@ -383,6 +383,12 @@ label {
 .auto-reply-off {
   color: #888; /* Gris atténué */
 }
+#conversationMessages {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 70vh; /* ou la valeur actuelle */
+}
 /* Responsive */
 @media (max-width: 900px) {
   .dashboard-wrapper {
