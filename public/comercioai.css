@@ -70,12 +70,39 @@ label {
 .form-subsection {
   margin-bottom: 40px;
 }
-#calendar {
-  max-width: 90%;
-  margin: 30px auto;
+/* ❄️ Fixe la page agenda uniquement */
+.agenda-page, .agenda-page html {
+  height: 100%;
+  overflow: hidden;
+}
+
+.agenda-page .overlay {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.agenda-page header.ca-header,
+.agenda-page footer.ca-footer {
+  flex-shrink: 0;
+}
+
+.agenda-page main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.agenda-page #calendar {
+  width: 95vw;
+  height: 100%;
+  max-height: calc(100vh - 150px); /* Ajuste à ton header+footer */
   background: white;
-  border-radius: 12px;
   padding: 20px;
+  border-radius: 12px;
   box-shadow: 0 0 12px rgba(0,0,0,0.2);
 }
 h2.agenda-title {
