@@ -58,48 +58,7 @@
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
-      const calendarEl = document.getElementById('calendar');
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        locale: 'es',
-        
-        // 🔽 AJOUTE ICI L'ÉVÉNEMENT AU CLIC
-        eventClick: function(info) {
-          const numero = info.event.extendedProps.phoneNumber;
-          if (numero) {
-            window.location.href = `dashboard.html?phone=${encodeURIComponent(numero)}`;
-          }
-        },
-        
-        events: await cargarEventos()
-      });
-
-      calendar.render();
-    });
-
-    async function cargarEventos() {
-      try {
-        const res = await fetch('/api/mis-citas', { credentials: 'include' });
-        const data = await res.json();
-        if (!Array.isArray(data)) return [];
-        return data.map(evt => ({
-          title: evt.customerName + ' – ' + evt.service,
-          start: evt.date + 'T' + evt.startTime,
-          end: evt.date + 'T' + evt.endTime,
-          phoneNumber: evt.phoneNumber // 👈 important
-        }));
-      } catch (err) {
-        console.error('❌ Error al cargar eventos:', err);
-        return [];
-      }
-    }
-    async function loadUserName() {
+      // 🔐 Authentification utilisateur
       const authDiv = document.getElementById("auth-buttons");
       try {
         const res = await fetch("/api/me", { credentials: "include" });
@@ -120,13 +79,11 @@
         console.error("Error auth:", err);
         authDiv.innerHTML = `<a href="login.html" class="auth-btn">Iniciar sesión</a>`;
       }
-    }
   
-    document.addEventListener("DOMContentLoaded", loadUserName);
-    document.addEventListener('DOMContentLoaded', async function () {
+      // 🔄 Chargement de l’agenda
       const calendarEl = document.getElementById('calendar');
       const popup = document.getElementById('eventPopup');
-    
+  
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -136,39 +93,62 @@
         },
         locale: 'es',
         events: await cargarEventos(),
-    
+  
         eventClick: function(info) {
           const event = info.event;
           const { customerName, phoneNumber, service, date, startTime, endTime, _id } = event.extendedProps;
-    
+  
           document.getElementById('popupTitle').textContent = `Cita de ${customerName}`;
           document.getElementById('popupDate').textContent = date;
           document.getElementById('popupTime').textContent = `${startTime} – ${endTime}`;
           document.getElementById('popupPhone').textContent = phoneNumber;
           document.getElementById('popupService').textContent = service;
-    
-          // Position de la popup (clique souris)
+  
           const mouseX = info.jsEvent.pageX;
           const mouseY = info.jsEvent.pageY;
           popup.style.left = `${mouseX + 10}px`;
           popup.style.top = `${mouseY}px`;
-    
+  
           popup.classList.remove('hidden');
-    
-          // Actions
+  
           document.getElementById('deleteBtn').onclick = () => supprimerCita(_id, event);
           document.getElementById('editBtn').onclick = () => alert("👉 ici on ouvrira le formulaire de modification");
         }
       });
-    
+  
+      // 👆 Ferme la popup si on clique ailleurs
       document.addEventListener("click", function(e) {
         if (!popup.contains(e.target)) {
-          popup.classList.add('hidden');
+          popup.classList.add("hidden");
         }
       });
-    
+  
       calendar.render();
     });
+  
+    async function cargarEventos() {
+      try {
+        const res = await fetch('/api/mis-citas', { credentials: 'include' });
+        const data = await res.json();
+        if (!Array.isArray(data)) return [];
+        return data.map(evt => ({
+          title: evt.customerName + ' – ' + evt.service,
+          start: evt.date + 'T' + evt.startTime,
+          end: evt.date + 'T' + evt.endTime,
+          phoneNumber: evt.phoneNumber,
+          customerName: evt.customerName,
+          date: evt.date,
+          startTime: evt.startTime,
+          endTime: evt.endTime,
+          service: evt.service,
+          _id: evt._id
+        }));
+      } catch (err) {
+        console.error('❌ Error al cargar eventos:', err);
+        return [];
+      }
+    }
+  
     async function supprimerCita(id, eventObj) {
       const ok = confirm("¿Seguro que deseas eliminar esta cita?");
       if (!ok) return;
@@ -180,7 +160,7 @@
       });
       const data = await res.json();
       if (data.success) {
-        eventObj.remove(); // Retire visuellement
+        eventObj.remove();
         document.getElementById("eventPopup").classList.add("hidden");
         alert("✅ Cita eliminada");
       } else {
