@@ -125,6 +125,7 @@
             }
           };
           document.getElementById("editBtn").onclick = () => {
+            popup.classList.add("edit-mode");
             // Masquer les champs en lecture seule
             document.getElementById("popupDate").parentElement.style.display = "none";
             document.getElementById("popupTime").parentElement.style.display = "none";
