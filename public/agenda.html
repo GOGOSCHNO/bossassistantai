@@ -79,6 +79,12 @@
           popup.classList.remove("hidden");
           popup.style.display = "block";
 
+          document.getElementById('goToChatBtn').onclick = () => {
+            const numero = props.phoneNumber;
+            if (numero) {
+              window.location.href = `dashboard.html?phone=${encodeURIComponent(numero)}`;
+            }
+          };
         }
       });
     
@@ -174,6 +180,9 @@
     <div><strong>Servicio:</strong> <span id="popupService"></span></div>
     <button id="editBtn">✏️</button>
     <button id="deleteBtn">🗑️</button>
+    <button id="goToChatBtn" title="Ir a la conversación">
+      <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="Chat" width="18" />
+    </button>
   </div>
 </body>
 </html>
