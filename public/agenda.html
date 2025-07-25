@@ -71,9 +71,13 @@
           document.getElementById('popupService').textContent = props.service;
     
           // Positionnement du popup
-          popup.style.left = '100px';
-          popup.style.top = '100px';
+          const mouseX = info.jsEvent.clientX;
+          const mouseY = info.jsEvent.clientY;
+          
+          popup.style.left = `${mouseX + 10}px`;
+          popup.style.top = `${mouseY + 10}px`;
           popup.classList.remove('hidden');
+          console.log("Classes après suppression:", popup.className);
     
           // Actions
           document.getElementById('deleteBtn').onclick = () => {
