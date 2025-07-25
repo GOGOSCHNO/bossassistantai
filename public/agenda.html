@@ -71,7 +71,19 @@
           document.getElementById('popupName').textContent = props.customerName;
           document.getElementById('popupPhone').textContent = props.phoneNumber;
           document.getElementById('popupService').textContent = props.service;
-        
+
+          // Remplir les <input> (mais les cacher au départ)
+          document.getElementById('inputDate').value = props.date;
+          document.getElementById('inputStartTime').value = props.startTime;
+          document.getElementById('inputEndTime').value = props.endTime;
+          document.getElementById('inputName').value = props.customerName;
+          document.getElementById('inputPhone').value = props.phoneNumber;
+          document.getElementById('inputService').value = props.service;
+          
+          // Cacher champs modifiables & bouton appliquer au départ
+          document.getElementById("editFields").style.display = "none";
+          document.getElementById("applyBtn").style.display = "none
+            
           // Position
           positionnerPopup(popup, info.jsEvent);
         
@@ -110,6 +122,46 @@
                 console.error("Erreur:", err);
                 alert("⚠️ Error de conexión al servidor");
               }
+            }
+          };
+          document.getElementById("editBtn").onclick = () => {
+            // Masquer les champs en lecture seule
+            document.getElementById("popupDate").parentElement.style.display = "none";
+            document.getElementById("popupTime").parentElement.style.display = "none";
+            document.getElementById("popupName").parentElement.style.display = "none";
+            document.getElementById("popupPhone").parentElement.style.display = "none";
+            document.getElementById("popupService").parentElement.style.display = "none";
+          
+            // Afficher les champs éditables et bouton appliquer
+            document.getElementById("editFields").style.display = "block";
+            document.getElementById("applyBtn").style.display = "inline-block";
+          };
+          document.getElementById("applyBtn").onclick = async () => {
+            const citaModificada = {
+              _id: props._id,
+              date: document.getElementById("inputDate").value,
+              startTime: document.getElementById("inputStartTime").value,
+              endTime: document.getElementById("inputEndTime").value,
+              customerName: document.getElementById("inputName").value,
+              phoneNumber: document.getElementById("inputPhone").value,
+              service: document.getElementById("inputService").value,
+            };
+          
+            const res = await fetch("/api/editar-cita", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(citaModificada)
+            });
+          
+            if (res.ok) {
+              alert("✅ Cita modificada con éxito");
+              popup.classList.add("hidden");
+              popup.style.display = "none";
+              window.location.reload(); // Recharge le calendrier
+            } else {
+              alert("❌ Error al modificar la cita");
             }
           };
         }
@@ -205,11 +257,24 @@
     <div><strong>Cliente:</strong> <span id="popupName"></span></div>
     <div><strong>Teléfono:</strong> <span id="popupPhone"></span></div>
     <div><strong>Servicio:</strong> <span id="popupService"></span></div>
-    <button id="editBtn">✏️</button>
-    <button id="deleteBtn">🗑️</button>
-    <button id="goToChatBtn" title="Ir a la conversación">
-      <img src="https://cdn-icons-png.flaticon.com/512/2462/2462719.png" alt="Chat" width="18" />
-    </button>
+
+    <!-- Champs modifiables cachés au départ -->
+    <div id="editFields" style="display: none;">
+      <p><strong>Fecha:</strong> <input type="date" id="inputDate"></p>
+      <p><strong>Hora:</strong>
+        <input type="time" id="inputStartTime"> –
+        <input type="time" id="inputEndTime">
+      </p>
+      <p><strong>Cliente:</strong> <input type="text" id="inputName"></p>
+      <p><strong>Teléfono:</strong> <input type="text" id="inputPhone"></p>
+      <p><strong>Servicio:</strong> <input type="text" id="inputService"></p>
+    </div>
+    <div class="popup-actions">
+      <button id="editBtn" title="editar">✏️</button>
+      <button id="deleteBtn" title="Eliminar la cita">🗑️</button>
+      <button id="goToChatBtn" title="Ir a la conversación">💬</button>
+      <button id="applyBtn" style="display:none;">✅ Aplicar</button>
+    </div>
   </div>
 </body>
 </html>
