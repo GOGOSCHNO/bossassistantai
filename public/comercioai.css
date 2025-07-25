@@ -153,7 +153,9 @@ h2.agenda-title {
   font-size: 14px;
   max-width: 90vw;
 }
-
+#eventPopup.edit-mode {
+  justify-content: flex-end;
+}
 .popup.hidden {
   display: none;
 }
