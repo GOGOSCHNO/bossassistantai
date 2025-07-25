@@ -85,6 +85,33 @@
               window.location.href = `dashboard.html?phone=${encodeURIComponent(numero)}`;
             }
           };
+          document.getElementById('deleteBtn').onclick = async () => {
+            const confirmation = confirm(`¿Estás seguro de eliminar la cita de ${props.customerName}?`);
+          
+            if (confirmation) {
+              try {
+                const res = await fetch(`/api/eliminar-cita`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({ citaId: props._id })
+                });
+          
+                if (res.ok) {
+                  alert("✅ Cita eliminada con éxito");
+                  popup.classList.add("hidden");
+                  popup.style.display = "none";
+                  event.remove(); // Supprime de l’agenda visuel
+                } else {
+                  alert("❌ Error al eliminar la cita");
+                }
+              } catch (err) {
+                console.error("Erreur:", err);
+                alert("⚠️ Error de conexión al servidor");
+              }
+            }
+          };
         }
       });
     
