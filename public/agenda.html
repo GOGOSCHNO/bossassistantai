@@ -60,14 +60,13 @@
     
         eventClick: function(info) {
           const event = info.event;
-          const { customerName, phoneNumber, service, date, startTime, endTime, _id } = event.extendedProps;
-    
-          document.getElementById('popupTitle').textContent = `Cita de ${customerName}`;
-          document.getElementById('popupDate').textContent = date;
-          document.getElementById('popupTime').textContent = `${startTime} – ${endTime}`;
-          document.getElementById('popupName').textContent = customerName;
-          document.getElementById('popupPhone').textContent = phoneNumber;
-          document.getElementById('popupService').textContent = service;
+          const props = info.event.extendedProps;
+          document.getElementById('popupTitle').textContent = `Cita de ${props.customerName}`;
+          document.getElementById('popupDate').textContent = props.date;
+          document.getElementById('popupTime').textContent = `${props.startTime} – ${props.endTime}`;
+          document.getElementById('popupName').textContent = props.customerName;
+          document.getElementById('popupPhone').textContent = props.phoneNumber;
+          document.getElementById('popupService').textContent = props.service;
     
           // Positionnement du popup
           popup.style.left = `${info.jsEvent.pageX + 10}px`;
@@ -103,13 +102,15 @@
           title: evt.customerName + ' – ' + evt.service,
           start: evt.date + 'T' + evt.startTime,
           end: evt.date + 'T' + evt.endTime,
-          phoneNumber: evt.phoneNumber,
-          customerName: evt.customerName,
-          service: evt.service,
-          date: evt.date,
-          startTime: evt.startTime,
-          endTime: evt.endTime,
-          _id: evt._id // nécessaire pour supprimer
+          extendedProps: {
+            phoneNumber: evt.phoneNumber,
+            customerName: evt.customerName,
+            service: evt.service,
+            date: evt.date,
+            startTime: evt.startTime,
+            endTime: evt.endTime,
+            _id: evt._id
+          }
         }));
       } catch (err) {
         console.error('❌ Error al cargar eventos:', err);
