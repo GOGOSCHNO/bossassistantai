@@ -85,7 +85,7 @@
           document.getElementById("applyBtn").style.display = "none";
             
           // Position
-          positionnerPopup(popup, info.jsEvent);
+          positionnerPopupRelatifEvenement(popup, info.el);
         
           // Affichage
           popup.classList.remove("hidden");
@@ -245,51 +245,22 @@
     }
   
     document.addEventListener("DOMContentLoaded", loadUserName);
-    function positionnerPopup(popup, event) {
-      const popupWidth = popup.offsetWidth || 260;
-      const popupHeight = popup.offsetHeight || 180;
+    function positionnerPopupRelatifEvenement(popup, eventElement) {
+      const rect = eventElement.getBoundingClientRect();
+      const popupHeight = popup.offsetHeight;
+      const margin = 10;
     
-      const pageWidth = window.innerWidth;
-      const pageHeight = window.innerHeight;
+      let top = window.scrollY + rect.top - popupHeight - margin;
+      let left = window.scrollX + rect.left;
     
-      const clickX = event.pageX;
-      const clickY = event.pageY;
-    
-      let left = clickX + 10;
-      let top = clickY + 10;
-    
-      if (left + popupWidth > pageWidth) {
-        left = clickX - popupWidth - 10;
+      // Si dépasse vers le haut → afficher en dessous
+      if (top < window.scrollY) {
+        top = window.scrollY + rect.bottom + margin;
       }
     
-      if (top + popupHeight > pageHeight) {
-        top = clickY - popupHeight - 10;
-      }
-    
-      popup.style.left = `${left}px`;
       popup.style.top = `${top}px`;
-    }
-    function positionnerEditFields(editFields, event) {
-      const screenW = window.innerWidth;
-      const screenH = window.innerHeight;
-      const margin = 20;
-    
-      let left = event.pageX + 10;
-      let top = event.pageY;
-    
-      const popupRect = editFields.getBoundingClientRect();
-      const width = popupRect.width || 260; // Fallback si invisible
-      const height = popupRect.height || 180;
-    
-      if (left + width + margin > screenW) {
-        left = event.pageX - width - 10;
-      }
-      if (top + height + margin > screenH) {
-        top = screenH - height - margin;
-      }
-    
-      editFields.style.left = `${left}px`;
-      editFields.style.top = `${top}px`;
+      popup.style.left = `${left}px`;
+      popup.style.transform = "none"; // important pour ne pas garder le translate
     }
   </script>
   <div id="eventPopup" class="popup hidden">
