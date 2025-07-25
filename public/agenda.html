@@ -71,8 +71,11 @@
           document.getElementById('popupService').textContent = props.service;
     
           // Positionnement du popup
-          popup.style.left = `${info.jsEvent.pageX + 10}px`;
-          popup.style.top = `${info.jsEvent.pageY}px`;
+          const mouseX = info.jsEvent.clientX;
+          const mouseY = info.jsEvent.clientY;
+          
+          popup.style.left = `${mouseX + 10}px`;
+          popup.style.top = `${mouseY + 10}px`;
           popup.classList.remove('hidden');
     
           // Actions
