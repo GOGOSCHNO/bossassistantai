@@ -78,6 +78,7 @@
           popup.style.top = `${mouseY + 10}px`;
           popup.classList.remove('hidden');
           popup.style.display = 'block'; // 👈 c’est cela qui manquait
+          console.log("👉 popup.style.display:", popup.style.display);
     
           // Actions
           document.getElementById('deleteBtn').onclick = () => {
