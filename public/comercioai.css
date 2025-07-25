@@ -130,20 +130,6 @@ h2.agenda-title {
   border-radius: 4px;
   font-size: 0.9rem;
 }
-.event-popup {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 9999;
-  max-width: 280px;
-  font-size: 0.9rem;
-}
-.event-popup.hidden {
-  display: none;
-}
 .popup-header {
   display: flex;
   justify-content: space-between;
