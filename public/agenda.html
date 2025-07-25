@@ -73,8 +73,7 @@
           document.getElementById('popupService').textContent = props.service;
         
           // Position
-          popup.style.left = `${info.jsEvent.pageX + 10}px`;
-          popup.style.top = `${info.jsEvent.pageY}px`;
+          positionnerPopup(popup, info.jsEvent);
         
           // Affichage
           popup.classList.remove("hidden");
@@ -141,6 +140,30 @@
     }
   
     document.addEventListener("DOMContentLoaded", loadUserName);
+    function positionnerPopup(popup, event) {
+      const popupWidth = popup.offsetWidth || 260;
+      const popupHeight = popup.offsetHeight || 180;
+    
+      const pageWidth = window.innerWidth;
+      const pageHeight = window.innerHeight;
+    
+      const clickX = event.pageX;
+      const clickY = event.pageY;
+    
+      let left = clickX + 10;
+      let top = clickY + 10;
+    
+      if (left + popupWidth > pageWidth) {
+        left = clickX - popupWidth - 10;
+      }
+    
+      if (top + popupHeight > pageHeight) {
+        top = clickY - popupHeight - 10;
+      }
+    
+      popup.style.left = `${left}px`;
+      popup.style.top = `${top}px`;
+    }
   </script>
   <div id="eventPopup" class="popup hidden">
     <div id="popupTitle"></div>
