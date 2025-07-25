@@ -1386,3 +1386,19 @@ app.get('/api/mis-citas', async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor." });
   }
 });
+app.post('/api/eliminar-cita', async (req, res) => {
+  const { citaId } = req.body;
+  if (!citaId) return res.status(400).send("ID manquant");
+
+  try {
+    const result = await db.collection('appointments').deleteOne({ _id: new ObjectId(citaId) });
+    if (result.deletedCount === 1) {
+      res.sendStatus(200);
+    } else {
+      res.status(404).send("Cita non trouvée");
+    }
+  } catch (err) {
+    console.error("Erreur suppression:", err);
+    res.status(500).send("Erreur serveur");
+  }
+});
