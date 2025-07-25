@@ -60,33 +60,32 @@
         events: await cargarEventos(),
     
         eventClick: function(info) {
-          console.log("✅ CLIC détecté sur :", info.event.title);
+          info.jsEvent.stopPropagation(); // 👈 bloque la propagation du clic
           const event = info.event;
-          const props = info.event.extendedProps;
+          const props = event.extendedProps;
+        
+          // Remplissage du contenu
           document.getElementById('popupTitle').textContent = `Cita de ${props.customerName}`;
           document.getElementById('popupDate').textContent = props.date;
           document.getElementById('popupTime').textContent = `${props.startTime} – ${props.endTime}`;
           document.getElementById('popupName').textContent = props.customerName;
           document.getElementById('popupPhone').textContent = props.phoneNumber;
           document.getElementById('popupService').textContent = props.service;
-    
-          // Positionnement du popup
-          const mouseX = info.jsEvent.clientX;
-          const mouseY = info.jsEvent.clientY;
-          
-          popup.style.left = `${mouseX + 10}px`;
-          popup.style.top = `${mouseY + 10}px`;
-          popup.classList.remove('hidden');
-          popup.style.display = 'block'; // 👈 c’est cela qui manquait
-          console.log("👉 popup.style.display:", popup.style.display);
-    
-          // Actions
-          document.getElementById('deleteBtn').onclick = () => {
-            supprimerCita(props._id, event);
-          };
-          document.getElementById('editBtn').onclick = () => {
-            alert("🔧 Ici tu pourras modifier la cita");
-          };
+        
+          // Position
+          popup.style.left = `${info.jsEvent.pageX + 10}px`;
+          popup.style.top = `${info.jsEvent.pageY}px`;
+        
+          // Affichage
+          popup.classList.remove("hidden");
+          popup.style.display = "block";
+
+          document.addEventListener("click", function (e) {
+            if (!popup.contains(e.target)) {
+              popup.classList.add("hidden");
+              popup.style.display = "none";
+            }
+          });
         }
       });
     
