@@ -32,6 +32,20 @@
 
     <main>
       <div id='calendar'></div>
+      <div id="eventPopup" class="popup hidden">
+        <div class="popup-content">
+          <h3 id="popupTitle">Cita</h3>
+          <p><strong>Fecha:</strong> <span id="popupDate"></span></p>
+          <p><strong>Hora:</strong> <span id="popupTime"></span></p>
+          <p><strong>Cliente:</strong> <span id="popupName"></span></p>
+          <p><strong>Teléfono:</strong> <span id="popupPhone"></span></p>
+          <p><strong>Servicio:</strong> <span id="popupService"></span></p>
+          <div class="popup-actions">
+            <button id="deleteBtn">🗑️</button>
+            <button id="editBtn">✏️</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <footer class="ca-footer">
@@ -142,19 +156,5 @@
   
     document.addEventListener("DOMContentLoaded", loadUserName);
   </script>
-  <div id="eventPopup" class="popup hidden">
-    <div class="popup-content">
-      <h3 id="popupTitle">Cita</h3>
-      <p><strong>Fecha:</strong> <span id="popupDate"></span></p>
-      <p><strong>Hora:</strong> <span id="popupTime"></span></p>
-      <p><strong>Cliente:</strong> <span id="popupName"></span></p>
-      <p><strong>Teléfono:</strong> <span id="popupPhone"></span></p>
-      <p><strong>Servicio:</strong> <span id="popupService"></span></p>
-      <div class="popup-actions">
-        <button id="deleteBtn">🗑️</button>
-        <button id="editBtn">✏️</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
