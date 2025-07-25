@@ -245,22 +245,27 @@
     }
   
     document.addEventListener("DOMContentLoaded", loadUserName);
-    function positionnerPopupRelatifEvenement(popup, eventElement) {
-      const rect = eventElement.getBoundingClientRect();
-      const popupHeight = popup.offsetHeight;
-      const margin = 10;
+    function positionnerPopupRelatifEvenement(popup, eventEl) {
+      const rect = eventEl.getBoundingClientRect();
+      const popupHeight = popup.offsetHeight || 240;
+      const popupWidth = popup.offsetWidth || 260;
+      const margin = 12;
     
-      let top = window.scrollY + rect.top - popupHeight - margin;
-      let left = window.scrollX + rect.left;
-    
-      // Si dépasse vers le haut → afficher en dessous
-      if (top < window.scrollY) {
-        top = window.scrollY + rect.bottom + margin;
-      }
-    
-      popup.style.top = `${top}px`;
+      // Position horizontale : s’assurer que ça ne dépasse pas à droite
+      const left = Math.min(rect.left, window.innerWidth - popupWidth - margin);
       popup.style.left = `${left}px`;
-      popup.style.transform = "none"; // important pour ne pas garder le translate
+    
+      // Calcul de l’espace disponible
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+    
+      if (spaceAbove >= popupHeight + margin) {
+        // Assez d’espace au-dessus → aligner le BAS du popup avec le HAUT du RDV
+        popup.style.top = `${rect.top - popupHeight - margin}px`;
+      } else {
+        // Pas assez d’espace → placer EN DESSOUS comme fallback
+        popup.style.top = `${rect.bottom + margin}px`;
+      }
     }
   </script>
   <div id="eventPopup" class="popup hidden">
