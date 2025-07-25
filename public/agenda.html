@@ -80,16 +80,16 @@
           popup.classList.remove("hidden");
           popup.style.display = "block";
 
-          document.addEventListener("click", function (e) {
-            if (!popup.contains(e.target)) {
-              popup.classList.add("hidden");
-              popup.style.display = "none";
-            }
-          });
         }
       });
     
       calendar.render();
+      document.addEventListener("click", function (e) {
+        if (!popup.contains(e.target)) {
+          popup.classList.add("hidden");
+          popup.style.display = "none";
+        }
+      });
 
     });
     async function cargarEventos() {
