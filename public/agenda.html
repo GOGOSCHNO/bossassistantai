@@ -73,6 +73,7 @@
         events: await cargarEventos(),
     
         eventClick: function(info) {
+          console.log("✅ CLIC détecté sur :", info.event.title);
           const event = info.event;
           const props = info.event.extendedProps;
           document.getElementById('popupTitle').textContent = `Cita de ${props.customerName}`;
