@@ -133,14 +133,12 @@
             document.getElementById("popupService").parentElement.style.display = "none";
           
             // Afficher les champs éditables et bouton appliquer
-            document.getElementById("editFields").style.display = "block";
+            const editFields = document.getElementById("editFields");
+            editFields.style.display = "block";
             document.getElementById("applyBtn").style.display = "inline-block";
           
-            // Centrer le popup pour éviter qu'il soit tronqué
-            const popup = document.getElementById("eventPopup");
-            popup.style.top = "50%";
-            popup.style.left = "50%";
-            popup.style.transform = "translate(-50%, -50%)";
+            // ✅ Positionner le bloc editFields
+            positionnerEditFields(editFields, info.jsEvent);
           };
           document.getElementById("applyBtn").onclick = async () => {
             const citaModificada = {
@@ -176,11 +174,24 @@
       calendar.render();
       
       document.addEventListener("click", function (e) {
+        const editFields = document.getElementById("editFields");
+        const applyBtn = document.getElementById("applyBtn");
+      
         if (!popup.contains(e.target)) {
+          // Fermer le popup
           popup.classList.add("hidden");
           popup.style.display = "none";
-          document.getElementById("editFields").style.display = "none";
-          document.getElementById("applyBtn").style.display = "none";
+      
+          // Fermer editFields s’il était affiché
+          editFields.style.display = "none";
+          applyBtn.style.display = "none";
+      
+          // Réafficher les champs lecture seule
+          document.getElementById("popupDate").parentElement.style.display = "block";
+          document.getElementById("popupTime").parentElement.style.display = "block";
+          document.getElementById("popupName").parentElement.style.display = "block";
+          document.getElementById("popupPhone").parentElement.style.display = "block";
+          document.getElementById("popupService").parentElement.style.display = "block";
         }
       });
     });
@@ -258,7 +269,28 @@
       popup.style.left = `${left}px`;
       popup.style.top = `${top}px`;
     }
+    function positionnerEditFields(editFields, event) {
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const margin = 20;
     
+      let left = event.pageX + 10;
+      let top = event.pageY;
+    
+      const popupRect = editFields.getBoundingClientRect();
+      const width = popupRect.width || 260; // Fallback si invisible
+      const height = popupRect.height || 180;
+    
+      if (left + width + margin > screenW) {
+        left = event.pageX - width - 10;
+      }
+      if (top + height + margin > screenH) {
+        top = screenH - height - margin;
+      }
+    
+      editFields.style.left = `${left}px`;
+      editFields.style.top = `${top}px`;
+    }
   </script>
   <div id="eventPopup" class="popup hidden">
     <div id="popupTitle"></div>
