@@ -1403,3 +1403,38 @@ app.post('/api/eliminar-cita', async (req, res) => {
     res.status(500).send("Erreur serveur");
   }
 });
+app.post("/api/editar-cita", async (req, res) => {
+  const { _id, date, startTime, endTime, customerName, phoneNumber, service } = req.body;
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ error: "No autenticado" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.collection("users").findOne({ email: decoded.email });
+
+    if (!user || !user.appointmentsCollection) {
+      return res.status(404).json({ error: "appointmentsCollection no definido." });
+    }
+
+    const collection = db.collection(user.appointmentsCollection);
+
+    await collection.updateOne(
+      { _id: new ObjectId(_id) },
+      {
+        $set: {
+          date,
+          startTime,
+          endTime,
+          customerName,
+          phoneNumber,
+          service
+        }
+      }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error al editar cita:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
