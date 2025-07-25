@@ -71,13 +71,10 @@
           document.getElementById('popupService').textContent = props.service;
     
           // Positionnement du popup
-          const mouseX = info.jsEvent.clientX;
-          const mouseY = info.jsEvent.clientY;
-          
-          popup.style.left = `${mouseX + 10}px`;
-          popup.style.top = `${mouseY + 10}px`;
+          popup.style.left = `${info.jsEvent.pageX + 10}px`;
+          popup.style.top = `${info.jsEvent.pageY}px`;
           popup.classList.remove('hidden');
-          console.log("Classes après suppression:", popup.className);
+          popup.style.display = 'block'; // 👈 c’est cela qui manquait
     
           // Actions
           document.getElementById('deleteBtn').onclick = () => {
@@ -95,6 +92,7 @@
       document.addEventListener("click", function (e) {
         if (!popup.contains(e.target)) {
           popup.classList.add("hidden");
+          popup.style.display = 'none';
         }
       });
     });
