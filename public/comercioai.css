@@ -141,8 +141,8 @@ h2.agenda-title {
   cursor: pointer;
   font-size: 1.1rem;
 }
-.popup {
-  position: absolute;
+#eventPopup.popup {
+  position: fixed; /* au lieu de absolute */
   z-index: 9999;
   background-color: #ffffff;
   color: #333;
@@ -151,6 +151,7 @@ h2.agenda-title {
   box-shadow: 0 0 12px rgba(0,0,0,0.2);
   width: 260px;
   font-size: 14px;
+  max-width: 90vw;
 }
 
 .popup.hidden {
