@@ -154,7 +154,10 @@ h2.agenda-title {
   max-width: 90vw;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* valeur par défaut */
+  justify-content: space-between;
+}
+.popup-content {
+  flex-grow: 1;
 }
 #eventPopup.edit-mode {
   justify-content: flex-end;
