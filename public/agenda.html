@@ -46,7 +46,8 @@
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
       const calendarEl = document.getElementById('calendar');
-
+      const popup = document.getElementById('eventPopup');
+    
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
@@ -55,41 +56,42 @@
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         locale: 'es',
-        
-        events: await cargarEventos()
+        events: await cargarEventos(),
+    
+        eventClick: function(info) {
+          const event = info.event;
+          const { customerName, phoneNumber, service, date, startTime, endTime, _id } = event.extendedProps;
+    
+          document.getElementById('popupTitle').textContent = `Cita de ${customerName}`;
+          document.getElementById('popupDate').textContent = date;
+          document.getElementById('popupTime').textContent = `${startTime} – ${endTime}`;
+          document.getElementById('popupName').textContent = customerName;
+          document.getElementById('popupPhone').textContent = phoneNumber;
+          document.getElementById('popupService').textContent = service;
+    
+          // Positionnement du popup
+          popup.style.left = `${info.jsEvent.pageX + 10}px`;
+          popup.style.top = `${info.jsEvent.pageY}px`;
+          popup.classList.remove('hidden');
+    
+          // Actions
+          document.getElementById('deleteBtn').onclick = () => {
+            supprimerCita(_id, event);
+          };
+          document.getElementById('editBtn').onclick = () => {
+            alert("🔧 Ici tu pourras modifier la cita");
+          };
+        }
       });
-      
-      eventClick: function(info) {
-        const event = info.event;
-        const { customerName, phoneNumber, service, date, startTime, endTime, _id } = event.extendedProps;
-      
-        document.getElementById('popupTitle').textContent = `Cita de ${customerName}`;
-        document.getElementById('popupDate').textContent = date;
-        document.getElementById('popupTime').textContent = `${startTime} – ${endTime}`;
-        document.getElementById('popupName').textContent = customerName;
-        document.getElementById('popupPhone').textContent = phoneNumber;
-        document.getElementById('popupService').textContent = service;
-      
-        const popup = document.getElementById('eventPopup');
-        popup.style.left = `${info.jsEvent.pageX + 10}px`;
-        popup.style.top = `${info.jsEvent.pageY}px`;
-        popup.classList.remove('hidden');
-      
-        // Boutons actions
-        document.getElementById('deleteBtn').onclick = () => {
-          supprimerCita(_id, event);
-        };
-        document.getElementById('editBtn').onclick = () => {
-          alert("🔧 Ici tu pourras modifier la cita");
-        };
-      }
+    
       calendar.render();
-    });
-    document.addEventListener("click", function (e) {
-      const popup = document.getElementById("eventPopup");
-      if (!popup.contains(e.target)) {
-        popup.classList.add("hidden");
-      }
+    
+      // Fermer le popup en cliquant dehors
+      document.addEventListener("click", function (e) {
+        if (!popup.contains(e.target)) {
+          popup.classList.add("hidden");
+        }
+      });
     });
     async function cargarEventos() {
       try {
