@@ -91,14 +91,7 @@
       });
     
       calendar.render();
-    
-      // Fermer le popup en cliquant dehors
-      document.addEventListener("click", function (e) {
-        if (!popup.contains(e.target)) {
-          popup.classList.add("hidden");
-          popup.style.display = 'none';
-        }
-      });
+
     });
     async function cargarEventos() {
       try {
