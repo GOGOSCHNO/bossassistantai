@@ -126,6 +126,10 @@
           };
           document.getElementById("editBtn").onclick = () => {
             popup.classList.add("edit-mode");
+
+            popup.style.display = "flex"; // 👈 corrige inline
+            popup.style.flexDirection = "column";
+            popup.style.justifyContent = "flex-end";
             // Masquer les champs en lecture seule
             document.getElementById("popupDate").parentElement.style.display = "none";
             document.getElementById("popupTime").parentElement.style.display = "none";
