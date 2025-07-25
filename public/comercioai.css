@@ -153,13 +153,7 @@ h2.agenda-title {
   font-size: 14px;
   max-width: 90vw;
 }
-.popup {
-  position: fixed;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 999;
-}
+
 .popup.hidden {
   display: none;
 }
