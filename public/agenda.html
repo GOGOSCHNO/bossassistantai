@@ -125,11 +125,6 @@
             }
           };
           document.getElementById("editBtn").onclick = () => {
-            popup.classList.add("edit-mode");
-
-            popup.style.display = "flex"; // 👈 corrige inline
-            popup.style.flexDirection = "column";
-            popup.style.justifyContent = "flex-end";
             // Masquer les champs en lecture seule
             document.getElementById("popupDate").parentElement.style.display = "none";
             document.getElementById("popupTime").parentElement.style.display = "none";
@@ -143,7 +138,7 @@
             document.getElementById("applyBtn").style.display = "inline-block";
           
             // ✅ Positionner le bloc editFields
-            positionnerEditFields(editFields, info.jsEvent);
+            positionnerPopupAvecDécalage(popup, info.el, 50); // ou 60, 70 si besoin
           };
           document.getElementById("applyBtn").onclick = async () => {
             const citaModificada = {
@@ -272,6 +267,25 @@
         popup.style.top = `${rect.bottom + margin}px`;
       }
     }
+    function positionnerPopupAvecDécalage(popup, eventElement, decalage = 50) {
+      const rect = eventElement.getBoundingClientRect();
+      const popupHeight = popup.offsetHeight;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+      // On place le bas du popup au-dessus du rendez-vous - avec décalage
+      let top = rect.top + scrollTop - popupHeight - decalage;
+      if (top < 10) top = 10;
+    
+      let left = rect.left + rect.width / 2 - popup.offsetWidth / 2;
+      if (left < 10) left = 10;
+      if (left + popup.offsetWidth > window.innerWidth) {
+        left = window.innerWidth - popup.offsetWidth - 10;
+      }
+    
+      popup.style.top = `${top}px`;
+      popup.style.left = `${left}px`;
+    }
+
   </script>
   <div id="eventPopup" class="popup hidden">
     <div class="popup-content">
