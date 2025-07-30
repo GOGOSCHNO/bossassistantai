@@ -642,6 +642,11 @@ main p {
   max-width: 800px;
   margin: 0 auto 1.5rem auto;
   line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+main p:last-of-type {
+  margin-bottom: 0.5rem; /* réduit la marge du dernier paragraphe */
 }
 .assistant-option h4 {
   margin-top: 10px;
