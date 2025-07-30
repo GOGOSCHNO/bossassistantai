@@ -110,6 +110,17 @@ h2.agenda-title {
   margin-top: 2rem;
   color: #4A90E2;
 }
+ul.terminos-uso {
+  margin: 1rem auto 2rem auto;
+  padding-left: 1.4rem;
+  max-width: 800px;
+  line-height: 1.6;
+  color: #eee;
+}
+ul.terminos-uso li {
+  list-style-type: disc;
+  margin-bottom: 0.7rem;
+}
 /* Pour améliorer l'apparence du calendrier FullCalendar */
 .fc {
   background-color: white;
@@ -647,6 +658,13 @@ main p {
 
 main p:last-of-type {
   margin-bottom: 0.5rem; /* réduit la marge du dernier paragraphe */
+}
+main a {
+  color: #4A90E2;
+  text-decoration: underline;
+}
+main a:hover {
+  color: #3b78b9;
 }
 .assistant-option h4 {
   margin-top: 10px;
