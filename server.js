@@ -808,7 +808,7 @@ async function sendConsentRequest(userNumber) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
