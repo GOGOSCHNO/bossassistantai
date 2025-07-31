@@ -849,38 +849,26 @@ app.post('/whatsapp', async (req, res) => {
     }
     await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
 
-    // 🔘 Si réponse à un bouton (consentement)
+    // 🧠 Cas 1 : Le message est une réponse à un bouton (consentement)
     if (message.type === 'button') {
       const payload = message.button?.payload;
 
       if (payload === 'consent_si') {
         await db.collection('threads').updateOne(
           { userNumber },
-          {
-            $set: { consent: true, consentAt: new Date() },
-            $setOnInsert: { threadId: 'na' },
-            $push: {
-              responses: {
-                userMessage: '✅ Consentimiento aceptado',
-                timestamp: new Date()
-              }
-            }
-          },
-          { upsert: true }
+          { $set: { consent: true, consentAt: new Date() } }
         );
-        console.log("✅ Consentement accepté pour", userNumber);
         await sendText(userNumber, "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente.");
         return res.sendStatus(200);
       }
 
       if (payload === 'consent_no') {
-        console.log("❌ Consentement refusé pour", userNumber);
         await sendText(userNumber, "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión.");
         return res.sendStatus(200);
       }
     }
 
-    // 🧠 Extraire le contenu utilisateur
+    // 🧠 Cas 2 : Message utilisateur standard
     let userMessage = '';
     if (message.type === 'text' && message.text.body) {
       userMessage = message.text.body.trim();
@@ -889,48 +877,38 @@ app.post('/whatsapp', async (req, res) => {
     } else if (message.type === 'audio') {
       userMessage = "Cliente envió un audio.";
     } else {
-      userMessage = "Cliente envió un tipo de mensaje no gestionado.";
+      userMessage = "Cliente envió un type de message non géré.";
     }
 
-    if (!userMessage) return res.status(200).send('Mensaje vacío o no soportado.');
-
-    // 🔎 Vérifier le consentement
-    const thread = await db.collection('threads').findOne({ userNumber });
-    if (!thread || thread.consent !== true) {
-      await db.collection('threads').updateOne(
-        { userNumber },
-        {
-          $setOnInsert: {
-            threadId: 'na',
-            consent: false
-          },
-          $push: {
-            responses: {
-              userMessage,
-              timestamp: new Date()
-            }
-          }
-        },
-        { upsert: true }
-      );
-      console.log("📤 Envoi du message de consentement à", userNumber);
-      await sendConsentRequest(userNumber);
-      return res.sendStatus(200);
+    if (!userMessage) {
+      return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 🗃️ Consent déjà donné : on enregistre le message et on traite
+    // 🗃️ Enregistrement du message utilisateur (sans assistantResponse)
     await db.collection('threads').updateOne(
       { userNumber },
       {
+        $setOnInsert: {
+          threadId: 'na',
+          consent: false
+        },
         $push: {
           responses: {
             userMessage,
             timestamp: new Date()
           }
         }
-      }
+      },
+      { upsert: true }
     );
     console.log("🗃️ Message utilisateur enregistré pour", userNumber);
+
+    // 🔍 Vérifier le consentement
+    const thread = await db.collection('threads').findOne({ userNumber });
+    if (!thread.consent) {
+      await sendConsentRequest(userNumber);
+      return res.sendStatus(200);
+    }
 
     // ✅ assistant_id défini en dur ici
     const assistantId = "asst_CWMnVSuxZscjzCB2KngUXn5I";
@@ -945,8 +923,8 @@ app.post('/whatsapp', async (req, res) => {
 
     // ▶️ Traitement normal si assistant activé
     await handleMessage(userMessage, userNumber);
-    res.sendStatus(200);
 
+    res.sendStatus(200);
   } catch (error) {
     console.error("❌ Erreur dans /whatsapp :", error);
     res.sendStatus(500);
