@@ -835,6 +835,8 @@ async function sendConsentRequest(userNumber) {
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    console.log("📨 Message reçu :", JSON.stringify(message, null, 2));
+    console.log("🔍 Type de message :", message.type);
     if (!entry) return res.sendStatus(200);
 
     const message = entry;
@@ -852,6 +854,7 @@ app.post('/whatsapp', async (req, res) => {
     // 🧠 Cas 1 : Le message est une réponse à un bouton (consentement)
     if (message.type === 'button') {
       const payload = message.button?.payload;
+      console.log("🟡 Réponse à un bouton détectée avec payload :", payload);
 
       if (payload === 'consent_si') {
         await db.collection('threads').updateOne(
