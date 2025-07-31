@@ -768,6 +768,59 @@ async function sendResponseToWhatsApp(response, userNumber) {
   }
 }
 
+async function sendConsentRequest(userNumber) {
+  try {
+    const payload = {
+      messaging_product: "whatsapp",
+      to: userNumber,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: {
+          text: "👋 ¡Hola! Antes de continuar, necesitamos tu autorización para procesar tus datos (como nombre, número y citas) a través de este canal WhatsApp API. Solo los usaremos para ayudarte.\n\nConsulta nuestra política: comercioai.site/politica-de-privacidad"
+        },
+        action: {
+          buttons: [
+            {
+              type: "reply",
+              reply: {
+                id: "consent_si",
+                title: "✅ Sí, acepto"
+              }
+            },
+            {
+              type: "reply",
+              reply: {
+                id: "consent_no",
+                title: "❌ No, gracias"
+              }
+            }
+          ]
+        }
+      }
+    };
+
+    await fetch("https://graph.facebook.com/v19.0/" + process.env.PHONE_NUMBER_ID + "/messages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log("🔐 Message de consentement envoyé à", userNumber);
+
+    // Marquer la date d'envoi du consentement si besoin :
+    await db.collection('threads').updateOne(
+      { userNumber },
+      { $set: { consentAskedAt: new Date() } }
+    );
+  } catch (err) {
+    console.error("❌ Erreur lors de l'envoi du message de consentement :", err);
+  }
+}
+
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -805,7 +858,10 @@ app.post('/whatsapp', async (req, res) => {
     await db.collection('threads').updateOne(
       { userNumber },
       {
-        $setOnInsert: { threadId: 'na' },
+        $setOnInsert: {
+          threadId: 'na',
+          consent: false
+        },
         $push: {
           responses: {
             userMessage,
@@ -816,7 +872,32 @@ app.post('/whatsapp', async (req, res) => {
       { upsert: true }
     );
     console.log("🗃️ Message utilisateur enregistré pour", userNumber);
+    
+    if (message.type === 'button') {
+      const payload = message.button?.payload;
+    
+      if (payload === 'consent_si') {
+        await db.collection('threads').updateOne(
+          { userNumber },
+          { $set: { consent: true, consentAt: new Date() } }
+        );
+        await sendText(userNumber, "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente.");
+        return res.sendStatus(200);
+      }
+    
+      if (payload === 'consent_no') {
+        await sendText(userNumber, "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión.");
+        return res.sendStatus(200);
+      }
+    }
+    
+    const thread = await db.collection('threads').findOne({ userNumber });
 
+    if (!thread.consent) {
+      await sendConsentRequest(userNumber);
+      return res.sendStatus(200);
+    }
+    
     // ✅ assistant_id défini en dur ici
     const assistantId = "asst_CWMnVSuxZscjzCB2KngUXn5I";
 
