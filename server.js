@@ -821,12 +821,30 @@ async function sendConsentRequest(userNumber) {
       console.error("❌ Erreur API WhatsApp :", response.status, data);
     } else {
       console.log("✅ Message de consentement envoyé avec succès :", data);
-    }
 
-    await db.collection('threads').updateOne(
-      { userNumber },
-      { $set: { consentAskedAt: new Date() } }
-    );
+      // 💾 Enregistrement assistantResponse dans MongoDB
+      await db.collection('threads').updateOne(
+        { userNumber },
+        {
+          $setOnInsert: {
+            threadId: 'na',
+            consent: false
+          },
+          $set: {
+            consentAskedAt: new Date()
+          },
+          $push: {
+            responses: {
+              assistantResponse: {
+                text: payload.interactive.body.text,
+                timestamp: new Date()
+              }
+            }
+          }
+        },
+        { upsert: true }
+      );
+    }
   } catch (err) {
     console.error("❌ Exception dans sendConsentRequest :", err);
   }
@@ -859,17 +877,38 @@ app.post('/whatsapp', async (req, res) => {
 
       console.log("🔘 Réponse bouton reçue - payload:", payload, "| titre:", title);
 
-      if (payload === 'consent_si') {
+      if (payload === 'consent_si' || payload === 'consent_no') {
+        // 💾 Enregistrer la réponse utilisateur dans MongoDB
         await db.collection('threads').updateOne(
           { userNumber },
-          { $set: { consent: true, consentAt: new Date() } }
+          {
+            $push: {
+              responses: {
+                userMessage: title,
+                timestamp: new Date()
+              }
+            }
+          }
         );
-        await sendResponseToWhatsApp({ text: "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente." }, userNumber);
-        return res.sendStatus(200);
-      }
-
-      if (payload === 'consent_no') {
-        await sendResponseToWhatsApp({ text: "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión." }, userNumber);
+      
+        if (payload === 'consent_si') {
+          await db.collection('threads').updateOne(
+            { userNumber },
+            { $set: { consent: true, consentAt: new Date() } }
+          );
+          await sendResponseToWhatsApp(
+            { text: "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente." },
+            userNumber
+          );
+        }
+      
+        if (payload === 'consent_no') {
+          await sendResponseToWhatsApp(
+            { text: "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión." },
+            userNumber
+          );
+        }
+      
         return res.sendStatus(200);
       }
     }
