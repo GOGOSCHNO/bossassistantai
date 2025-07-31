@@ -840,6 +840,7 @@ app.post('/whatsapp', async (req, res) => {
     const message = entry;
     console.log("📨 Message reçu :", JSON.stringify(message, null, 2));
     console.log("🔍 Type de message :", message.type);
+
     const userNumber = message.from;
     const messageId = message.id;
 
@@ -851,10 +852,12 @@ app.post('/whatsapp', async (req, res) => {
     }
     await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
 
-    // 🧠 Cas 1 : Le message est une réponse à un bouton (consentement)
-    if (message.type === 'button') {
-      const payload = message.button?.payload;
-      console.log("🟡 Réponse à un bouton détectée avec payload :", payload);
+    // 🧠 Cas 1 : Réponse à un bouton interactif (consentement)
+    if (message.type === 'interactive' && message.interactive?.type === 'button_reply') {
+      const payload = message.interactive.button_reply.id;
+      const title = message.interactive.button_reply.title;
+
+      console.log("🔘 Réponse bouton reçue - payload:", payload, "| titre:", title);
 
       if (payload === 'consent_si') {
         await db.collection('threads').updateOne(
@@ -887,7 +890,7 @@ app.post('/whatsapp', async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 🗃️ Enregistrement du message utilisateur (sans assistantResponse)
+    // 🗃️ Enregistrement du message utilisateur
     await db.collection('threads').updateOne(
       { userNumber },
       {
