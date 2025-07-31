@@ -835,11 +835,11 @@ async function sendConsentRequest(userNumber) {
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    console.log("📨 Message reçu :", JSON.stringify(message, null, 2));
-    console.log("🔍 Type de message :", message.type);
     if (!entry) return res.sendStatus(200);
 
     const message = entry;
+    console.log("📨 Message reçu :", JSON.stringify(message, null, 2));
+    console.log("🔍 Type de message :", message.type);
     const userNumber = message.from;
     const messageId = message.id;
 
