@@ -800,24 +800,35 @@ async function sendConsentRequest(userNumber) {
       }
     };
 
-    await fetch("https://graph.facebook.com/v19.0/" + process.env.PHONE_NUMBER_ID + "/messages", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
+    console.log("📤 Envoi du message de consentement à :", userNumber);
+    console.log("📦 Payload envoyé :", JSON.stringify(payload, null, 2));
 
-    console.log("🔐 Message de consentement envoyé à", userNumber);
+    const response = await fetch(
+      `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
 
-    // Marquer la date d'envoi du consentement si besoin :
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Erreur API WhatsApp :", response.status, data);
+    } else {
+      console.log("✅ Message de consentement envoyé avec succès :", data);
+    }
+
     await db.collection('threads').updateOne(
       { userNumber },
       { $set: { consentAskedAt: new Date() } }
     );
   } catch (err) {
-    console.error("❌ Erreur lors de l'envoi du message de consentement :", err);
+    console.error("❌ Exception dans sendConsentRequest :", err);
   }
 }
 
