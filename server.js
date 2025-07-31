@@ -864,12 +864,12 @@ app.post('/whatsapp', async (req, res) => {
           { userNumber },
           { $set: { consent: true, consentAt: new Date() } }
         );
-        await sendResponseToWhatsApp("✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente.", userNumber);
+        await sendResponseToWhatsApp({ text: "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente." }, userNumber);
         return res.sendStatus(200);
       }
 
       if (payload === 'consent_no') {
-        await sendResponseToWhatsApp("Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión.", userNumber);
+        await sendResponseToWhatsApp({ text: "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión." }, userNumber);
         return res.sendStatus(200);
       }
     }
