@@ -189,6 +189,7 @@ ul.terminos-uso li {
   font-size: 1.2rem;
   cursor: pointer;
 }
+
 /* =============================== */
 /* === Header (3 parties Linear) ==*/
 /* =============================== */
@@ -377,6 +378,71 @@ ul.terminos-uso li {
   border-left: 4px solid #FFFF00;
 }
 /* ======== DASHBOARD CRM LAYOUT ======== */
+/* === Split layout principal === */
+/* === Split layout principal === */
+.split-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 80px 5%;
+  flex-direction: row;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.split-section.reverse {
+  flex-direction: row-reverse;
+}
+
+/* === Colonne texte === */
+.hero-text {
+  flex: 1;
+  max-width: 550px;
+}
+
+.hero-text h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
+.hero-text p {
+  font-size: 1.15rem;
+  color: #333;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.hero-text .cta-button {
+  background-color: #007BFF;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+}
+
+.hero-text .cta-button:hover {
+  background-color: #0056b3;
+}
+
+/* === Colonne image === */
+.hero-image {
+  flex: 1;
+  max-width: 500px;
+  text-align: center;
+}
+
+.hero-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
 
 .dashboard-wrapper {
   display: flex;
@@ -1057,6 +1123,33 @@ img, video {
     padding: 0 1rem !important;
     gap: 10px;
   }
+  .split-section {
+    flex-direction: column;
+    padding: 50px 20px;
+    text-align: center;
+  }
+
+  .split-section.reverse {
+    flex-direction: column;
+  }
+
+  .hero-text h1 {
+    font-size: 2rem;
+  }
+
+  .hero-text p {
+    font-size: 1rem;
+  }
+
+  .hero-image {
+    max-width: 100%;
+    margin-top: 30px;
+  }
+
+  .hero-text .cta-button {
+    width: 100%;
+    max-width: 280px;
+  }
 }
 @media (min-width: 901px) {
   .ca-header-mobile, .ca-mobile-menu {
@@ -1081,3 +1174,4 @@ img, video {
   .cta-button { width: 90%; margin: 0 auto; font-size: 1rem; padding: 0.6rem; }
   footer { font-size: 0.75rem; padding: 1rem 0.5rem; }
 }
+
