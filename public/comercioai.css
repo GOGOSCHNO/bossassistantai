@@ -404,13 +404,13 @@ ul.terminos-uso li {
 .hero-text h1 {
   font-size: 2.5rem;
   margin-bottom: 20px;
-  color: #1a1a1a;
+  color: #ffffff;
   line-height: 1.3;
 }
 
 .hero-text p {
   font-size: 1.15rem;
-  color: #333;
+  color: #dddddd;
   margin-bottom: 30px;
   line-height: 1.6;
 }
@@ -438,10 +438,12 @@ ul.terminos-uso li {
 }
 
 .hero-image img {
-  width: 100%;
+  width: 85%;
+  max-width: 360px;
   height: auto;
+  margin: 0 auto;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .dashboard-wrapper {
@@ -1174,4 +1176,5 @@ img, video {
   .cta-button { width: 90%; margin: 0 auto; font-size: 1rem; padding: 0.6rem; }
   footer { font-size: 0.75rem; padding: 1rem 0.5rem; }
 }
+
 
