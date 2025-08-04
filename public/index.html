@@ -189,37 +189,24 @@
   // -- Header central (desktop) --
   async function updateHeaderNavCenter() {
     const navCenter = document.getElementById("nav-center");
+  
     try {
       const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", { credentials: "include" });
       const data = await res.json();
   
       if (res.ok) {
+        // ✅ UTILISATEUR CONNECTÉ
         navCenter.innerHTML = `
-          <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-          <a href="https://wa.me/573019133560?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
           <a href="dashboard.html" class="ca-btn ca-btn-primary">Dashboard</a>
         `;
       } else {
         throw new Error();
       }
     } catch {
+      // ✅ UTILISATEUR NON CONNECTÉ
       navCenter.innerHTML = `
         <a href="precio.html" class="ca-btn nav-btn">Ver planes</a>
-        <a href="https://wa.me/573019133560?text=Hola%20me%20gustaría%20una%20demo%20de%20ComercioAI" target="_blank" class="ca-btn nav-btn">Reservar Demo</a>
-        <a href="#" class="ca-btn ca-btn-primary" id="probarGratisBtn">Probar Gratis 🚀</a>
       `;
-      // Activation du formulaire "Probar Gratis"
-      const btnProbarGratis = document.getElementById("probarGratisBtn");
-      if (btnProbarGratis) {
-        btnProbarGratis.addEventListener("click", function () {
-          const formContainer = document.getElementById("pruebaGratisForm");
-          formContainer.style.display = "block";
-          formContainer.style.opacity = "1";
-          formContainer.style.transform = "translateY(0px)";
-          btnProbarGratis.style.display = "none";
-          formContainer.scrollIntoView({ behavior: "smooth" });
-        });
-      }
     }
   }
   
@@ -502,4 +489,5 @@
   </script>
 </body>
 </html>
+
 
