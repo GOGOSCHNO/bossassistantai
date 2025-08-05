@@ -223,10 +223,11 @@ ul.terminos-uso li {
   .ca-header-center {
     display: flex;
     align-items: flex-end;
+    justify-content: center;
   }
   
   .ca-header-left { gap: 8px; }
-  .ca-header-center { gap: 2px; justify-content: center; flex: 1; }
+  .ca-header-center { gap: 2px; flex: 1; }
   .ca-header-right { gap: 10px; }
   
   .ca-logo-icon img {
@@ -1181,6 +1182,7 @@ img, video {
   .cta-button { width: 90%; margin: 0 auto; font-size: 1rem; padding: 0.6rem; }
   footer { font-size: 0.75rem; padding: 1rem 0.5rem; }
 }
+
 
 
 
