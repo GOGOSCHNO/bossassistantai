@@ -747,26 +747,37 @@ async function sendResponseToWhatsApp(response, userNumber) {
   };
 
   if (text) {
-    await axios.post(apiUrl, {
+    const payloadText = {
       messaging_product: 'whatsapp',
       to: userNumber,
       text: { body: text },
-    }, { headers });
+    };
+
+    console.log("📦 Payload TEXT vers WhatsApp :", JSON.stringify(payloadText, null, 2));
+    console.log("🌍 URL POST utilisée :", apiUrl);
+
+    await axios.post(apiUrl, payloadText, { headers });
   }
 
   if (images && images.length > 0) {
     for (const url of images) {
       if (url) {
-        await axios.post(apiUrl, {
+        const payloadImage = {
           messaging_product: 'whatsapp',
           to: userNumber,
           type: 'image',
           image: { link: url },
-        }, { headers });
+        };
+
+        console.log("📦 Payload IMAGE vers WhatsApp :", JSON.stringify(payloadImage, null, 2));
+        console.log("🌍 URL POST utilisée :", apiUrl);
+
+        await axios.post(apiUrl, payloadImage, { headers });
       }
     }
   }
 }
+
 
 async function sendConsentRequest(userNumber) {
   try {
