@@ -90,6 +90,32 @@
   </footer>
 
   <script>
+    async function loadUserName() {
+      const authDiv = document.getElementById("auth-buttons");
+      try {
+        const res = await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/me", {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (res.ok) {
+          authDiv.innerHTML = `
+            <div id="user-info" style="cursor: pointer; font-weight: bold;">👋 Hola, ${data.name}</div>
+            <button id="logout-btn" class="auth-btn">Cerrar sesión</button>
+          `;
+          document.getElementById("logout-btn").addEventListener("click", async () => {
+            await fetch("https://bossassistantai-439c88409c33.herokuapp.com/api/logout", {
+              method: "POST", credentials: "include"
+            });
+            window.location.reload();
+          });
+        }
+      } catch {
+        authDiv.innerHTML = `
+          <a href="signup.html" class="auth-btn">Crear cuenta</a>
+          <a href="login.html" class="auth-btn">Iniciar sesión</a>
+        `;
+      }
+    }
   // Exemple JS minimal pour brancher l’UI
   async function loadStatus() {
     try {
@@ -117,3 +143,4 @@
   </script>
 </body>
 </html>
+
