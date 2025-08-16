@@ -870,22 +870,6 @@ async function currentUser(req){
 
 function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
 
-function maskTail(str, visible=4){
-  if(!str) return null;
-  const s = String(str);
-  return s.length > visible ? '••••' + s.slice(-visible) : '••' + s;
-}
-
-async function currentUser(req){
-  const t = req.cookies?.token;
-  if(!t) throw new Error('No autenticado');
-  const d = jwt.verify(t, process.env.JWT_SECRET);
-  const u = await db.collection('users').findOne({ email: d.email });
-  if(!u) throw new Error('Usuario no encontrado');
-  return u;
-}
-
-
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -1678,64 +1662,6 @@ app.get('/api/whatsapp/status', async (req,res)=>{
       autoReplyEnabled: !!u.autoReplyEnabled,
       isTechProvider: process.env.IS_TECH_PROVIDER === 'true'
     });
-  }catch(e){
-    const code = e.message==='No autenticado'?401:500;
-    res.status(code).json({ error: e.message });
-  }
-});
-
-// === POST /api/whatsapp/connect
-// placeholder "Producción": on stocke les artefacts sans vérifier contre Meta
-// body attendu (min viable): { mode:'produccion', phoneNumberId, accessToken, wabaId?, businessId?, waNumber? }
-app.post('/api/whatsapp/connect', async (req,res)=>{
-  try{
-    const u = await currentUser(req);
-    const { mode, phoneNumberId, accessToken, wabaId, businessId, waNumber } = req.body || {};
-
-    if (mode !== 'produccion' && mode !== 'simulado') {
-      return res.status(400).json({ error: 'mode inválido' });
-    }
-
-    // MODE SIMULADO: si tu veux aussi l’utiliser plus tard
-    if (mode === 'simulado') {
-      const pn = process.env.PROVIDER_PHONE_NUMBER_ID;
-      const tok = process.env.PROVIDER_ACCESS_TOKEN;
-      if(!pn || !tok) return res.status(400).json({ error:'Faltan credenciales del provider' });
-      await db.collection('users').updateOne(
-        { _id: u._id },
-        { $set: { 
-            whatsapp: {
-              connected: true, mode: 'simulado',
-              phoneNumberId: pn, accessToken: tok,
-              connectedAt: new Date()
-            }
-          } 
-        }
-      );
-      return res.json({ ok:true, mode:'simulado' });
-    }
-
-    // MODE PRODUCCION (placeholder)
-    if (!phoneNumberId || !accessToken) {
-      return res.status(400).json({ error: 'Se requieren phoneNumberId y accessToken' });
-    }
-
-    await db.collection('users').updateOne(
-      { _id: u._id },
-      { $set: {
-          whatsapp: {
-            connected: true,
-            mode: 'produccion',
-            phoneNumberId,
-            accessToken,          // ⚠️ stocke chiffré si possible en prod
-            wabaId: wabaId || null,
-            businessId: businessId || null,
-            waNumber: waNumber || (u.whatsappDraft?.waNumber || null),
-            connectedAt: new Date()
-          }
-        }}
-    );
-    res.json({ ok:true, mode:'produccion' });
   }catch(e){
     const code = e.message==='No autenticado'?401:500;
     res.status(code).json({ error: e.message });
