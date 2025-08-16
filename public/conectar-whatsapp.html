@@ -79,6 +79,22 @@
         <pre id="logPanel">Esperando eventos...</pre>
       </div>
     </section>
+    <section class="ca-section">
+      <h2>Número de WhatsApp (solo captura)</h2>
+      <p class="ca-subtext">Introduce tu número en formato E.164 (ej: +573001234567). Aún no conectamos el WABA.</p>
+    
+      <div class="ca-card">
+        <label for="waNumber">Número (E.164)</label>
+        <input id="waNumber" type="text" class="ca-input" placeholder="+573001234567" autocomplete="tel" />
+    
+        <div class="ca-actions">
+          <button id="btnValidate" class="ca-btn">Validar formato</button>
+          <button id="btnSaveDraft" class="ca-btn ca-btn-primary">Guardar número</button>
+        </div>
+    
+        <div id="numMsg" class="ca-alert" style="display:none;"></div>
+      </div>
+    </section>
   </main>
 
   <!-- === Footer commun === -->
@@ -90,51 +106,76 @@
   </footer>
 
   <script>
-  async function initHeaderAuth() {
-    const el = id => document.getElementById(id);
-    try {
-      const res = await fetch('/api/me', { credentials: 'include' });
-      if (!res.ok) throw new Error('unauth');
-      const me = await res.json();
-      // ⚠️ Id du conteneur = le même que sur tes autres pages
-      const box = el('auth-buttons');
-      if (box) box.innerHTML = `👋 Hola, ${me.name || me.email}`;
-      return me;
-    } catch (e) {
-      const box = document.getElementById('auth-buttons');
-      if (box) box.innerHTML = `<a href="login.html" class="ca-btn">Iniciar sesión</a>`;
-      // Option stricte : décommente pour forcer la login
-      // location.href = 'login.html';
-      return null;
+    async function initHeaderAuth() {
+      const el = id => document.getElementById(id);
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (!res.ok) throw new Error('unauth');
+        const me = await res.json();
+        // ⚠️ Id du conteneur = le même que sur tes autres pages
+        const box = el('auth-buttons');
+        if (box) box.innerHTML = `👋 Hola, ${me.name || me.email}`;
+        return me;
+      } catch (e) {
+        const box = document.getElementById('auth-buttons');
+        if (box) box.innerHTML = `<a href="login.html" class="ca-btn">Iniciar sesión</a>`;
+        // Option stricte : décommente pour forcer la login
+        // location.href = 'login.html';
+        return null;
+      }
     }
-  }
+    
+    document.addEventListener('DOMContentLoaded', initHeaderAuth);
+    const $ = (id)=>document.getElementById(id);
   
-  document.addEventListener('DOMContentLoaded', initHeaderAuth);
-  async function loadStatus() {
-    try {
-      const res = await fetch("/api/whatsapp/status", { credentials: "include" });
-      const data = await res.json();
-      document.getElementById("statusText").textContent =
-        data.connected
-          ? `✅ Conectado (ID: ${data.phoneNumberIdMasked || "****"})`
-          : "❌ No conectado";
-
-      document.getElementById("autoReplyToggle").disabled = !data.connected;
-      document.getElementById("alertBanner").style.display = data.connected ? "none" : "block";
-    } catch {
-      document.getElementById("statusText").textContent = "Error al cargar estado.";
+    // Validation E.164: + y 8–15 dígitos (prudente)
+    function isE164(s){
+      return /^\+[1-9]\d{7,14}$/.test(String(s).trim());
     }
-  }
-
-  document.getElementById("testBtn").addEventListener("click", async () => {
-    const res = await fetch("/api/whatsapp/test", { method: "POST", credentials: "include" });
-    const txt = await res.text();
-    document.getElementById("logPanel").textContent += "\\nTest → " + txt;
-  });
-
-  document.addEventListener("DOMContentLoaded", loadStatus);
+  
+    function showMsg(ok, text){
+      const box = $('numMsg');
+      box.className = 'ca-alert ' + (ok ? 'ca-alert-success' : 'ca-alert-warning');
+      box.textContent = text;
+      box.style.display = 'block';
+    }
+  
+    async function loadDraft(){
+      try{
+        const r = await fetch('/api/whatsapp/number/draft', { credentials:'include' });
+        if(!r.ok) return;
+        const d = await r.json();
+        if(d?.waNumber) $('waNumber').value = d.waNumber;
+      }catch{}
+    }
+  
+    $('btnValidate').onclick = ()=>{
+      const v = $('waNumber').value.trim();
+      if(isE164(v)) showMsg(true, '✅ Formato válido (E.164).');
+      else showMsg(false, '❌ Formato inválido. Debe ser +códigoPaís + dígitos (8–15).');
+    };
+  
+    $('btnSaveDraft').onclick = async ()=>{
+      const v = $('waNumber').value.trim();
+      if(!isE164(v)){ showMsg(false, '❌ Corrige el formato antes de guardar.'); return; }
+      try{
+        const r = await fetch('/api/whatsapp/number/draft', {
+          method:'POST', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ waNumber: v })
+        });
+        const d = await r.json().catch(()=> ({}));
+        if(!r.ok) return showMsg(false, d?.error || '❌ Error guardando número.');
+        showMsg(true, '✅ Número guardado como borrador.');
+      }catch{
+        showMsg(false, '❌ Error de red.');
+      }
+    };
+  
+    document.addEventListener('DOMContentLoaded', loadDraft);
   </script>
 </body>
 </html>
+
 
 
