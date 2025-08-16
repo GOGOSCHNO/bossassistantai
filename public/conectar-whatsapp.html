@@ -95,6 +95,44 @@
         <div id="numMsg" class="ca-alert" style="display:none;"></div>
       </div>
     </section>
+    <section class="ca-section">
+      <h2>Producción (placeholder)</h2>
+      <p class="ca-subtext">Introduce temporalmente tus credenciales para guardar la estructura. Aún no iniciamos Embedded Signup.</p>
+    
+      <div class="ca-card">
+        <div class="form-row">
+          <label for="prodWabaId">WABA ID (opcional)</label>
+          <input id="prodWabaId" class="ca-input" type="text" placeholder="Ej: 123456789012345" />
+        </div>
+    
+        <div class="form-row">
+          <label for="prodBusinessId">Business ID (opcional)</label>
+          <input id="prodBusinessId" class="ca-input" type="text" placeholder="Ej: 987654321098765" />
+        </div>
+    
+        <div class="form-row">
+          <label for="prodPhoneNumberId">phone_number_id *</label>
+          <input id="prodPhoneNumberId" class="ca-input" type="text" placeholder="Ej: 123456789012345" />
+        </div>
+    
+        <div class="form-row">
+          <label for="prodAccessToken">access_token *</label>
+          <input id="prodAccessToken" class="ca-input" type="text" placeholder="EAAG..." />
+        </div>
+    
+        <div class="form-row">
+          <label for="prodWaNumber">Número WhatsApp (E.164, opcional)</label>
+          <input id="prodWaNumber" class="ca-input" type="text" placeholder="+573001234567" />
+        </div>
+    
+        <div class="ca-actions">
+          <button id="btnSaveProd" class="ca-btn ca-btn-primary">Guardar credenciales (Prod)</button>
+          <button id="btnReloadStatus" class="ca-btn">Refrescar estado</button>
+        </div>
+    
+        <div id="prodMsg" class="ca-alert" style="display:none;"></div>
+      </div>
+    </section>
   </main>
 
   <!-- === Footer commun === -->
@@ -173,9 +211,67 @@
     };
   
     document.addEventListener('DOMContentLoaded', loadDraft);
+    const el = (id)=>document.getElementById(id);
+    function showProdMsg(ok, txt){
+      const box = el('prodMsg');
+      box.className = 'ca-alert ' + (ok ? 'ca-alert-success' : 'ca-alert-warning');
+      box.textContent = txt; box.style.display = 'block';
+    }
+  
+    async function refreshStatusBox(){
+      try{
+        const r = await fetch('/api/whatsapp/status', { credentials:'include' });
+        if(!r.ok) throw new Error();
+        const s = await r.json();
+        // Si tu as un encart d’état, profite pour l’afficher ici :
+        // (existant dans ta page : #statusText)
+        const txt = s.connected
+          ? `✅ Conectado (${s.mode || '-'}) – phone_number_id: ${s.phoneNumberIdMasked || '—'}`
+          : '❌ No conectado';
+        const statusEl = document.getElementById('statusText');
+        if (statusEl) statusEl.textContent = txt;
+      }catch{
+        const statusEl = document.getElementById('statusText');
+        if (statusEl) statusEl.textContent = 'Error al cargar estado.';
+      }
+    }
+  
+    el('btnSaveProd').onclick = async ()=>{
+      const payload = {
+        mode: 'produccion',
+        wabaId: el('prodWabaId').value.trim() || undefined,
+        businessId: el('prodBusinessId').value.trim() || undefined,
+        phoneNumberId: el('prodPhoneNumberId').value.trim(),
+        accessToken: el('prodAccessToken').value.trim(),
+        waNumber: el('prodWaNumber').value.trim() || undefined
+      };
+      if(!payload.phoneNumberId || !payload.accessToken){
+        showProdMsg(false, 'Completa phone_number_id y access_token.');
+        return;
+      }
+      try{
+        const r = await fetch('/api/whatsapp/connect', {
+          method:'POST', credentials:'include',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const d = await r.json().catch(()=>({}));
+        if(!r.ok) return showProdMsg(false, d?.error || '❌ Error guardando credenciales.');
+        showProdMsg(true, '✅ Credenciales guardadas (Prod).');
+        refreshStatusBox();
+      }catch{
+        showProdMsg(false, '❌ Error de red.');
+      }
+    };
+  
+    el('btnReloadStatus').onclick = refreshStatusBox;
+  
+    // charge l’état au chargement
+    document.addEventListener('DOMContentLoaded', refreshStatusBox);
   </script>
 </body>
 </html>
+
 
 
 
