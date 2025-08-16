@@ -861,6 +861,14 @@ async function sendConsentRequest(userNumber) {
   }
 }
 
+async function currentUser(req){
+  const t = req.cookies?.token; if(!t) throw new Error('No autenticado');
+  const d = jwt.verify(t, process.env.JWT_SECRET);
+  const u = await db.collection('users').findOne({ email: d.email });
+  if(!u) throw new Error('Usuario no encontrado'); return u;
+}
+function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
+
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -1586,5 +1594,50 @@ app.post("/api/editar-cita", async (req, res) => {
   } catch (err) {
     console.error("❌ Error al editar cita:", err);
     res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+// GET /api/whatsapp/number/draft
+app.get('/api/whatsapp/number/draft', async (req,res)=>{
+  try{
+    const u = await currentUser(req);
+    const draft = u.whatsappDraft || null;
+    res.json(draft || {});
+  }catch(e){
+    const code = e.message==='No autenticado'?401:500;
+    res.status(code).json({ error: e.message });
+  }
+});
+
+// POST /api/whatsapp/number/draft  { waNumber }
+app.post('/api/whatsapp/number/draft', async (req,res)=>{
+  try{
+    const u = await currentUser(req);
+    const waNumber = String(req.body?.waNumber||'').trim();
+    if(!isE164(waNumber)) return res.status(400).json({ error:'Formato E.164 inválido' });
+
+    const now = new Date();
+    await db.collection('users').updateOne(
+      { _id: u._id },
+      { $set: { 'whatsappDraft.waNumber': waNumber, 'whatsappDraft.updatedAt': now },
+        $setOnInsert: { 'whatsappDraft.createdAt': now } }
+    );
+    res.json({ ok:true, waNumber });
+  }catch(e){
+    const code = e.message==='No autenticado'?401:500;
+    res.status(code).json({ error: e.message });
+  }
+});
+
+// (Opcional) POST /api/whatsapp/number/clear
+app.post('/api/whatsapp/number/clear', async (req,res)=>{
+  try{
+    const u = await currentUser(req);
+    await db.collection('users').updateOne(
+      { _id: u._id }, { $unset: { whatsappDraft: '' } }
+    );
+    res.json({ ok:true });
+  }catch(e){
+    const code = e.message==='No autenticado'?401:500;
+    res.status(code).json({ error: e.message });
   }
 });
