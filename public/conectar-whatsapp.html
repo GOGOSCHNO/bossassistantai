@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Conectar WhatsApp – ComercioAI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png">
+  <link rel="stylesheet" href="comercioai.css">
+</head>
+<body>
+  <!-- === Header commun === -->
+  <header class="ca-header">
+    <div class="ca-header-3col">
+      <div class="ca-header-left">
+        <a href="index.html" class="ca-logo-icon">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+        </a>
+        <a href="index.html" class="ca-logo-text-img">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+        </a>
+      </div>
+      <nav class="ca-header-center" id="nav-center"></nav>
+      <div id="auth-buttons" class="nav-login"></div>
+    </div>
+    <!-- Version mobile -->
+    <div class="ca-header-mobile">
+      <div class="ca-header-left">
+        <a href="index.html" class="ca-logo-icon">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/assistantai-site/refs/heads/main/images/favicon%20(2).png" alt="Logo Cerveau">
+        </a>
+        <a href="index.html" class="ca-logo-text-img">
+          <img src="https://raw.githubusercontent.com/GOGOSCHNO/bossassistantai/refs/heads/main/public/images/ComercioAI_logotexte%20sans%20fonds.png" alt="Logo ComercioAI">
+        </a>
+      </div>
+      <div class="ca-header-mobile-actions" id="mobile-actions"></div>
+      <button class="ca-hamburger" id="caHamburgerBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="ca-mobile-menu" id="caMobileMenu"></nav>
+  </header>
+
+  <!-- === Contenu principal === -->
+  <main class="ca-main">
+    <section class="ca-section">
+      <h1>Conectar WhatsApp</h1>
+      <p class="ca-subtext">Conecta tu número de WhatsApp API para activar las respuestas automáticas de tu asistente.</p>
+
+      <!-- Carte de status -->
+      <div class="ca-card" id="statusCard">
+        <h3>Estado de conexión</h3>
+        <p id="statusText">Cargando...</p>
+      </div>
+
+      <!-- Boutons -->
+      <div class="ca-actions">
+        <button id="testBtn" class="ca-btn ca-btn-primary">Probar conexión (Simulado)</button>
+        <button id="signupBtn" class="ca-btn ca-btn-disabled" title="Disponible tras aprobación Tech Provider">
+          Iniciar Embedded Signup
+        </button>
+      </div>
+
+      <!-- Ruban alerte -->
+      <div id="alertBanner" class="ca-alert ca-alert-warning" style="display:none;">
+        ⚠️ Conecta tu WhatsApp API para activar respuestas automáticas
+      </div>
+
+      <!-- Toggle auto-reply -->
+      <div class="ca-toggle">
+        <label>
+          <input type="checkbox" id="autoReplyToggle" disabled>
+          Activar respuestas automáticas
+        </label>
+      </div>
+
+      <!-- Logs -->
+      <div class="ca-card ca-logs">
+        <h3>Logs</h3>
+        <pre id="logPanel">Esperando eventos...</pre>
+      </div>
+    </section>
+  </main>
+
+  <!-- === Footer commun === -->
+  <footer class="ca-footer">
+    &copy; 2025 ComercioAI – Todos los derechos reservados.
+    <a href="contacto.html">Contáctanos</a>
+    <a href="politica-de-privacidad.html" target="_blank">Política de Privacidad</a>
+    <a href="eliminar-datos.html" target="_blank">Eliminar mis datos</a>
+  </footer>
+
+  <script>
+  // Exemple JS minimal pour brancher l’UI
+  async function loadStatus() {
+    try {
+      const res = await fetch("/api/whatsapp/status", { credentials: "include" });
+      const data = await res.json();
+      document.getElementById("statusText").textContent =
+        data.connected
+          ? `✅ Conectado (ID: ${data.phoneNumberIdMasked || "****"})`
+          : "❌ No conectado";
+
+      document.getElementById("autoReplyToggle").disabled = !data.connected;
+      document.getElementById("alertBanner").style.display = data.connected ? "none" : "block";
+    } catch {
+      document.getElementById("statusText").textContent = "Error al cargar estado.";
+    }
+  }
+
+  document.getElementById("testBtn").addEventListener("click", async () => {
+    const res = await fetch("/api/whatsapp/test", { method: "POST", credentials: "include" });
+    const txt = await res.text();
+    document.getElementById("logPanel").textContent += "\\nTest → " + txt;
+  });
+
+  document.addEventListener("DOMContentLoaded", loadStatus);
+  </script>
+</body>
+</html>
