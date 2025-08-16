@@ -95,6 +95,7 @@
         <div id="numMsg" class="ca-alert" style="display:none;"></div>
       </div>
     </section>
+    <button id="btnEmbedded" class="ca-btn ca-btn-primary">Iniciar Embedded Signup</button>
   </main>
 
   <!-- === Footer commun === -->
@@ -173,9 +174,24 @@
     };
   
     document.addEventListener('DOMContentLoaded', loadDraft);
+    const $ = (id)=>document.getElementById(id);
+
+    // 1) Demander au serveur l’URL ESU (avec state signé)
+    async function startESU(){
+      try{
+        const r = await fetch('/api/whatsapp/embedded/start', { credentials:'include' });
+        if(!r.ok){ alert('No se pudo iniciar ESU'); return; }
+        const { url } = await r.json();
+        window.location.href = url; // ouvre le flow Meta
+      }catch(e){
+        alert('Error iniciando ESU');
+      }
+    }
+    document.getElementById('btnEmbedded').addEventListener('click', startESU);
   </script>
 </body>
 </html>
+
 
 
 
