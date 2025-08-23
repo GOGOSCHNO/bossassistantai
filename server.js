@@ -17,6 +17,8 @@ const jwt = require('jsonwebtoken');
 const { google } = require('googleapis');
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
+const crypto = require('crypto');
+const querystring = require('querystring');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -869,6 +871,18 @@ async function currentUser(req){
 }
 function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
 
+function signState(payload){
+  const raw = JSON.stringify(payload);
+  const sig = crypto.createHmac('sha256', process.env.APP_SECRET).update(raw).digest('hex');
+  return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
+}
+async function verifyState(b64){
+  const parsed = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
+  const { raw, sig } = parsed || {};
+  const exp = crypto.createHmac('sha256', process.env.APP_SECRET).update(raw).digest('hex');
+  if(sig !== exp) throw new Error('state inválido');
+  return JSON.parse(raw);
+}
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -1640,5 +1654,96 @@ app.post('/api/whatsapp/number/clear', async (req,res)=>{
   }catch(e){
     const code = e.message==='No autenticado'?401:500;
     res.status(code).json({ error: e.message });
+  }
+});
+app.get('/api/whatsapp/embedded/start', async (req,res)=>{
+  try{
+    const u = await currentUser(req); // helper que tu as déjà
+    const state = signState({ email: u.email, ts: Date.now() });
+
+    // scopes minimaux pour ESU & gestion business/WABA (ajuste si Meta t’en demande d’autres)
+    const scope = [
+      'business_management',
+      'whatsapp_business_management',
+      'whatsapp_business_messaging'
+    ].join(',');
+
+    const url = 'https://www.facebook.com/v20.0/dialog/oauth?' + querystring.stringify({
+      client_id: process.env.APP_ID,
+      redirect_uri: process.env.ESU_REDIRECT_URI,
+      state,
+      response_type: 'code',
+      scope
+    });
+
+    res.json({ url });
+  }catch(e){
+    res.status(401).json({ error: 'No autenticado' });
+  }
+});
+
+app.get('/api/whatsapp/embedded/callback', async (req,res)=>{
+  try{
+    const { code, state } = req.query;
+    if(!code || !state) return res.status(400).send('Faltan parámetros');
+
+    const s = await verifyState(state);
+
+    // 1) code -> access_token (de l’utilisateur qui a fait login)
+    const tokenRes = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?` + 
+      querystring.stringify({
+        client_id: process.env.APP_ID,
+        client_secret: process.env.APP_SECRET,
+        redirect_uri: process.env.ESU_REDIRECT_URI,
+        code
+      })
+    );
+    const tokenBody = await tokenRes.json();
+    if(!tokenRes.ok) return res.status(400).send('Token exchange failed: ' + JSON.stringify(tokenBody));
+
+    const userToken = tokenBody.access_token;
+
+    // 2) Lire les WABA accessibles + leurs numéros
+    // (on récupère qq infos utiles pour initialiser ton tenant)
+    // NB: les champs exacts évoluent, on vise un min utile.
+    const fields = [
+      'id,name',
+      'owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}'
+    ].join(',');
+
+    const meRes = await fetch(`https://graph.facebook.com/v20.0/me?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(userToken)}`);
+    const meBody = await meRes.json();
+    if(!meRes.ok) return res.status(400).send('Graph me failed: ' + JSON.stringify(meBody));
+
+    // 3) Choisir un WABA + un numéro (pour commencer simple : premier dispo)
+    const wabas = meBody?.owned_whatsapp_business_accounts || [];
+    const waba = wabas[0] || null;
+    const phone = waba?.phone_numbers?.[0] || null;
+
+    // 4) Sauvegarder dans users.whatsapp (prod)
+    const u = await db.collection('users').findOne({ email: s.email });
+    if(!u) return res.status(400).send('Usuario no encontrado');
+
+    await db.collection('users').updateOne(
+      { _id: u._id },
+      { $set: {
+          whatsapp: {
+            connected: !!(waba && phone),
+            mode: 'produccion',
+            wabaId: waba?.id || null,
+            businessId: null, // si tu veux l’inférer ensuite via /me/businesses
+            phoneNumberId: phone?.id || null,
+            waNumber: phone?.display_phone_number || null,
+            accessToken: userToken,            // ⚠️ en prod: stocke chiffré
+            connectedAt: new Date()
+          }
+        }}
+    );
+
+    // 5) Rediriger vers ta page (succès)
+    res.redirect('/conectar-whatsapp.html?esu=ok');
+  }catch(e){
+    console.error('ESU callback error', e);
+    res.redirect('/conectar-whatsapp.html?esu=error');
   }
 });
