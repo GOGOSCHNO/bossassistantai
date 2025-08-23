@@ -107,90 +107,95 @@
   </footer>
 
   <script>
-    async function initHeaderAuth() {
-      const el = id => document.getElementById(id);
+  document.addEventListener('DOMContentLoaded', () => {
+    const $ = (id) => document.getElementById(id);
+  
+    // --- Auth header ---
+    (async function initHeaderAuth() {
       try {
         const res = await fetch('/api/me', { credentials: 'include' });
-        if (!res.ok) throw new Error('unauth');
-        const me = await res.json();
-        // ⚠️ Id du conteneur = le même que sur tes autres pages
-        const box = el('auth-buttons');
-        if (box) box.innerHTML = `👋 Hola, ${me.name || me.email}`;
-        return me;
-      } catch (e) {
-        const box = document.getElementById('auth-buttons');
-        if (box) box.innerHTML = `<a href="login.html" class="ca-btn">Iniciar sesión</a>`;
-        // Option stricte : décommente pour forcer la login
-        // location.href = 'login.html';
-        return null;
-      }
-    }
-    
-    document.addEventListener('DOMContentLoaded', initHeaderAuth);
-    const $ = (id)=>document.getElementById(id);
+        const box = $('auth-buttons');
+        if (res.ok) {
+          const me = await res.json();
+          if (box) box.innerHTML = `👋 Hola, ${me.name || me.email}`;
+        } else {
+          if (box) box.innerHTML = `<a href="login.html" class="ca-btn">Iniciar sesión</a>`;
+        }
+      } catch {}
+    })();
   
-    // Validation E.164: + y 8–15 dígitos (prudente)
-    function isE164(s){
-      return /^\+[1-9]\d{7,14}$/.test(String(s).trim());
-    }
-  
-    function showMsg(ok, text){
+    // --- E.164 utils ---
+    const isE164 = (s) => /^\+[1-9]\d{7,14}$/.test(String(s).trim());
+    const showMsg = (ok, text) => {
       const box = $('numMsg');
+      if (!box) return;
       box.className = 'ca-alert ' + (ok ? 'ca-alert-success' : 'ca-alert-warning');
       box.textContent = text;
       box.style.display = 'block';
-    }
+    };
   
-    async function loadDraft(){
-      try{
-        const r = await fetch('/api/whatsapp/number/draft', { credentials:'include' });
-        if(!r.ok) return;
+    // --- Charger le draft si dispo ---
+    (async function loadDraft() {
+      try {
+        const r = await fetch('/api/whatsapp/number/draft', { credentials: 'include' });
+        if (!r.ok) return;
         const d = await r.json();
-        if(d?.waNumber) $('waNumber').value = d.waNumber;
-      }catch{}
+        if (d?.waNumber) $('waNumber').value = d.waNumber;
+      } catch {}
+    })();
+  
+    // --- Handlers boutons ---
+    const btnValidate = $('btnValidate');
+    const btnSaveDraft = $('btnSaveDraft');
+    const waNumber = $('waNumber');
+  
+    if (btnValidate && waNumber) {
+      btnValidate.onclick = () => {
+        const v = waNumber.value.trim();
+        if (isE164(v)) showMsg(true, '✅ Formato válido (E.164).');
+        else showMsg(false, '❌ Formato inválido. Debe ser +códigoPaís + dígitos (8–15).');
+      };
     }
   
-    $('btnValidate').onclick = ()=>{
-      const v = $('waNumber').value.trim();
-      if(isE164(v)) showMsg(true, '✅ Formato válido (E.164).');
-      else showMsg(false, '❌ Formato inválido. Debe ser +códigoPaís + dígitos (8–15).');
-    };
-  
-    $('btnSaveDraft').onclick = async ()=>{
-      const v = $('waNumber').value.trim();
-      if(!isE164(v)){ showMsg(false, '❌ Corrige el formato antes de guardar.'); return; }
-      try{
-        const r = await fetch('/api/whatsapp/number/draft', {
-          method:'POST', credentials:'include',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ waNumber: v })
-        });
-        const d = await r.json().catch(()=> ({}));
-        if(!r.ok) return showMsg(false, d?.error || '❌ Error guardando número.');
-        showMsg(true, '✅ Número guardado como borrador.');
-      }catch{
-        showMsg(false, '❌ Error de red.');
-      }
-    };
-  
-    document.addEventListener('DOMContentLoaded', loadDraft);
-    const $ = (id)=>document.getElementById(id);
-
-    // 1) Demander au serveur l’URL ESU (avec state signé)
-    async function startESU(){
-      try{
-        const r = await fetch('/api/whatsapp/embedded/start', { credentials:'include' });
-        if(!r.ok){ alert('No se pudo iniciar ESU'); return; }
-        const { url } = await r.json();
-        window.location.href = url; // ouvre le flow Meta
-      }catch(e){
-        alert('Error iniciando ESU');
-      }
+    if (btnSaveDraft && waNumber) {
+      btnSaveDraft.onclick = async () => {
+        const v = waNumber.value.trim();
+        if (!isE164(v)) return showMsg(false, '❌ Corrige el formato antes de guardar.');
+        try {
+          const r = await fetch('/api/whatsapp/number/draft', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ waNumber: v })
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) return showMsg(false, d?.error || '❌ Error guardando número.');
+          showMsg(true, '✅ Número guardado como borrador.');
+        } catch {
+          showMsg(false, '❌ Error de red.');
+        }
+      };
     }
-    document.getElementById('btnEmbedded').addEventListener('click', startESU);
+  
+    // --- Embedded Signup ---
+    const btnEmbedded = $('btnEmbedded');
+    if (btnEmbedded) {
+      btnEmbedded.addEventListener('click', async () => {
+        try {
+          const r = await fetch('/api/whatsapp/embedded/start', { credentials:'include' });
+          if (!r.ok) return alert('No se pudo iniciar ESU');
+          const { url } = await r.json();
+          window.location.href = url;
+        } catch {
+          alert('Error iniciando ESU');
+        }
+      });
+    }
+  });
   </script>
 </body>
 </html>
+
 
 
 
