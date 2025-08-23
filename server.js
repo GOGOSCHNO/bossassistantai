@@ -867,7 +867,6 @@ async function currentUser(req){
   const u = await db.collection('users').findOne({ email: d.email });
   if(!u) throw new Error('Usuario no encontrado'); return u;
 }
-
 function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
 
 app.post('/whatsapp', async (req, res) => {
@@ -1597,6 +1596,7 @@ app.post("/api/editar-cita", async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+
 // GET /api/whatsapp/number/draft
 app.get('/api/whatsapp/number/draft', async (req,res)=>{
   try{
@@ -1637,31 +1637,6 @@ app.post('/api/whatsapp/number/clear', async (req,res)=>{
       { _id: u._id }, { $unset: { whatsappDraft: '' } }
     );
     res.json({ ok:true });
-  }catch(e){
-    const code = e.message==='No autenticado'?401:500;
-    res.status(code).json({ error: e.message });
-  }
-});
-// === GET /api/whatsapp/status
-// source de vérité UI : état de connexion prod + numéro draft
-app.get('/api/whatsapp/status', async (req,res)=>{
-  try{
-    const u = await currentUser(req);
-    const w = u.whatsapp || {};
-    const draft = u.whatsappDraft || {};
-    res.json({
-      connected: !!w.connected,
-      mode: w.mode || null, // 'produccion' | 'simulado' | null
-      phoneNumberIdMasked: w.phoneNumberId ? maskTail(w.phoneNumberId, 6) : null,
-      wabaId: w.wabaId || null,
-      businessId: w.businessId || null,
-      waNumber: w.waNumber || draft.waNumber || null, // pratique pour afficher quelque chose
-      tokenMasked: w.accessToken ? maskTail(w.accessToken, 4) : null,
-      tenantName: u.name || u.businessName || u.email,
-      slug: u.slug,
-      autoReplyEnabled: !!u.autoReplyEnabled,
-      isTechProvider: process.env.IS_TECH_PROVIDER === 'true'
-    });
   }catch(e){
     const code = e.message==='No autenticado'?401:500;
     res.status(code).json({ error: e.message });
