@@ -193,8 +193,26 @@
     }
   });
   </script>
+  <script>
+    async function refreshStatus(){
+      try{
+        const r = await fetch('/api/whatsapp/status', { credentials:'include' });
+        const s = await r.json();
+        const txt = s.connected
+          ? `✅ Conectado (producción) – phone_number_id: ${s.phoneNumberIdMasked || '—'}`
+          : '❌ No conectado';
+        const el = document.getElementById('statusText');
+        if (el) el.textContent = txt;
+      }catch{
+        const el = document.getElementById('statusText');
+        if (el) el.textContent = 'Error al cargar estado.';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', refreshStatus);
+  </script>
 </body>
 </html>
+
 
 
 
