@@ -1801,13 +1801,13 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
           { _id: u0._id },
           { $set: {
               whatsapp: {
-                connected: !!(waba && phone),
+                connected: false,
                 mode: 'produccion',
-                wabaId: waba?.id || null,
-                businessId: biz.id,
-                phoneNumberId: phone?.id || null,
-                waNumber: phone?.display_phone_number || null,
-                accessToken: encrypt(userToken), // Chiffrer ici
+                wabaId: null,
+                businessId: null,
+                phoneNumberId: null,
+                waNumber: null,
+                accessToken: userToken,
                 connectedAt: new Date()
               }
             } }
@@ -1847,7 +1847,7 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
             businessId: biz.id,
             phoneNumberId: phone?.id || null,
             waNumber: phone?.display_phone_number || null,
-            accessToken: userToken,        // ⚠️ chiffrer en prod
+            accessToken: encrypt(userToken), // Chiffrer ici
             connectedAt: new Date()
           }
         } }
