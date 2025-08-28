@@ -1807,7 +1807,7 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
                 businessId: null,
                 phoneNumberId: null,
                 waNumber: null,
-                accessToken: userToken,
+                accessToken: encrypt(userToken),
                 connectedAt: new Date()
               }
             } }
