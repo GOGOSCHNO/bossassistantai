@@ -1801,13 +1801,13 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
           { _id: u0._id },
           { $set: {
               whatsapp: {
-                connected: false,
+                connected: !!(waba && phone),
                 mode: 'produccion',
-                wabaId: null,
-                businessId: null,
-                phoneNumberId: null,
-                waNumber: null,
-                accessToken: encrypt(userToken),
+                wabaId: waba?.id || null,
+                businessId: biz.id,
+                phoneNumberId: phone?.id || null,
+                waNumber: phone?.display_phone_number || null,
+                accessToken: encrypt(userToken), // Chiffrer ici
                 connectedAt: new Date()
               }
             } }
