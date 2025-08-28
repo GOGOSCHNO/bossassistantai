@@ -96,6 +96,36 @@
       </div>
     </section>
     <button id="btnEmbedded" class="ca-btn ca-btn-primary">Iniciar Embedded Signup</button>
+    <section id="number-registration">
+      <h2>Registro de Número (si WABA sin número)</h2>
+      <p>Si tu WABA no tiene un número utilizable, regístralo aquí.</p>
+    
+      <!-- Input pour numéro E.164 (utilise /api/whatsapp/number/draft si besoin) -->
+      <label for="wa-number">Número WhatsApp (E.164, ej: +573001234567):</label>
+      <input type="text" id="wa-number" placeholder="+573001234567">
+      <button id="save-number">Guardar Número</button>
+    
+      <!-- Boutons pour la séquence -->
+      <div>
+        <button id="request-code">Enviar Código (SMS)</button>
+        <input type="text" id="verification-code" placeholder="Código de 6 dígitos" maxlength="6">
+        <button id="verify-code">Verificar Código</button>
+        <button id="register-number">Registrar Número</button>
+      </div>
+    
+      <!-- Test d’envoi -->
+      <div>
+        <label for="test-to">Enviar test a (E.164):</label>
+        <input type="text" id="test-to" placeholder="+573001234567">
+        <button id="send-test">Probar Envio</button>
+      </div>
+    
+      <!-- Logs (append des événements) -->
+      <div id="logs">
+        <h3>Logs</h3>
+        <ul></ul>
+      </div>
+    </section>
   </main>
 
   <!-- === Footer commun === -->
@@ -210,8 +240,108 @@
     }
     document.addEventListener('DOMContentLoaded', refreshStatus);
   </script>
+  <script>
+    const logsList = document.querySelector('#logs ul');
+    function logMessage(msg) {
+      const li = document.createElement('li');
+      li.textContent = new Date().toISOString() + ' - ' + msg;
+      logsList.appendChild(li);
+    }
+  
+    // Charger numéro draft si existe
+    fetch('/api/whatsapp/number/draft')
+      .then(res => res.json())
+      .then(data => {
+        if (data.waNumber) document.getElementById('wa-number').value = data.waNumber;
+      })
+      .catch(err => logMessage('Error cargando draft: ' + err.message));
+  
+    // Guardar número
+    document.getElementById('save-number').addEventListener('click', () => {
+      const waNumber = document.getElementById('wa-number').value.trim();
+      if (!waNumber.startsWith('+') || waNumber.length < 12) {
+        alert('Formato E.164 inválido');
+        return;
+      }
+      fetch('/api/whatsapp/number/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ waNumber })
+      })
+      .then(res => res.json())
+      .then(data => logMessage('Número guardado: ' + data.waNumber))
+      .catch(err => logMessage('Error guardando número: ' + err.message));
+    });
+  
+    // Envoyer code
+    document.getElementById('request-code').addEventListener('click', () => {
+      fetch('/api/whatsapp/number/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code_method: 'SMS', locale: 'es_ES' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) logMessage('Código solicitado OK');
+        else alert(data.error);
+      })
+      .catch(err => logMessage('Error request-code: ' + err.message));
+    });
+  
+    // Vérifier code
+    document.getElementById('verify-code').addEventListener('click', () => {
+      const code = document.getElementById('verification-code').value.trim();
+      if (code.length !== 6) return alert('Código de 6 dígitos requerido');
+      fetch('/api/whatsapp/number/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) logMessage('Código verificado OK');
+        else alert(data.error);
+      })
+      .catch(err => logMessage('Error verify-code: ' + err.message));
+    });
+  
+    // Register
+    document.getElementById('register-number').addEventListener('click', () => {
+      fetch('/api/whatsapp/number/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messaging_product: 'whatsapp' }) // Ajouter pin si besoin
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) logMessage('Registro OK: ' + data.message);
+        else alert(data.error);
+      })
+      .catch(err => logMessage('Error register: ' + err.message));
+    });
+  
+    // Test envoi
+    document.getElementById('send-test').addEventListener('click', () => {
+      const to = document.getElementById('test-to').value.trim();
+      if (!to) return alert('Número destinatario requerido');
+      fetch('/api/whatsapp/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) logMessage('Test enviado OK, ID: ' + data.messageId);
+        else alert(data.error);
+      })
+      .catch(err => logMessage('Error test send: ' + err.message));
+    });
+  
+    // Refresh status après actions (optionnel, poll /api/whatsapp/status)
+  </script>
 </body>
 </html>
+
 
 
 
