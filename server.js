@@ -1691,68 +1691,85 @@ app.get('/api/whatsapp/embedded/start', async (req,res)=>{
   }
 });
 
-app.get('/api/whatsapp/embedded/callback', async (req,res)=>{
-  try{
+// 📌 Callback de l’Embedded Signup
+app.get('/api/whatsapp/embedded/callback', async (req, res) => {
+  try {
     const { code, state } = req.query;
-    if(!code || !state) return res.status(400).send('Faltan parámetros');
+    if (!code || !state) {
+      return res.status(400).send('Faltan parámetros');
+    }
 
+    // 1️⃣ Vérification du state signé (email du user, timestamp…)
     const s = await verifyState(state);
 
-    // 1) code -> access_token (de l’utilisateur qui a fait login)
-    const tokenRes = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?` + 
-      querystring.stringify({
-        client_id: process.env.APP_ID,
-        client_secret: process.env.APP_SECRET,
-        redirect_uri: process.env.ESU_REDIRECT_URI,
-        code
-      })
+    // 2️⃣ Échange du "code" contre un user access_token
+    const tokenRes = await fetch(
+      `https://graph.facebook.com/v20.0/oauth/access_token?` +
+        querystring.stringify({
+          client_id: process.env.APP_ID,
+          client_secret: process.env.APP_SECRET,
+          redirect_uri: process.env.ESU_REDIRECT_URI,
+          code,
+        })
     );
     const tokenBody = await tokenRes.json();
-    if(!tokenRes.ok) return res.status(400).send('Token exchange failed: ' + JSON.stringify(tokenBody));
+    if (!tokenRes.ok) {
+      return res
+        .status(400)
+        .send('Token exchange failed: ' + JSON.stringify(tokenBody));
+    }
 
     const userToken = tokenBody.access_token;
 
-    // 2) Lire les WABA accessibles + leurs numéros
-    // (on récupère qq infos utiles pour initialiser ton tenant)
-    // NB: les champs exacts évoluent, on vise un min utile.
+    // 3️⃣ Récupérer les WABA et numéros accessibles pour ce user
     const fields = [
       'id,name',
-      'owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}'
+      'owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}',
     ].join(',');
 
-    const meRes = await fetch(`https://graph.facebook.com/v20.0/me?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(userToken)}`);
+    const meRes = await fetch(
+      `https://graph.facebook.com/v20.0/me?fields=${encodeURIComponent(
+        fields
+      )}&access_token=${encodeURIComponent(userToken)}`
+    );
     const meBody = await meRes.json();
-    if(!meRes.ok) return res.status(400).send('Graph me failed: ' + JSON.stringify(meBody));
+    if (!meRes.ok) {
+      return res
+        .status(400)
+        .send('Graph me failed: ' + JSON.stringify(meBody));
+    }
 
-    // 3) Choisir un WABA + un numéro (pour commencer simple : premier dispo)
+    // 4️⃣ Pour simplifier : on prend le premier WABA dispo et son premier numéro
     const wabas = meBody?.owned_whatsapp_business_accounts || [];
     const waba = wabas[0] || null;
     const phone = waba?.phone_numbers?.[0] || null;
 
-    // 4) Sauvegarder dans users.whatsapp (prod)
+    // 5️⃣ Sauvegarde dans l’objet `users.whatsapp`
     const u = await db.collection('users').findOne({ email: s.email });
-    if(!u) return res.status(400).send('Usuario no encontrado');
+    if (!u) return res.status(400).send('Usuario no encontrado');
 
     await db.collection('users').updateOne(
       { _id: u._id },
-      { $set: {
+      {
+        $set: {
           whatsapp: {
             connected: !!(waba && phone),
             mode: 'produccion',
             wabaId: waba?.id || null,
-            businessId: null, // si tu veux l’inférer ensuite via /me/businesses
+            businessId: null, // tu peux compléter plus tard avec /me/businesses
             phoneNumberId: phone?.id || null,
             waNumber: phone?.display_phone_number || null,
-            accessToken: userToken,            // ⚠️ en prod: stocke chiffré
-            connectedAt: new Date()
-          }
-        }}
+            accessToken: userToken, // ⚠️ penser à chiffrer en prod
+            connectedAt: new Date(),
+          },
+        },
+      }
     );
 
-    // 5) Rediriger vers ta page (succès)
+    // 6️⃣ Redirection vers la page front avec flag de succès
     res.redirect('/conectar-whatsapp.html?esu=ok');
-  }catch(e){
-    console.error('ESU callback error', e);
+  } catch (e) {
+    console.error('❌ ESU callback error', e);
     res.redirect('/conectar-whatsapp.html?esu=error');
   }
 });
