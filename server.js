@@ -70,11 +70,14 @@ async function connectToMongoDB() {
 connectToMongoDB();
 
 // Middleware
-const allowedOrigins = [
-  "https://comercioai.site",
-  "https://www.comercioai.site",
-  "https://bossassistantai-439c88409c33.herokuapp.com" // 👈 Ajout nécessaire pour les tests Heroku
-];
+const allowedOrigins = new Set([
+  'https://comercioai.site',
+  'https://www.comercioai.site',
+  'https://bossassistantai-439c88409c33.herokuapp.com',
+  // (facultatif si tu ouvres des dialogues/iframes FB dans ton domaine)
+  'https://www.facebook.com',
+  'https://facebook.com'
+]);
 
 async function handleMessage(userMessage, userNumber) {
   if (!messageQueue.has(userNumber)) messageQueue.set(userNumber, []);
@@ -147,15 +150,21 @@ async function handleMessage(userMessage, userNumber) {
 }
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true); // ✅ sécurise aussi les requêtes sans header Origin
-    }
-    console.warn("❌ CORS refusé pour :", origin);
-    callback(new Error("Not allowed by CORS"));
+  origin: (origin, cb) => {
+    // A) Aucun Origin (ex: appels serveur/Graph, curl, same-origin) -> OK
+    if (!origin) return cb(null, true);
+    // B) Origin autorisée -> OK
+    if (allowedOrigins.has(origin)) return cb(null, true);
+    // C) Non autorisée -> on BLOQUE sans lever d'exception (sinon 500)
+    console.warn('CORS blocked origin:', origin);
+    return cb(null, false);
   },
   credentials: true
 }));
+
+// (optionnel mais propre pour les préflight)
+app.options('*', cors());
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
