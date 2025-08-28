@@ -19,6 +19,8 @@ const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const querystring = require('querystring');
+const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY, 'base64'); // ENV: base64 d'une clé 32 bytes
+const ivLength = 12;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -891,6 +893,50 @@ async function verifyState(b64){
   const exp = crypto.createHmac('sha256', process.env.APP_SECRET).update(raw).digest('hex');
   if(sig !== exp) throw new Error('state inválido');
   return JSON.parse(raw);
+}
+function encrypt(text) {
+  const iv = crypto.randomBytes(ivLength);
+  const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return iv.toString('hex') + ':' + encrypted + ':' + authTag;
+}
+
+function decrypt(token) {
+  const [ivHex, encryptedHex, authTagHex] = token.split(':');
+  const iv = Buffer.from(ivHex, 'hex');
+  const encrypted = Buffer.from(encryptedHex, 'hex');
+  const authTag = Buffer.from(authTagHex, 'hex');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', encryptionKey, iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(encrypted, null, 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+// Helper currentUser (déjà existant, mais rappel pour cohérence)
+async function currentUser(req) {
+  const token = req.cookies.token;
+  if (!token) throw new Error('No autenticado');
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const user = await db.collection('users').findOne({ email: decoded.email });
+  if (!user) throw new Error('Usuario no encontrado');
+  return user;
+}
+function getErrorMessage(err) {
+  const metaError = err.response?.data?.error;
+  if (metaError) {
+    switch (metaError.code) {
+      case 100: return 'Parámetro inválido o faltante. Verifica los datos enviados.';
+      case 131009: return 'Código de verificación inválido o expirado.';
+      case 131021: return 'Rate limit alcanzado. Espera unos minutos e intenta de nuevo.';
+      case 190: return 'Access token expirado o inválido. Reconecta via Embedded Signup.';
+      case 200: return 'Permisos insuficientes. Verifica los scopes en la app Meta.';
+      default: return metaError.message || 'Error desconocido de Meta.';
+    }
+  }
+  return err.message || 'Error interno del servidor.';
 }
 app.post('/whatsapp', async (req, res) => {
   try {
@@ -1814,4 +1860,141 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
     return res.redirect('/conectar-whatsapp.html?esu=error');
   }
 });
+// POST /api/whatsapp/number/request-code
+app.post('/api/whatsapp/number/request-code', async (req, res) => {
+  try {
+    const user = await currentUser(req);
+    const { code_method = 'SMS', locale = 'es_ES' } = req.body; // Par défaut SMS, es_ES pour espagnol
+    const { wabaId } = user.whatsapp || {};
+    if (!wabaId) return res.status(400).json({ error: 'WABA no configurado' });
 
+    // Utiliser un numéro draft si pas de phoneNumberId
+    const phoneNumberId = user.whatsapp.phoneNumberId || null;
+    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible. Usa /api/whatsapp/number/draft primero.' });
+
+    const accessToken = decrypt(user.whatsapp.accessToken); // Déchiffrer
+
+    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/request_code`;
+    const response = await axios.post(apiUrl, { code_method, language: locale }, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (response.data.success) {
+      // Pas de champs supplémentaires à persister typiquement ici
+      res.json({ success: true, message: 'Código solicitado exitosamente' });
+    } else {
+      throw new Error('Respuesta inesperada de Meta');
+    }
+  } catch (err) {
+    console.error('Error en request-code:', err.response?.data || err.message);
+    const errorMsg = getErrorMessage(err);
+    res.status(err.response?.status || 500).json({ error: errorMsg });
+  }
+});
+
+// POST /api/whatsapp/number/verify-code
+app.post('/api/whatsapp/number/verify-code', async (req, res) => {
+  try {
+    const user = await currentUser(req);
+    const { code } = req.body;
+    if (!code || code.length !== 6) return res.status(400).json({ error: 'Código de 6 dígitos requerido' });
+
+    const phoneNumberId = user.whatsapp.phoneNumberId || null;
+    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible' });
+
+    const accessToken = decrypt(user.whatsapp.accessToken);
+
+    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/verify_code`;
+    const response = await axios.post(apiUrl, { code }, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (response.data.success) {
+      // Pas de champs supplémentaires ici
+      res.json({ success: true, message: 'Código verificado exitosamente' });
+    } else {
+      throw new Error('Respuesta inesperada de Meta');
+    }
+  } catch (err) {
+    console.error('Error en verify-code:', err.response?.data || err.message);
+    const errorMsg = getErrorMessage(err);
+    res.status(err.response?.status || 500).json({ error: errorMsg });
+  }
+});
+
+// POST /api/whatsapp/number/register
+app.post('/api/whatsapp/number/register', async (req, res) => {
+  try {
+    const user = await currentUser(req);
+    const { messaging_product = 'whatsapp', pin } = req.body; // PIN optionnel si requis par Meta
+
+    const phoneNumberId = user.whatsapp.phoneNumberId || null;
+    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible' });
+
+    const accessToken = decrypt(user.whatsapp.accessToken);
+
+    const payload = { messaging_product };
+    if (pin) payload.pin = pin; // Si Meta demande un PIN pour l'enregistrement
+
+    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/register`;
+    const response = await axios.post(apiUrl, payload, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (response.data.success) {
+      // Mettre à jour connected: true et persister champs supplémentaires si renvoyés (ex: verified_name)
+      const updateFields = { 'whatsapp.connected': true };
+      if (response.data.verified_name) updateFields['whatsapp.verified_name'] = response.data.verified_name;
+      if (response.data.quality_rating) updateFields['whatsapp.quality_rating'] = response.data.quality_rating;
+
+      await db.collection('users').updateOne(
+        { _id: user._id },
+        { $set: updateFields }
+      );
+
+      res.json({ success: true, message: 'Número registrado exitosamente', data: response.data });
+    } else {
+      throw new Error('Respuesta inesperada de Meta');
+    }
+  } catch (err) {
+    console.error('Error en register:', err.response?.data || err.message);
+    const errorMsg = getErrorMessage(err);
+    res.status(err.response?.status || 500).json({ error: errorMsg });
+  }
+});
+
+// POST /api/whatsapp/test (smoke test d’envoi)
+app.post('/api/whatsapp/test', async (req, res) => {
+  try {
+    const user = await currentUser(req);
+    const { to } = req.body; // Numéro destinataire (ex: +573001234567)
+    if (!to) return res.status(400).json({ error: 'Número destinatario requerido' });
+
+    const { phoneNumberId, connected } = user.whatsapp || {};
+    if (!connected || !phoneNumberId) return res.status(400).json({ error: 'WhatsApp no conectado' });
+
+    const accessToken = decrypt(user.whatsapp.accessToken);
+
+    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+    const payload = {
+      messaging_product: 'whatsapp',
+      to,
+      type: 'text',
+      text: { body: 'Hola from ComercioAI! Esto es un test.' }
+    };
+
+    const response = await axios.post(apiUrl, payload, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (response.data.messages?.[0]?.id) {
+      res.json({ success: true, message: 'Mensaje de test enviado', messageId: response.data.messages[0].id });
+    } else {
+      throw new Error('Respuesta inesperada de Meta');
+    }
+  } catch (err) {
+    console.error('Error en test send:', err.response?.data || err.message);
+    const errorMsg = getErrorMessage(err);
+    res.status(err.response?.status || 500).json({ error: errorMsg });
+  }
+});
