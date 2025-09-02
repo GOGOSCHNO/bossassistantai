@@ -51,51 +51,10 @@
         <h3>Estado de conexión</h3>
         <p id="statusText">Cargando...</p>
       </div>
-
-      <!-- Boutons -->
-      <div class="ca-actions">
-        <button id="testBtn" class="ca-btn ca-btn-primary">Probar conexión (Simulado)</button>
-        <button id="signupBtn" class="ca-btn ca-btn-disabled" title="Disponible tras aprobación Tech Provider">
-          Iniciar Embedded Signup
-        </button>
-      </div>
-
-      <!-- Ruban alerte -->
-      <div id="alertBanner" class="ca-alert ca-alert-warning" style="display:none;">
-        ⚠️ Conecta tu WhatsApp API para activar respuestas automáticas
-      </div>
-
-      <!-- Toggle auto-reply -->
-      <div class="ca-toggle">
-        <label>
-          <input type="checkbox" id="autoReplyToggle" disabled>
-          Activar respuestas automáticas
-        </label>
-      </div>
-
-      <!-- Logs -->
-      <div class="ca-card ca-logs">
-        <h3>Logs</h3>
-        <pre id="logPanel">Esperando eventos...</pre>
-      </div>
     </section>
-    <section class="ca-section">
-      <h2>Número de WhatsApp (solo captura)</h2>
-      <p class="ca-subtext">Introduce tu número en formato E.164 (ej: +573001234567). Aún no conectamos el WABA.</p>
     
-      <div class="ca-card">
-        <label for="waNumber">Número (E.164)</label>
-        <input id="waNumber" type="text" class="ca-input" placeholder="+573001234567" autocomplete="tel" />
-    
-        <div class="ca-actions">
-          <button id="btnValidate" class="ca-btn">Validar formato</button>
-          <button id="btnSaveDraft" class="ca-btn ca-btn-primary">Guardar número</button>
-        </div>
-    
-        <div id="numMsg" class="ca-alert" style="display:none;"></div>
-      </div>
-    </section>
     <button id="btnEmbedded" class="ca-btn ca-btn-primary">Iniciar Embedded Signup</button>
+    
     <section id="number-registration">
       <h2>Registro de Número (si WABA sin número)</h2>
       <p>Si tu WABA no tiene un número utilizable, regístralo aquí.</p>
@@ -341,6 +300,7 @@
   </script>
 </body>
 </html>
+
 
 
 
