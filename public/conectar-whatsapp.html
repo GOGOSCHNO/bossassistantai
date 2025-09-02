@@ -82,59 +82,6 @@
       } catch {}
     })();
   
-    // --- E.164 utils ---
-    const isE164 = (s) => /^\+[1-9]\d{7,14}$/.test(String(s).trim());
-    const showMsg = (ok, text) => {
-      const box = $('numMsg');
-      if (!box) return;
-      box.className = 'ca-alert ' + (ok ? 'ca-alert-success' : 'ca-alert-warning');
-      box.textContent = text;
-      box.style.display = 'block';
-    };
-  
-    // --- Charger le draft si dispo ---
-    (async function loadDraft() {
-      try {
-        const r = await fetch('/api/whatsapp/number/draft', { credentials: 'include' });
-        if (!r.ok) return;
-        const d = await r.json();
-        if (d?.waNumber) $('waNumber').value = d.waNumber;
-      } catch {}
-    })();
-  
-    // --- Handlers boutons ---
-    const btnValidate = $('btnValidate');
-    const btnSaveDraft = $('btnSaveDraft');
-    const waNumber = $('waNumber');
-  
-    if (btnValidate && waNumber) {
-      btnValidate.onclick = () => {
-        const v = waNumber.value.trim();
-        if (isE164(v)) showMsg(true, '✅ Formato válido (E.164).');
-        else showMsg(false, '❌ Formato inválido. Debe ser +códigoPaís + dígitos (8–15).');
-      };
-    }
-  
-    if (btnSaveDraft && waNumber) {
-      btnSaveDraft.onclick = async () => {
-        const v = waNumber.value.trim();
-        if (!isE164(v)) return showMsg(false, '❌ Corrige el formato antes de guardar.');
-        try {
-          const r = await fetch('/api/whatsapp/number/draft', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ waNumber: v })
-          });
-          const d = await r.json().catch(() => ({}));
-          if (!r.ok) return showMsg(false, d?.error || '❌ Error guardando número.');
-          showMsg(true, '✅ Número guardado como borrador.');
-        } catch {
-          showMsg(false, '❌ Error de red.');
-        }
-      };
-    }
-  
     // --- Embedded Signup ---
     const btnEmbedded = $('btnEmbedded');
     if (btnEmbedded) {
@@ -168,107 +115,9 @@
     }
     document.addEventListener('DOMContentLoaded', refreshStatus);
   </script>
-  <script>
-    const logsList = document.querySelector('#logs ul');
-    function logMessage(msg) {
-      const li = document.createElement('li');
-      li.textContent = new Date().toISOString() + ' - ' + msg;
-      logsList.appendChild(li);
-    }
-  
-    // Charger numéro draft si existe
-    fetch('/api/whatsapp/number/draft')
-      .then(res => res.json())
-      .then(data => {
-        if (data.waNumber) document.getElementById('wa-number').value = data.waNumber;
-      })
-      .catch(err => logMessage('Error cargando draft: ' + err.message));
-  
-    // Guardar número
-    document.getElementById('save-number').addEventListener('click', () => {
-      const waNumber = document.getElementById('wa-number').value.trim();
-      if (!waNumber.startsWith('+') || waNumber.length < 12) {
-        alert('Formato E.164 inválido');
-        return;
-      }
-      fetch('/api/whatsapp/number/draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ waNumber })
-      })
-      .then(res => res.json())
-      .then(data => logMessage('Número guardado: ' + data.waNumber))
-      .catch(err => logMessage('Error guardando número: ' + err.message));
-    });
-  
-    // Envoyer code
-    document.getElementById('request-code').addEventListener('click', () => {
-      fetch('/api/whatsapp/number/request-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code_method: 'SMS', locale: 'es_ES' })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) logMessage('Código solicitado OK');
-        else alert(data.error);
-      })
-      .catch(err => logMessage('Error request-code: ' + err.message));
-    });
-  
-    // Vérifier code
-    document.getElementById('verify-code').addEventListener('click', () => {
-      const code = document.getElementById('verification-code').value.trim();
-      if (code.length !== 6) return alert('Código de 6 dígitos requerido');
-      fetch('/api/whatsapp/number/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) logMessage('Código verificado OK');
-        else alert(data.error);
-      })
-      .catch(err => logMessage('Error verify-code: ' + err.message));
-    });
-  
-    // Register
-    document.getElementById('register-number').addEventListener('click', () => {
-      fetch('/api/whatsapp/number/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messaging_product: 'whatsapp' }) // Ajouter pin si besoin
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) logMessage('Registro OK: ' + data.message);
-        else alert(data.error);
-      })
-      .catch(err => logMessage('Error register: ' + err.message));
-    });
-  
-    // Test envoi
-    document.getElementById('send-test').addEventListener('click', () => {
-      const to = document.getElementById('test-to').value.trim();
-      if (!to) return alert('Número destinatario requerido');
-      fetch('/api/whatsapp/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) logMessage('Test enviado OK, ID: ' + data.messageId);
-        else alert(data.error);
-      })
-      .catch(err => logMessage('Error test send: ' + err.message));
-    });
-  
-    // Refresh status après actions (optionnel, poll /api/whatsapp/status)
-  </script>
 </body>
 </html>
+
 
 
 
