@@ -54,37 +54,6 @@
     </section>
     
     <button id="btnEmbedded" class="ca-btn ca-btn-primary">Iniciar Embedded Signup</button>
-    
-    <section id="number-registration">
-      <h2>Registro de Número (si WABA sin número)</h2>
-      <p>Si tu WABA no tiene un número utilizable, regístralo aquí.</p>
-    
-      <!-- Input pour numéro E.164 (utilise /api/whatsapp/number/draft si besoin) -->
-      <label for="wa-number">Número WhatsApp (E.164, ej: +573001234567):</label>
-      <input type="text" id="wa-number" placeholder="+573001234567">
-      <button id="save-number">Guardar Número</button>
-    
-      <!-- Boutons pour la séquence -->
-      <div>
-        <button id="request-code">Enviar Código (SMS)</button>
-        <input type="text" id="verification-code" placeholder="Código de 6 dígitos" maxlength="6">
-        <button id="verify-code">Verificar Código</button>
-        <button id="register-number">Registrar Número</button>
-      </div>
-    
-      <!-- Test d’envoi -->
-      <div>
-        <label for="test-to">Enviar test a (E.164):</label>
-        <input type="text" id="test-to" placeholder="+573001234567">
-        <button id="send-test">Probar Envio</button>
-      </div>
-    
-      <!-- Logs (append des événements) -->
-      <div id="logs">
-        <h3>Logs</h3>
-        <ul></ul>
-      </div>
-    </section>
   </main>
 
   <!-- === Footer commun === -->
@@ -300,6 +269,7 @@
   </script>
 </body>
 </html>
+
 
 
 
