@@ -938,6 +938,32 @@ function getErrorMessage(err) {
   }
   return err.message || 'Error interno del servidor.';
 }
+async function subscribeWabaToApp(wabaId, userAccessToken) {
+  try {
+    const r = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${userAccessToken}` }
+      // NB: pas besoin de body; certaines versions acceptent subscribed_fields=["messages"]
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      console.error('subscribeWabaToApp failed', r.status, j);
+      return false;
+    }
+    console.log('WABA subscribed_apps =>', j);
+    return true;
+  } catch (e) {
+    console.error('subscribeWabaToApp error', e);
+    return false;
+  }
+}
+
+function maskTail(str, tail = 4) {
+  if (!str) return '';
+  const s = String(str);
+  return '•'.repeat(Math.max(0, s.length - tail)) + s.slice(-tail);
+}
+
 app.post('/whatsapp', async (req, res) => {
   try {
     const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -1762,239 +1788,97 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Faltan parámetros');
 
-    // Vérifie le state signé (email du user, ts, etc.)
-    const s = await verifyState(state);
+    // 0) Vérif de l’état (si tu stockes email dans state)
+    const s = await verifyState(state); // { email, ts, ... }
+    if (!s?.email) return res.status(400).send('Estado inválido');
 
-    // 1) code -> user access_token
-    const tokenRes = await fetch(
-      `https://graph.facebook.com/v20.0/oauth/access_token?` +
-      querystring.stringify({
+    // 1) Échange code -> access_token (token utilisateur)
+    const tokenRes = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?` +
+      new URLSearchParams({
         client_id: process.env.APP_ID,
         client_secret: process.env.APP_SECRET,
-        redirect_uri: process.env.ESU_REDIRECT_URI,
+        redirect_uri: process.env.ESU_REDIRECT_URI, // doit matcher exactement
         code
       })
     );
     const tokenBody = await tokenRes.json();
-    if (!tokenRes.ok) {
-      console.error('Token exchange failed:', tokenBody);
+    if (!tokenRes.ok || !tokenBody?.access_token) {
+      console.error('Token exchange failed', tokenBody);
       return res.redirect('/conectar-whatsapp.html?esu=error');
     }
     const userToken = tokenBody.access_token;
 
-    // 2) Récupère les Business accessibles pour l’utilisateur
-    const meRes = await fetch(
-      `https://graph.facebook.com/v20.0/me?fields=businesses{id,name}&access_token=${encodeURIComponent(userToken)}`
-    );
-    const me = await meRes.json();
-    if (!meRes.ok) {
-      console.error('Graph /me failed:', me);
-      return res.redirect('/conectar-whatsapp.html?esu=error');
-    }
-    const businesses = me.businesses?.data || [];
-    if (businesses.length === 0) {
-      console.warn('Aucun Business accessible pour ce compte.');
-      // On sauve quand même le token, et on redirige: l’UI pourra afficher “WABA non trouvé”
-      const u0 = await db.collection('users').findOne({ email: s.email });
-      if (u0) {
-        await db.collection('users').updateOne(
-          { _id: u0._id },
-          { $set: {
-              whatsapp: {
-                connected: false,
-                mode: 'produccion',
-                wabaId: null,
-                businessId: null,
-                phoneNumberId: null,
-                waNumber: null,
-                accessToken: userToken,
-                connectedAt: new Date()
-              }
-            } }
-        );
-      }
-      return res.redirect('/conectar-whatsapp.html?esu=ok');
-    }
+    // (option) log scopes pour diagnostiquer les permissions
+    // await debugTokenScopes(userToken);
 
-    // 3) Lis les WABA + numéros du premier Business (ou applique ta logique de sélection)
-    const biz = businesses[0];
-    const bizFields = 'owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}';
-    const bizRes = await fetch(
-      `https://graph.facebook.com/v20.0/${biz.id}?fields=${encodeURIComponent(bizFields)}&access_token=${encodeURIComponent(userToken)}`
+    // 2) Lire les businesses de l'utilisateur puis les WABA + numéros
+    // On évite le me?fields=businesses (qui peut 100) et on fait 2 appels lisibles.
+    const bizRes = await fetch(`https://graph.facebook.com/v20.0/me/businesses?` + 
+      new URLSearchParams({
+        fields: 'id,name,owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}',
+        access_token: userToken
+      })
     );
-    const bizData = await bizRes.json();
+    const bizBody = await bizRes.json();
     if (!bizRes.ok) {
-      console.error('Graph business failed:', bizData);
+      console.error('Graph /me/businesses failed:', bizBody);
       return res.redirect('/conectar-whatsapp.html?esu=error');
     }
 
-    const wabas = bizData.owned_whatsapp_business_accounts?.data || [];
-    const waba = wabas[0] || null;
-    // (selon l’API, phone_numbers est souvent un edge paginé .data)
-    const phone = waba?.phone_numbers?.data?.[0] || waba?.phone_numbers?.[0] || null;
+    // 3) Choix: premier business / premier WABA / premier numéro
+    const business = bizBody?.data?.[0] || null;
+    const waba = business?.owned_whatsapp_business_accounts?.data?.[0] || null;
+    const phone = waba?.phone_numbers?.data?.[0] || null;
 
-    // 4) Sauvegarde dans users.whatsapp
+    if (!business || !waba || !phone) {
+      console.error('ESU: no business/waba/phone found', { business: !!business, waba: !!waba, phone: !!phone });
+      return res.redirect('/conectar-whatsapp.html?esu=error');
+    }
+
+    const businessId = business.id;
+    const wabaId = waba.id;
+    const phoneNumberId = phone.id;
+    const waNumber = phone.display_phone_number;
+
+    // 4) Souscrire la WABA à l'app => nécessaire pour recevoir les webhooks sur /whatsapp
+    await subscribeWabaToApp(wabaId, userToken);
+
+    // 5) Sauvegarde en base (users.whatsapp)
     const u = await db.collection('users').findOne({ email: s.email });
-    if (!u) return res.redirect('/conectar-whatsapp.html?esu=error');
+    if (!u) {
+      console.error('Usuario no encontrado para', s.email);
+      return res.redirect('/conectar-whatsapp.html?esu=error');
+    }
 
     await db.collection('users').updateOne(
       { _id: u._id },
-      { $set: {
+      {
+        $set: {
           whatsapp: {
-            connected: !!(waba && phone),
+            connected: true,
             mode: 'produccion',
-            wabaId: waba?.id || null,
-            businessId: biz.id,
-            phoneNumberId: phone?.id || null,
-            waNumber: phone?.display_phone_number || null,
-            accessToken: encrypt(userToken), // Chiffrer ici
+            businessId,
+            wabaId,
+            phoneNumberId,
+            waNumber,
+            accessToken: userToken, // ⚠️ en prod: chiffrer ce champ
             connectedAt: new Date()
           }
-        } }
+        }
+      }
     );
 
-    // 5) Redirige vers la page de connexion WhatsApp
+    console.log('ESU OK →', {
+      businessId,
+      wabaId,
+      phoneNumberId: maskTail(phoneNumberId),
+      waNumber
+    });
+
+    // 6) Retour page avec succès
     return res.redirect('/conectar-whatsapp.html?esu=ok');
   } catch (e) {
-    console.error('❌ ESU callback error:', e);
+    console.error('ESU callback error', e);
     return res.redirect('/conectar-whatsapp.html?esu=error');
-  }
-});
-// POST /api/whatsapp/number/request-code
-app.post('/api/whatsapp/number/request-code', async (req, res) => {
-  try {
-    const user = await currentUser(req);
-    const { code_method = 'SMS', locale = 'es_ES' } = req.body; // Par défaut SMS, es_ES pour espagnol
-    const { wabaId } = user.whatsapp || {};
-    if (!wabaId) return res.status(400).json({ error: 'WABA no configurado' });
-
-    // Utiliser un numéro draft si pas de phoneNumberId
-    const phoneNumberId = user.whatsapp.phoneNumberId || null;
-    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible. Usa /api/whatsapp/number/draft primero.' });
-
-    const accessToken = decrypt(user.whatsapp.accessToken); // Déchiffrer
-
-    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/request_code`;
-    const response = await axios.post(apiUrl, { code_method, language: locale }, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (response.data.success) {
-      // Pas de champs supplémentaires à persister typiquement ici
-      res.json({ success: true, message: 'Código solicitado exitosamente' });
-    } else {
-      throw new Error('Respuesta inesperada de Meta');
-    }
-  } catch (err) {
-    console.error('Error en request-code:', err.response?.data || err.message);
-    const errorMsg = getErrorMessage(err);
-    res.status(err.response?.status || 500).json({ error: errorMsg });
-  }
-});
-
-// POST /api/whatsapp/number/verify-code
-app.post('/api/whatsapp/number/verify-code', async (req, res) => {
-  try {
-    const user = await currentUser(req);
-    const { code } = req.body;
-    if (!code || code.length !== 6) return res.status(400).json({ error: 'Código de 6 dígitos requerido' });
-
-    const phoneNumberId = user.whatsapp.phoneNumberId || null;
-    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible' });
-
-    const accessToken = decrypt(user.whatsapp.accessToken);
-
-    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/verify_code`;
-    const response = await axios.post(apiUrl, { code }, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (response.data.success) {
-      // Pas de champs supplémentaires ici
-      res.json({ success: true, message: 'Código verificado exitosamente' });
-    } else {
-      throw new Error('Respuesta inesperada de Meta');
-    }
-  } catch (err) {
-    console.error('Error en verify-code:', err.response?.data || err.message);
-    const errorMsg = getErrorMessage(err);
-    res.status(err.response?.status || 500).json({ error: errorMsg });
-  }
-});
-
-// POST /api/whatsapp/number/register
-app.post('/api/whatsapp/number/register', async (req, res) => {
-  try {
-    const user = await currentUser(req);
-    const { messaging_product = 'whatsapp', pin } = req.body; // PIN optionnel si requis par Meta
-
-    const phoneNumberId = user.whatsapp.phoneNumberId || null;
-    if (!phoneNumberId) return res.status(400).json({ error: 'Número de teléfono no disponible' });
-
-    const accessToken = decrypt(user.whatsapp.accessToken);
-
-    const payload = { messaging_product };
-    if (pin) payload.pin = pin; // Si Meta demande un PIN pour l'enregistrement
-
-    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/register`;
-    const response = await axios.post(apiUrl, payload, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (response.data.success) {
-      // Mettre à jour connected: true et persister champs supplémentaires si renvoyés (ex: verified_name)
-      const updateFields = { 'whatsapp.connected': true };
-      if (response.data.verified_name) updateFields['whatsapp.verified_name'] = response.data.verified_name;
-      if (response.data.quality_rating) updateFields['whatsapp.quality_rating'] = response.data.quality_rating;
-
-      await db.collection('users').updateOne(
-        { _id: user._id },
-        { $set: updateFields }
-      );
-
-      res.json({ success: true, message: 'Número registrado exitosamente', data: response.data });
-    } else {
-      throw new Error('Respuesta inesperada de Meta');
-    }
-  } catch (err) {
-    console.error('Error en register:', err.response?.data || err.message);
-    const errorMsg = getErrorMessage(err);
-    res.status(err.response?.status || 500).json({ error: errorMsg });
-  }
-});
-
-// POST /api/whatsapp/test (smoke test d’envoi)
-app.post('/api/whatsapp/test', async (req, res) => {
-  try {
-    const user = await currentUser(req);
-    const { to } = req.body; // Numéro destinataire (ex: +573001234567)
-    if (!to) return res.status(400).json({ error: 'Número destinatario requerido' });
-
-    const { phoneNumberId, connected } = user.whatsapp || {};
-    if (!connected || !phoneNumberId) return res.status(400).json({ error: 'WhatsApp no conectado' });
-
-    const accessToken = decrypt(user.whatsapp.accessToken);
-
-    const apiUrl = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
-    const payload = {
-      messaging_product: 'whatsapp',
-      to,
-      type: 'text',
-      text: { body: 'Hola from ComercioAI! Esto es un test.' }
-    };
-
-    const response = await axios.post(apiUrl, payload, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (response.data.messages?.[0]?.id) {
-      res.json({ success: true, message: 'Mensaje de test enviado', messageId: response.data.messages[0].id });
-    } else {
-      throw new Error('Respuesta inesperada de Meta');
-    }
-  } catch (err) {
-    console.error('Error en test send:', err.response?.data || err.message);
-    const errorMsg = getErrorMessage(err);
-    res.status(err.response?.status || 500).json({ error: errorMsg });
   }
 });
