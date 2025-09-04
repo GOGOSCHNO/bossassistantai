@@ -590,75 +590,169 @@ function maskTail(str, tail = 4) {
   return '•'.repeat(Math.max(0, s.length - tail)) + s.slice(-tail);
 }
 
+// 🔹 Résoudre le tenant (commerçant) à partir du phone_number_id
+async function getTenantByPhoneNumberId(phoneNumberId) {
+  if (!phoneNumberId) return null;
+  return await db.collection('users').findOne(
+    { "whatsapp.phoneNumberId": phoneNumberId },
+    {
+      projection: {
+        name: 1,
+        email: 1,
+        assistant_id: 1,
+        threadsCollection: 1,
+        whatsapp: 1,
+        configuracion_asistente: 1,
+      }
+    }
+  );
+}
+
+// 🔹 Idempotence
+async function isDuplicateMessage(messageId) {
+  if (!messageId) return false;
+  const found = await db.collection('processedMessages').findOne({ messageId });
+  return !!found;
+}
+async function markMessageProcessed(messageId) {
+  if (!messageId) return;
+  await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
+}
+
+// 🔹 Normalisation minimale (texte + bouton; image/audio gardés pour itération suivante)
+function normalizeIncoming(raw) {
+  const base = {
+    id: raw?.id,
+    from: raw?.from,                    // numéro du client final (e.g. "5730…")
+    timestamp: raw?.timestamp,
+    type: raw?.type,
+    text: null,
+    interactive: null,
+    attachments: null,                  // future-proof
+  };
+
+  if (raw?.type === 'text') {
+    base.text = raw?.text?.body ?? '';
+  } else if (raw?.type === 'interactive' && raw?.interactive?.type === 'button_reply') {
+    base.interactive = {
+      kind: 'button_reply',
+      id: raw?.interactive?.button_reply?.id,
+      title: raw?.interactive?.button_reply?.title,
+    };
+  } else if (raw?.type === 'image') {
+    base.attachments = { kind: 'image', payload: raw?.image };
+  } else if (raw?.type === 'audio') {
+    base.attachments = { kind: 'audio', payload: raw?.audio };
+  }
+
+  return base;
+}
+
+app.get('/whatsapp', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+  const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN;
+
+  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('✅ Webhook vérifié');
+    return res.status(200).send(challenge);
+  }
+  console.log('❌ Webhook verification failed');
+  return res.sendStatus(403);
+});
+
+
+/**
+ * POST /whatsapp
+ * Réception des événements WhatsApp (multi-tenant)
+ *
+ * Étapes:
+ * 1) Extraire le message et metadata
+ * 2) Résoudre le tenant via metadata.phone_number_id
+ * 3) Idempotence
+ * 4) Normaliser le message
+ * 5) Appeler la logique existante handleMessage(message, context)
+ */
 app.post('/whatsapp', async (req, res) => {
   try {
-    const entry = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!entry) return res.sendStatus(200);
+    // 1) Extraire la notification
+    const change = req.body?.entry?.[0]?.changes?.[0]?.value;
+    const message = change?.messages?.[0];
+    const metadata = change?.metadata;
 
-    const message = entry;
-    console.log("📨 Message reçu :", JSON.stringify(message, null, 2));
-    console.log("🔍 Type de message :", message.type);
+    // ⚠️ Répondre vite à Meta
+    res.status(200).send('OK');
 
-    const userNumber = message.from;
-    const messageId = message.id;
-
-    // 🔄 Anti-doublon
-    const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
-    if (alreadyProcessed) {
-      console.log("⚠️ Message déjà traité, on ignore :", messageId);
-      return res.status(200).send("Message déjà traité.");
-    }
-    await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
-
-    // 🧠 Construction du message utilisateur
-    let userMessage = '';
-    if (message.type === 'text' && message.text?.body) {
-      userMessage = message.text.body.trim();
-    } else if (message.type === 'image') {
-      userMessage = "Cliente envió una imagen.";
-    } else if (message.type === 'audio') {
-      userMessage = "Cliente envió un audio.";
-    } else {
-      userMessage = "Cliente envió un type de message non géré.";
+    if (!message) {
+      console.log('ℹ️ Aucun message dans le payload');
+      return;
     }
 
-    if (!userMessage) {
-      return res.status(200).send('Message vide ou non géré.');
+    const phoneNumberId = metadata?.phone_number_id;
+    const displayPhone = metadata?.display_phone_number;
+
+    console.log('📨 Inbound', {
+      messageId: message?.id,
+      type: message?.type,
+      from: message?.from,
+      phoneNumberId,
+      displayPhone
+    });
+
+    // 2) Résoudre le tenant
+    const tenant = await getTenantByPhoneNumberId(phoneNumberId);
+    if (!tenant) {
+      console.error('🚫 Tenant introuvable pour phone_number_id:', phoneNumberId);
+      return;
     }
 
-    // 🗃️ Enregistrement du message utilisateur (sans champ 'consent')
-    await db.collection('threads').updateOne(
-      { userNumber },
-      {
-        $setOnInsert: { threadId: 'na' },
-        $push: {
-          responses: {
-            userMessage,
-            timestamp: new Date()
-          }
-        }
+    // 3) Idempotence
+    const msgId = message.id;
+    if (await isDuplicateMessage(msgId)) {
+      console.log('⚠️ Déjà traité, on ignore:', msgId);
+      return;
+    }
+    await markMessageProcessed(msgId);
+
+    // 4) Normaliser
+    const normalized = normalizeIncoming(message);
+
+    // 5) Contexte multi-tenant passé à ta logique existante (handleMessage)
+    const context = {
+      // Identité tenant
+      tenantId: tenant._id?.toString?.() ?? null,
+      tenantName: tenant.name,
+
+      // Assistant & threads du tenant
+      assistantId: tenant.assistant_id,               // utilisé plus tard par interactWithAssistant
+      threadsCollection: tenant.threadsCollection,     // utilisé plus tard par getOrCreateThreadId
+
+      // WABA du tenant (pour l’envoi sortant vers le bon numéro)
+      whatsapp: {
+        phoneNumberId: tenant.whatsapp?.phoneNumberId,
+        accessToken: tenant.whatsapp?.accessToken,     // ⚠️ ne jamais logguer en clair
+        wabaId: tenant.whatsapp?.wabaId,
       },
-      { upsert: true }
-    );
-    console.log("🗃️ Message utilisateur enregistré pour", userNumber);
 
-    // ✅ assistant_id défini en dur ici (à revoir plus tard en multi-tenant)
-    const assistantId = "asst_CWMnVSuxZscjzCB2KngUXn5I";
+      // Pour logs/traçabilité
+      correlation: {
+        phoneNumberId,
+        messageId: normalized.id,
+        customerNumber: normalized.from,
+        receivedAt: new Date().toISOString(),
+      },
 
-    // 🔎 Vérifie si l'auto-reply est actif pour cet assistant
-    const user = await db.collection('users').findOne({ assistant_id: assistantId });
-    if (!user || user.autoReplyEnabled === false) {
-      console.log("⏹️ Assistant désactivé pour ce compte.");
-      return res.sendStatus(200);
-    }
+      // Configs d’assistant éventuelles (textes, consentement, etc.)
+      config: tenant.configuracion_asistente || {},
+    };
 
-    // ▶️ Traitement normal si assistant activé
-    await handleMessage(userMessage, userNumber);
+    // 👇 On garde ton flux tel quel: handleMessage -> interactWithAssistant -> pollForCompletion -> sendResponseToWhatsApp
+    await handleMessage(normalized, context);
 
-    res.sendStatus(200);
-  } catch (error) {
-    console.error("❌ Erreur dans /whatsapp :", error);
-    res.sendStatus(500);
+  } catch (err) {
+    // On a déjà renvoyé 200 à Meta; log local
+    console.error('💥 Erreur /whatsapp:', err?.stack || err?.message || err);
   }
 });
 
@@ -757,23 +851,6 @@ app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
         console.error("❌ Error al procesar la inscripción:", error);
         res.status(500).json({ error: "Error interno al procesar la inscripción." });
     }
-});
-
-app.get('/whatsapp', (req, res) => {
-  // Récupère les paramètres que Meta envoie
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  // Compare le token reçu avec celui que vous avez défini dans Meta for Developers
-  if (mode === 'subscribe' && token === 'myVerifyToken123') {
-    console.log('WEBHOOK_VERIFIED');
-    // Renvoyer challenge pour confirmer la vérification
-    res.status(200).send(challenge);
-  } else {
-    // Token ou mode invalide
-    res.sendStatus(403);
-  }
 });
 
 // Endpoint de vérification
