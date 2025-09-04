@@ -274,49 +274,77 @@ async function handleMessage(normalizedMessage, context) {
 }
 
 // Fonction pour récupérer ou créer un thread
-async function getOrCreateThreadId(userNumber) {
-  const existing = await db.collection("threads").findOne({ userNumber });
+async function getOrCreateThreadId(threadsCollection, userNumber, context) {
+  if (!threadsCollection) throw new Error("threadsCollection manquante dans le context");
+  if (!userNumber) throw new Error("userNumber manquant");
 
-  // Si un thread OpenAI est déjà associé
-  if (existing && existing.threadId && existing.threadId !== "na") {
+  const col = db.collection(threadsCollection);
+
+  // 1) Chercher un thread existant pour ce client final
+  let existing = await col.findOne(
+    { userNumber },
+    { projection: { threadId: 1 } }
+  );
+  if (existing?.threadId) {
     return existing.threadId;
   }
 
-  // Sinon, on crée un nouveau thread sur OpenAI
-  const thread = await openai.beta.threads.create();
-  const newThreadId = thread.id;
+  // 2) Sinon, créer un thread OpenAI (lié au tenant + client)
+  const thread = await openai.beta.threads.create({
+    metadata: {
+      tenantId: context.tenantId || "",
+      tenantName: context.tenantName || "",
+      customerNumber: userNumber,
+      source: "whatsapp",
+      phoneNumberId: context.whatsapp?.phoneNumberId || "",
+    },
+  });
 
-  // On met à jour MongoDB avec le vrai threadId
-  await db.collection("threads").updateOne(
-    { userNumber },
-    { $set: { threadId: newThreadId } }
-  );
+  // 3) Persister la relation dans la collection threads_<TENANT>
+  await col.insertOne({
+    userNumber,
+    threadId: thread.id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastMessage: null,
+    status: "active",
+    labels: ["whatsapp"],
+    tenantId: context.tenantId || null,
+  });
 
-  return newThreadId;
+  return thread.id;
 }
 
 // Fonction pour interagir avec OpenAI
-async function interactWithAssistant(userMessage, userNumber) {
+async function interactWithAssistant(prompt, userNumber, context) {
   try {
-    const threadId = await getOrCreateThreadId(userNumber);
+    const threadId = await getOrCreateThreadId(context.threadsCollection, userNumber, context);
+    context.currentThreadId = threadId;
+
+    // 📅 Date et heure locales en Colombie
     const dateISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Bogota' });
     const heure = new Date().toLocaleTimeString('es-ES', { timeZone: 'America/Bogota' });
 
-    // 💬 Envoi du message utilisateur
+    // 💬 Construire le message enrichi
+    const enrichedPrompt = `Mensaje del cliente: "${prompt}". 
+Nota: El número WhatsApp del cliente es ${userNumber}. 
+Fecha actual: ${dateISO} Hora actual: ${heure}`;
+
+    // 1. Ajout du message utilisateur enrichi
     await openai.beta.threads.messages.create(threadId, {
       role: "user",
-      content: `Mensaje del cliente: "${userMessage}". Nota: El número WhatsApp del cliente es ${userNumber}. Fecha actual: ${dateISO} Hora actual: ${heure}`
+      content: enrichedPrompt
     });
-    console.log(`✉️ Message utilisateur ajouté au thread ${threadId}`);
+    console.log(`✉️ Message utilisateur enrichi ajouté au thread ${threadId}`);
 
-    // ▶️ Création d’un nouveau run
+    // 2. Création du run pour l’assistant spécifique du commerçant
     const runResponse = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: "asst_CWMnVSuxZscjzCB2KngUXn5I"
+      assistant_id: context.assistantId
     });
     const runId = runResponse.id;
-    console.log(`▶️ Run lancé : runId = ${runId}`);
+    console.log(`▶️ Run lancé pour assistant ${context.assistantId} : runId = ${runId}`);
 
-    // ⏳ Attente de la complétion
+    // 3. Attendre la complétion
     const messages = await pollForCompletion(threadId, runId);
 
     return { threadId, runId, messages };
@@ -327,72 +355,106 @@ async function interactWithAssistant(userMessage, userNumber) {
 }
 
 // Vérification du statut d'un run
-async function pollForCompletion(threadId, runId) {
-  return new Promise((resolve, reject) => {
-    const interval = 2000;           // 2s
-    const timeoutLimit = 80000;      // 80s
-    let elapsedTime = 0;
+async function pollForCompletion(runId, context) {
+  // ✅ On attend que l'appelant fournisse le thread courant via le context
+  const threadId = context?.currentThreadId;
+  if (!threadId) {
+    throw new Error("pollForCompletion: context.currentThreadId manquant");
+  }
 
+  // Paramètres de polling (conservés proches de ta version)
+  const interval = 2000;      // 2s
+  const timeoutLimit = 80000; // 80s
+  let elapsedTime = 0;
+
+  const logPrefix = `[tenant:${context.tenantId || context.whatsapp?.phoneNumberId || 'unknown'} thread:${threadId} run:${runId}]`;
+
+  return new Promise((resolve, reject) => {
     const checkRun = async () => {
       try {
+        // 1) Récupérer le statut du run
         const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
-        console.log(`📊 Run status: ${runStatus.status}`);
+        console.log(`${logPrefix} 📊 Run status: ${runStatus.status}`);
 
-        // ✅ Terminé → on polit et on renvoie
+        // 2) ✅ Terminé → “polir” puis renvoyer
         if (runStatus.status === 'completed') {
-          const messages = await fetchThreadMessages(threadId);
+          const messages = await fetchThreadMessages(threadId); // ta fonction existante
           return resolve(messages);
         }
 
-        // 🔧 Tool calls demandés
+        // 3) 🔧 Tools requis (MVP: structure prête; à compléter plus tard)
         if (runStatus.status === 'requires_action' &&
             runStatus.required_action?.submit_tool_outputs?.tool_calls?.length) {
+
           const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
           const tool_outputs = [];
 
           for (const { id, function: fn } of toolCalls) {
-            let params;
+            let params = {};
             try {
               params = JSON.parse(fn.arguments || "{}");
             } catch (e) {
-              console.error("❌ Tool args parse error:", e);
-              return reject(e);
+              console.error(`${logPrefix} ❌ Tool args parse error:`, e);
+              // On renvoie une erreur “douce” au modèle
+              tool_outputs.push({ tool_call_id: id, output: JSON.stringify({ error: 'bad_arguments' }) });
+              continue;
             }
 
-            if (fn.name === "getAppointments") {
-            }
+            switch (fn.name) {
+              case "getAppointments": {
+                // 👉 À implémenter plus tard par tenant, ex: lire context.appointmentsCollection
+                // const appt = await ...;
+                tool_outputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({ ok: false, reason: "not_implemented_yet" })
+                });
+                break;
+              }
 
-            else if (fn.name === "createAppointment") {
-              
-            }
+              case "createAppointment": {
+                // 👉 À implémenter (écriture dans la bonne collection du tenant)
+                tool_outputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({ ok: false, reason: "not_implemented_yet" })
+                });
+                break;
+              }
 
+              default: {
+                tool_outputs.push({
+                  tool_call_id: id,
+                  output: JSON.stringify({ error: "unknown_tool" })
+                });
+              }
+            }
           }
 
           if (tool_outputs.length > 0) {
             await openai.beta.threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
           }
 
-          // Reboucle rapidement après soumission
+          // Reboucle rapidement
           return setTimeout(checkRun, 500);
         }
 
-        // ⏳ Timeout de sécurité
+        // 4) ⏳ Timeout de sécurité
         elapsedTime += interval;
         if (elapsedTime >= timeoutLimit) {
-          console.error("⏳ Timeout 80s → cancel run");
-          await openai.beta.threads.runs.cancel(threadId, runId);
+          console.error(`${logPrefix} ⏳ Timeout 80s → cancel run`);
+          try { await openai.beta.threads.runs.cancel(threadId, runId); } catch {}
           return reject(new Error("Run timed out"));
         }
 
-        // ↻ Continue de poller
+        // 5) ↻ Continuer de poller
         return setTimeout(checkRun, interval);
 
       } catch (err) {
-        console.error("❌ pollForCompletion error:", err);
+        console.error(`${logPrefix} ❌ pollForCompletion error:`, err?.response?.data || err?.message || err);
         return reject(err);
       }
     };
 
+    // Démarrer la boucle
     checkRun();
   });
 }
@@ -521,44 +583,108 @@ async function fetchThreadMessages(threadId) {
   }
 }
 
-async function sendResponseToWhatsApp(response, userNumber) {
-  const { text, images } = response;
-  console.log("📤 Envoi WhatsApp : texte =", text, "images =", images);
-  const apiUrl = `https://graph.facebook.com/v16.0/${whatsappPhoneNumberId}/messages`;
+async function sendResponseToWhatsApp(reply, toNumber, context) {
+  const { text, images } = reply || {};
+  const phoneNumberId = context?.whatsapp?.phoneNumberId;
+  const accessToken   = context?.whatsapp?.accessToken;
+  const apiVersion    = 'v20.0'; // aligne avec tes autres appels Graph
+  const apiUrl        = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
+
+  if (!phoneNumberId || !accessToken) {
+    console.error('🚫 sendResponseToWhatsApp: phoneNumberId/accessToken manquants dans context.whatsapp');
+    return;
+  }
+
   const headers = {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   };
 
-  if (text) {
-    const payloadText = {
-      messaging_product: 'whatsapp',
-      to: userNumber,
-      text: { body: text },
-    };
+  // Helper: POST avec retry (429/5xx)
+  async function postWithRetry(payload, maxAttempts = 3) {
+    let attempt = 0;
+    let delay = 800; // ms
+    while (attempt < maxAttempts) {
+      try {
+        await axios.post(apiUrl, payload, { headers });
+        return true;
+      } catch (err) {
+        const status = err?.response?.status || 0;
+        const isRetryable = status === 429 || (status >= 500 && status < 600);
+        const msg = err?.response?.data || err?.message || err;
+        console.warn(`⚠️ WhatsApp POST échec (tentative ${attempt + 1}/${maxAttempts})`, msg);
 
-    console.log("📦 Payload TEXT vers WhatsApp :", JSON.stringify(payloadText, null, 2));
-    console.log("🌍 URL POST utilisée :", apiUrl);
-
-    await axios.post(apiUrl, payloadText, { headers });
-  }
-
-  if (images && images.length > 0) {
-    for (const url of images) {
-      if (url) {
-        const payloadImage = {
-          messaging_product: 'whatsapp',
-          to: userNumber,
-          type: 'image',
-          image: { link: url },
-        };
-
-        console.log("📦 Payload IMAGE vers WhatsApp :", JSON.stringify(payloadImage, null, 2));
-        console.log("🌍 URL POST utilisée :", apiUrl);
-
-        await axios.post(apiUrl, payloadImage, { headers });
+        if (!isRetryable || attempt === maxAttempts - 1) {
+          console.error('❌ Abandon envoi WhatsApp:', msg);
+          return false;
+        }
+        await new Promise(r => setTimeout(r, delay));
+        delay *= 2; // backoff expo
+        attempt++;
       }
     }
+    return false;
+  }
+
+  // 1) TEXTE (si présent)
+  if (text && String(text).trim()) {
+    const payloadText = {
+      messaging_product: 'whatsapp',
+      to: toNumber,
+      text: { body: text }
+    };
+    console.log(`📤 [${context.tenantName || context.tenantId}] Envoi TEXT → ${toNumber}`);
+    await postWithRetry(payloadText);
+  }
+
+  // 2) IMAGES (si présentes) — envoi une par une (tu peux plafonner si besoin)
+  if (Array.isArray(images) && images.length > 0) {
+    for (const url of images) {
+      if (!url) continue;
+      const payloadImage = {
+        messaging_product: 'whatsapp',
+        to: toNumber,
+        type: 'image',
+        image: { link: url }
+      };
+      console.log(`🖼️ [${context.tenantName || context.tenantId}] Envoi IMAGE → ${toNumber} : ${url}`);
+      await postWithRetry(payloadImage);
+    }
+  }
+
+  // 3) Journalisation dans la collection threads_* du TENANT
+  try {
+    if (context?.threadsCollection) {
+      await db.collection(context.threadsCollection).updateOne(
+        { userNumber: toNumber },
+        {
+          $setOnInsert: { threadId: context.currentThreadId || null },
+          $push: {
+            responses: {
+              assistantResponse: {
+                text: text || '',
+                images: Array.isArray(images) ? images : [],
+                note: {
+                  summary: reply?.note?.summary || null,
+                  status:  reply?.note?.status  || null
+                },
+                timestamp: new Date()
+              }
+            }
+          },
+          $set: {
+            updatedAt: new Date(),
+            threadId: context.currentThreadId || null
+          }
+        },
+        { upsert: true }
+      );
+      console.log(`🗃️ Réponse assistant journalisée dans ${context.threadsCollection} pour ${toNumber}`);
+    } else {
+      console.warn('ℹ️ Pas de threadsCollection dans context — journalisation sautée.');
+    }
+  } catch (e) {
+    console.warn('⚠️ Journalisation MongoDB échouée:', e?.message || e);
   }
 }
 
