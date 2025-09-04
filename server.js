@@ -171,73 +171,105 @@ transporter.verify(function(error, success) {
     }
 });
 
-async function handleMessage(userMessage, userNumber) {
-  if (!messageQueue.has(userNumber)) messageQueue.set(userNumber, []);
-  messageQueue.get(userNumber).push(userMessage);
-  console.log(`🧾 Message ajouté à la file pour ${userNumber} : "${userMessage}"`);
+// Clé de file = tenant + numéro du client final
+function getQueueKey(context, customerNumber) {
+  // priorité au tenantId; fallback sur phoneNumberId
+  const tenantKey = context.tenantId || context.whatsapp?.phoneNumberId || 'unknownTenant';
+  const customerKey = customerNumber || 'unknownCustomer';
+  return `${tenantKey}:${customerKey}`;
+}
 
-  if (locks.get(userNumber)) return;
+// Convertit le message normalisé en texte utilisateur (ton ancienne logique attend une string)
+function extractUserText(normalizedMsg) {
+  if (normalizedMsg?.type === 'text') return normalizedMsg.text || '';
+  if (normalizedMsg?.interactive?.kind === 'button_reply') {
+    // On peut renvoyer le titre comme “intent” utilisateur
+    return normalizedMsg.interactive.title || normalizedMsg.interactive.id || '';
+  }
+  if (normalizedMsg?.attachments?.kind === 'image') {
+    return '[image]'; // MVP: on garde le flux texte; tu traiteras le média plus tard
+  }
+  if (normalizedMsg?.attachments?.kind === 'audio') {
+    return '[audio]'; // MVP
+  }
+  return '';
+}
 
-  locks.set(userNumber, true);
-  console.log(`🔒 Lock activé pour ${userNumber}`);
+// Concatène proprement les messages en rafale
+function combineMessages(queue) {
+  // Ta logique précédente utilisait ". " — on la garde
+  return queue.filter(Boolean).join('. ');
+}
+
+// =============================
+// handleMessage — version multi-tenant
+// =============================
+async function handleMessage(normalizedMessage, context) {
+  const userNumber = normalizedMessage?.from; // numéro du client final
+  const queueKey = getQueueKey(context, userNumber);
+
+  // 1) Enfiler ce message (converti en texte)
+  const userText = extractUserText(normalizedMessage);
+  if (!messageQueue.has(queueKey)) messageQueue.set(queueKey, []);
+  messageQueue.get(queueKey).push(userText);
+
+  console.log(`🧾 [${queueKey}] Message ajouté à la file: "${userText}"`);
+
+  // 2) Si un traitement est déjà en cours pour ce (tenant:client), on sort
+  if (locks.get(queueKey)) return;
+
+  // 3) Sinon, on prend le lock et on draine la file
+  locks.set(queueKey, true);
+  console.log(`🔒 [${queueKey}] Lock activé`);
 
   try {
-    const initialQueue = [...messageQueue.get(userNumber)];
-    console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
-    messageQueue.set(userNumber, []); // vider temporairement
+    while (true) {
+      // a) Snapshot de la file actuelle et vidage temporaire
+      const initialQueue = [...(messageQueue.get(queueKey) || [])];
+      messageQueue.set(queueKey, []); // on vide pour capter d'éventuels nouveaux messages pendant le run
 
-    const combinedMessage = initialQueue.join(". ");
-    const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
-    console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
-    console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
-    activeRuns.set(userNumber, { threadId, runId });
-
-    // Vérifier si de nouveaux messages sont arrivés pendant le run
-    const newMessages = messageQueue.get(userNumber) || [];
-    if (newMessages.length > 0) {
-      console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
-      messageQueue.set(userNumber, [...initialQueue, ...newMessages]);
-      locks.set(userNumber, false);
-      return await handleMessage("", userNumber);
-    }
-
-    const messages = await pollForCompletion(threadId, runId);
-    console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
-    await sendResponseToWhatsApp(messages, userNumber);
-
-    // Enregistrement dynamique de la réponse de l’assistant
-    await db.collection('threads').updateOne(
-      { userNumber },
-      {
-        $push: {
-          responses: {
-            assistantResponse: {
-              text: messages.text,
-              note: {
-                summary: messages.note?.summary || null,
-                status: messages.note?.status || null
-              },
-              timestamp: new Date()
-            }
-          }
-        },
-        $set: { threadId }
+      if (initialQueue.length === 0) {
+        console.log(`✅ [${queueKey}] File vide, rien à traiter.`);
+        break;
       }
-    );
-    console.log("🗃️ Réponse de l’assistant enregistrée dans MongoDB pour", userNumber);
-  } catch (error) {
-    console.error("❌ Erreur dans handleMessage :", error);
-  } finally {
-    console.log(`🔓 Lock libéré pour ${userNumber}`);
-    locks.set(userNumber, false);
 
-    const remaining = messageQueue.get(userNumber) || [];
-    if (remaining.length > 0) {
-      const next = remaining.shift();
-      messageQueue.set(userNumber, [next, ...remaining]);
-      await handleMessage("", userNumber);
-      console.log(`➡️ Message restant détecté, relance de handleMessage() pour ${userNumber}`);
+      console.log(`📚 [${queueKey}] File initiale:`, initialQueue);
+
+      // b) Concatènes en un seul “user prompt”
+      const combinedMessage = combineMessages(initialQueue);
+
+      // c) Appel de ton assistant (comme avant), en passant le context
+      //    interactWithAssistant doit appeler getOrCreateThreadId(context.threadsCollection, …)
+      //    et retourner { threadId, runId } comme aujourd’hui.
+      const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber, context);
+      console.log(`🧠 [${queueKey}] Assistant appelé avec: "${combinedMessage}"`);
+      console.log(`📎 [${queueKey}] threadId=${threadId}, runId=${runId}`);
+      activeRuns.set(queueKey, { threadId, runId });
+
+      // d) Attente de complétion (inchangé) + “polissage” par fetchThreadMessages (dans ta fonction)
+      const assistantReply = await pollForCompletion(runId, context);
+      // assistantReply est supposé prêt pour WhatsApp (ton existant appelle déjà fetchThreadMessages en interne)
+
+      // e) Envoi de la réponse WhatsApp depuis le WABA du TENANT (via context.whatsapp)
+      await sendResponseToWhatsApp(assistantReply, userNumber, context);
+
+      console.log(`📤 [${queueKey}] Réponse envoyée au client ${userNumber}`);
+
+      // f) Si des nouveaux messages sont arrivés entre temps, la boucle while les reprendra
+      const pending = messageQueue.get(queueKey) || [];
+      if (pending.length === 0) {
+        console.log(`🧹 [${queueKey}] Traitement terminé, file vide.`);
+        break;
+      }
+      console.log(`🔁 [${queueKey}] Nouveaux messages arrivés pendant le run, on enchaîne…`);
     }
+  } catch (err) {
+    console.error(`💥 [${queueKey}] Erreur handleMessage:`, err?.stack || err?.message || err);
+  } finally {
+    // 4) Libération du lock
+    locks.set(queueKey, false);
+    activeRuns.delete(queueKey);
+    console.log(`🔓 [${queueKey}] Lock libéré`);
   }
 }
 
