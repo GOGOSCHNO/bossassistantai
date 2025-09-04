@@ -316,38 +316,46 @@ async function getOrCreateThreadId(threadsCollection, userNumber, context) {
 }
 
 // Fonction pour interagir avec OpenAI
-async function interactWithAssistant(prompt, userNumber, context) {
+async function interactWithAssistant(userMessage, userNumber, context) {
   try {
+    // 1) Thread du client final dans la collection du TENANT
     const threadId = await getOrCreateThreadId(context.threadsCollection, userNumber, context);
+
+    // ✅ IMPORTANT: rendre le thread courant disponible pour pollForCompletion
     context.currentThreadId = threadId;
 
-    // 📅 Date et heure locales en Colombie
+    // 2) Date/heure locales Colombia
     const dateISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Bogota' });
-    const heure = new Date().toLocaleTimeString('es-ES', { timeZone: 'America/Bogota' });
+    const heure   = new Date().toLocaleTimeString('es-ES', { timeZone: 'America/Bogota' });
 
-    // 💬 Construire le message enrichi
-    const enrichedPrompt = `Mensaje del cliente: "${prompt}". 
-Nota: El número WhatsApp del cliente es ${userNumber}. 
-Fecha actual: ${dateISO} Hora actual: ${heure}`;
+    // 3) Prompt enrichi (comme ton ancienne version)
+    const enrichedPrompt = `Mensaje del cliente: "${userMessage}". Nota: El número WhatsApp del cliente es ${userNumber}. Fecha actual: ${dateISO} Hora actual: ${heure}`;
 
-    // 1. Ajout du message utilisateur enrichi
     await openai.beta.threads.messages.create(threadId, {
       role: "user",
-      content: enrichedPrompt
+      content: enrichedPrompt,
+      metadata: {
+        source: "whatsapp",
+        customerNumber: userNumber,
+        tenantId: context.tenantId || ""
+      }
     });
     console.log(`✉️ Message utilisateur enrichi ajouté au thread ${threadId}`);
 
-    // 2. Création du run pour l’assistant spécifique du commerçant
-    const runResponse = await openai.beta.threads.runs.create(threadId, {
-      assistant_id: context.assistantId
+    // 4) Lancer le run sur l’assistant du TENANT
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: context.assistantId,
+      metadata: {
+        tenantId: context.tenantId || "",
+        phoneNumberId: context.whatsapp?.phoneNumberId || ""
+      }
     });
-    const runId = runResponse.id;
+    const runId = run.id;
     console.log(`▶️ Run lancé pour assistant ${context.assistantId} : runId = ${runId}`);
 
-    // 3. Attendre la complétion
-    const messages = await pollForCompletion(threadId, runId);
+    // 👉 Ne pas poller ici : on laisse handleMessage le faire
+    return { threadId, runId };
 
-    return { threadId, runId, messages };
   } catch (error) {
     console.error("❌ Erreur dans interactWithAssistant:", error);
     throw error;
@@ -356,88 +364,57 @@ Fecha actual: ${dateISO} Hora actual: ${heure}`;
 
 // Vérification du statut d'un run
 async function pollForCompletion(runId, context) {
-  // ✅ On attend que l'appelant fournisse le thread courant via le context
   const threadId = context?.currentThreadId;
-  if (!threadId) {
-    throw new Error("pollForCompletion: context.currentThreadId manquant");
-  }
+  if (!threadId) throw new Error("pollForCompletion: context.currentThreadId manquant");
 
-  // Paramètres de polling (conservés proches de ta version)
-  const interval = 2000;      // 2s
-  const timeoutLimit = 80000; // 80s
+  const interval = 2000;
+  const timeoutLimit = 80000;
   let elapsedTime = 0;
-
   const logPrefix = `[tenant:${context.tenantId || context.whatsapp?.phoneNumberId || 'unknown'} thread:${threadId} run:${runId}]`;
 
   return new Promise((resolve, reject) => {
     const checkRun = async () => {
       try {
-        // 1) Récupérer le statut du run
         const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
         console.log(`${logPrefix} 📊 Run status: ${runStatus.status}`);
 
-        // 2) ✅ Terminé → “polir” puis renvoyer
         if (runStatus.status === 'completed') {
-          const messages = await fetchThreadMessages(threadId); // ta fonction existante
+          const messages = await fetchThreadMessages(threadId);
           return resolve(messages);
         }
 
-        // 3) 🔧 Tools requis (MVP: structure prête; à compléter plus tard)
         if (runStatus.status === 'requires_action' &&
             runStatus.required_action?.submit_tool_outputs?.tool_calls?.length) {
-
           const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
           const tool_outputs = [];
 
           for (const { id, function: fn } of toolCalls) {
             let params = {};
-            try {
-              params = JSON.parse(fn.arguments || "{}");
-            } catch (e) {
+            try { params = JSON.parse(fn.arguments || "{}"); }
+            catch (e) {
               console.error(`${logPrefix} ❌ Tool args parse error:`, e);
-              // On renvoie une erreur “douce” au modèle
               tool_outputs.push({ tool_call_id: id, output: JSON.stringify({ error: 'bad_arguments' }) });
               continue;
             }
 
             switch (fn.name) {
-              case "getAppointments": {
-                // 👉 À implémenter plus tard par tenant, ex: lire context.appointmentsCollection
-                // const appt = await ...;
-                tool_outputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({ ok: false, reason: "not_implemented_yet" })
-                });
+              case "getAppointments":
+                tool_outputs.push({ tool_call_id: id, output: JSON.stringify({ ok:false, reason:"not_implemented_yet" }) });
                 break;
-              }
-
-              case "createAppointment": {
-                // 👉 À implémenter (écriture dans la bonne collection du tenant)
-                tool_outputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({ ok: false, reason: "not_implemented_yet" })
-                });
+              case "createAppointment":
+                tool_outputs.push({ tool_call_id: id, output: JSON.stringify({ ok:false, reason:"not_implemented_yet" }) });
                 break;
-              }
-
-              default: {
-                tool_outputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({ error: "unknown_tool" })
-                });
-              }
+              default:
+                tool_outputs.push({ tool_call_id: id, output: JSON.stringify({ error:"unknown_tool" }) });
             }
           }
 
           if (tool_outputs.length > 0) {
             await openai.beta.threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
           }
-
-          // Reboucle rapidement
           return setTimeout(checkRun, 500);
         }
 
-        // 4) ⏳ Timeout de sécurité
         elapsedTime += interval;
         if (elapsedTime >= timeoutLimit) {
           console.error(`${logPrefix} ⏳ Timeout 80s → cancel run`);
@@ -445,19 +422,17 @@ async function pollForCompletion(runId, context) {
           return reject(new Error("Run timed out"));
         }
 
-        // 5) ↻ Continuer de poller
         return setTimeout(checkRun, interval);
-
       } catch (err) {
         console.error(`${logPrefix} ❌ pollForCompletion error:`, err?.response?.data || err?.message || err);
         return reject(err);
       }
     };
 
-    // Démarrer la boucle
     checkRun();
   });
 }
+
 
 // Récupérer les messages d'un thread
 async function fetchThreadMessages(threadId) {
