@@ -80,77 +80,6 @@ const allowedOrigins = new Set([
   'https://www.facebook.com',
   'https://facebook.com'
 ]);
-
-async function handleMessage(userMessage, userNumber) {
-  if (!messageQueue.has(userNumber)) messageQueue.set(userNumber, []);
-  messageQueue.get(userNumber).push(userMessage);
-  console.log(`🧾 Message ajouté à la file pour ${userNumber} : "${userMessage}"`);
-
-  if (locks.get(userNumber)) return;
-
-  locks.set(userNumber, true);
-  console.log(`🔒 Lock activé pour ${userNumber}`);
-
-  try {
-    const initialQueue = [...messageQueue.get(userNumber)];
-    console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
-    messageQueue.set(userNumber, []); // vider temporairement
-
-    const combinedMessage = initialQueue.join(". ");
-    const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
-    console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
-    console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
-    activeRuns.set(userNumber, { threadId, runId });
-
-    // Vérifier si de nouveaux messages sont arrivés pendant le run
-    const newMessages = messageQueue.get(userNumber) || [];
-    if (newMessages.length > 0) {
-      console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
-      messageQueue.set(userNumber, [...initialQueue, ...newMessages]);
-      locks.set(userNumber, false);
-      return await handleMessage("", userNumber);
-    }
-
-    const messages = await pollForCompletion(threadId, runId);
-    console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
-    await sendResponseToWhatsApp(messages, userNumber);
-
-    // Enregistrement dynamique de la réponse de l’assistant
-    await db.collection('threads').updateOne(
-      { userNumber },
-      {
-        $push: {
-          responses: {
-            assistantResponse: {
-              text: messages.text,
-              note: {
-                summary: messages.note?.summary || null,
-                status: messages.note?.status || null
-              },
-              timestamp: new Date()
-            }
-          }
-        },
-        $set: { threadId }
-      }
-    );
-    console.log("🗃️ Réponse de l’assistant enregistrée dans MongoDB pour", userNumber);
-  } catch (error) {
-    console.error("❌ Erreur dans handleMessage :", error);
-  } finally {
-    console.log(`🔓 Lock libéré pour ${userNumber}`);
-    locks.set(userNumber, false);
-
-    const remaining = messageQueue.get(userNumber) || [];
-    if (remaining.length > 0) {
-      const next = remaining.shift();
-      messageQueue.set(userNumber, [next, ...remaining]);
-      await handleMessage("", userNumber);
-      console.log(`➡️ Message restant détecté, relance de handleMessage() pour ${userNumber}`);
-    }
-  }
-}
-
 app.use(cors({
   origin: (origin, cb) => {
     // A) Aucun Origin (ex: appels serveur/Graph, curl, same-origin) -> OK
@@ -242,6 +171,76 @@ transporter.verify(function(error, success) {
     }
 });
 
+async function handleMessage(userMessage, userNumber) {
+  if (!messageQueue.has(userNumber)) messageQueue.set(userNumber, []);
+  messageQueue.get(userNumber).push(userMessage);
+  console.log(`🧾 Message ajouté à la file pour ${userNumber} : "${userMessage}"`);
+
+  if (locks.get(userNumber)) return;
+
+  locks.set(userNumber, true);
+  console.log(`🔒 Lock activé pour ${userNumber}`);
+
+  try {
+    const initialQueue = [...messageQueue.get(userNumber)];
+    console.log(`📚 File initiale de ${userNumber} :`, initialQueue);
+    messageQueue.set(userNumber, []); // vider temporairement
+
+    const combinedMessage = initialQueue.join(". ");
+    const { threadId, runId } = await interactWithAssistant(combinedMessage, userNumber);
+    console.log(`🧠 Assistant appelé avec : "${combinedMessage}"`);
+    console.log(`📎 threadId = ${threadId}, runId = ${runId}`);
+    activeRuns.set(userNumber, { threadId, runId });
+
+    // Vérifier si de nouveaux messages sont arrivés pendant le run
+    const newMessages = messageQueue.get(userNumber) || [];
+    if (newMessages.length > 0) {
+      console.log("⚠️ Réponse ignorée car nouveaux messages après envoi.");
+      messageQueue.set(userNumber, [...initialQueue, ...newMessages]);
+      locks.set(userNumber, false);
+      return await handleMessage("", userNumber);
+    }
+
+    const messages = await pollForCompletion(threadId, runId);
+    console.log(`📬 Envoi de la réponse finale à WhatsApp pour ${userNumber}`);
+    await sendResponseToWhatsApp(messages, userNumber);
+
+    // Enregistrement dynamique de la réponse de l’assistant
+    await db.collection('threads').updateOne(
+      { userNumber },
+      {
+        $push: {
+          responses: {
+            assistantResponse: {
+              text: messages.text,
+              note: {
+                summary: messages.note?.summary || null,
+                status: messages.note?.status || null
+              },
+              timestamp: new Date()
+            }
+          }
+        },
+        $set: { threadId }
+      }
+    );
+    console.log("🗃️ Réponse de l’assistant enregistrée dans MongoDB pour", userNumber);
+  } catch (error) {
+    console.error("❌ Erreur dans handleMessage :", error);
+  } finally {
+    console.log(`🔓 Lock libéré pour ${userNumber}`);
+    locks.set(userNumber, false);
+
+    const remaining = messageQueue.get(userNumber) || [];
+    if (remaining.length > 0) {
+      const next = remaining.shift();
+      messageQueue.set(userNumber, [next, ...remaining]);
+      await handleMessage("", userNumber);
+      console.log(`➡️ Message restant détecté, relance de handleMessage() pour ${userNumber}`);
+    }
+  }
+}
+
 // Fonction pour récupérer ou créer un thread
 async function getOrCreateThreadId(userNumber) {
   const existing = await db.collection("threads").findOne({ userNumber });
@@ -294,319 +293,76 @@ async function interactWithAssistant(userMessage, userNumber) {
     throw error;
   }
 }
-async function initGoogleCalendarClient() {
-    try {
-      const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY; 
-      if (!serviceAccountJson) {
-        console.error("SERVICE_ACCOUNT_KEY n'est pas défini en variable d'env.");
-        return;
-      }
-      const key = JSON.parse(serviceAccountJson);
-      console.log("Compte de service :", key.client_email);
-  
-      const client = new google.auth.JWT(
-        key.client_email,
-        null,
-        key.private_key,
-        ['https://www.googleapis.com/auth/calendar']
-      );
-      
-      await client.authorize();
-      calendar = google.calendar({ version: 'v3', auth: client });
-      console.log('✅ Client Google Calendar initialisé');
-    } catch (error) {
-      console.error("❌ Erreur d'init du client Google Calendar :", error);
-    }
-  }
 
-async function startCalendar() {
-  await initGoogleCalendarClient();  // on attend l'init
-  if (calendar) {
-    try {
-      const res = await calendar.calendarList.list();
-      console.log('\n📅 Agendas disponibles :');
-      (res.data.items || []).forEach(cal => {
-        console.log(`- ID: ${cal.id}, Summary: ${cal.summary}`);
-      });
-    } catch (err) {
-      console.error("❌ Erreur lors de la récupération des agendas :", err);
-    }
-  }
-}
-  // Appeler une seule fois :
-  startCalendar();
-
-  async function createAppointment(params) {
-    // Vérifier si le client Google Calendar est déjà initialisé
-    if (!calendar) {
-      try {
-        const serviceAccountJson = process.env.SERVICE_ACCOUNT_KEY;
-        if (!serviceAccountJson) {
-          console.error("SERVICE_ACCOUNT_KEY n'est pas défini en variable d'env.");
-          return { success: false, message: "Service account non configuré." };
-        }
-        const key = JSON.parse(serviceAccountJson);
-        console.log("Compte de service :", key.client_email);
-  
-        // Création du client JWT
-        const client = new google.auth.JWT(
-          key.client_email,
-          null,
-          key.private_key,
-          ['https://www.googleapis.com/auth/calendar']
-        );
-  
-        // Authentification
-        await client.authorize();
-  
-        // Initialisation du client Calendar et affectation à la variable globale
-        calendar = google.calendar({ version: 'v3', auth: client });
-        console.log('✅ Client Google Calendar initialisé dans createAppointment');
-      } catch (error) {
-        console.error("❌ Erreur lors de l'initialisation de Google Calendar :", error);
-        return { success: false, message: "Erreur d'initialisation de Calendar" };
-      }
-    }
-  
-    // À partir d'ici, calendar est garanti d'être défini.
-    try {
-      // Définir l'événement à créer
-      const event = {
-        summary: `Cita de ${params.customerName}`,
-        description: `Téléphone: ${params.phoneNumber}\nService: ${params.service}`,
-        start: {
-          dateTime: `${params.date}T${params.startTime}:00`, // Ajout des secondes si besoin
-          timeZone: 'America/Bogota',
-        },
-        end: {
-          dateTime: `${params.date}T${params.endTime}:00`,
-          timeZone: 'America/Bogota',
-        },
-      };  
-  
-      // Insertion de l'événement dans l'agenda de diegodfr75@gmail.com
-      const calendarRes = await calendar.events.insert({
-        calendarId: params.calendarId,
-        resource: event,
-      });
-  
-      const eventId = calendarRes.data.id;
-      console.log('Événement créé sur Google Calendar, eventId =', eventId);
-  
-      // Insertion en base de données (MongoDB) avec l'eventId
-      await db.collection('appointments').insertOne({
-        customerName: params.customerName,
-        phoneNumber: params.phoneNumber,
-        date: params.date,
-        startTime: params.startTime,
-        endTime: params.endTime,
-        service: params.service,
-        googleEventId: eventId
-      });
-  
-      return { success: true, message: 'Cita creada en Calendar y Mongo', eventId };
-    } catch (error) {
-      console.error("Erreur lors de la création de l'événement :", error);
-      return { success: false, message: 'No se pudo crear la cita.' };
-    }
-  }
 // Vérification du statut d'un run
-async function pollForCompletion(threadId, runId, userNumber) {
+async function pollForCompletion(threadId, runId) {
   return new Promise((resolve, reject) => {
-    const interval = 2000;
-    const timeoutLimit = 80000;
+    const interval = 2000;           // 2s
+    const timeoutLimit = 80000;      // 80s
     let elapsedTime = 0;
 
     const checkRun = async () => {
       try {
         const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
-        console.log(`📊 Estado del run: ${runStatus.status}`);
+        console.log(`📊 Run status: ${runStatus.status}`);
 
+        // ✅ Terminé → on polit et on renvoie
         if (runStatus.status === 'completed') {
           const messages = await fetchThreadMessages(threadId);
-          console.log("📩 Réponse finale de l'assistant:", messages);
-          resolve(messages);
-          return;
+          return resolve(messages);
         }
 
-        if (
-          runStatus.status === 'requires_action' &&
-          runStatus.required_action?.submit_tool_outputs?.tool_calls
-        ) {
+        // 🔧 Tool calls demandés
+        if (runStatus.status === 'requires_action' &&
+            runStatus.required_action?.submit_tool_outputs?.tool_calls?.length) {
           const toolCalls = runStatus.required_action.submit_tool_outputs.tool_calls;
-          const toolOutputs = [];
+          const tool_outputs = [];
 
-          for (const toolCall of toolCalls) {
-            const { function: fn, id } = toolCall;
+          for (const { id, function: fn } of toolCalls) {
             let params;
-
             try {
-              params = JSON.parse(fn.arguments);
-            } catch (error) {
-              console.error("❌ Erreur en parsant les arguments JSON:", error);
-              reject(error);
-              return;
+              params = JSON.parse(fn.arguments || "{}");
+            } catch (e) {
+              console.error("❌ Tool args parse error:", e);
+              return reject(e);
             }
 
-            switch (fn.name) {
-              case "getAppointments": {
-                if (!calendar) {
-                  await initGoogleCalendarClient(); // au cas où non initialisé
-                }
-              
-                try {
-                  const startOfDay = `${params.date}T00:00:00-05:00`; // Bogota timezone
-                  const endOfDay = `${params.date}T23:59:59-05:00`;
-              
-                  const res = await calendar.events.list({
-                    calendarId: params.calendarId,
-                    timeMin: new Date(startOfDay).toISOString(),
-                    timeMax: new Date(endOfDay).toISOString(),
-                    singleEvents: true,
-                    orderBy: 'startTime',
-                  });
-              
-                  const appointments = res.data.items.map(event => ({
-                    start: event.start.dateTime,
-                    end: event.end.dateTime,
-                    summary: event.summary,
-                  }));
-              
-                  toolOutputs.push({
-                    tool_call_id: id,
-                    output: JSON.stringify(appointments),
-                  });
-                } catch (error) {
-                  console.error("❌ Erreur lors de la récupération des RDV Google Calendar :", error);
-                  toolOutputs.push({
-                    tool_call_id: id,
-                    output: JSON.stringify({ error: "Erreur Google Calendar" }),
-                  });
-                }
-                break;
-              }
-
-              case "cancelAppointment": {
-                const wasDeleted = await cancelAppointment(params.phoneNumber);
-
-                toolOutputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({
-                    success: wasDeleted,
-                    message: wasDeleted
-                      ? "La cita ha sido cancelada."
-                      : "No se encontró ninguna cita para ese número."
-                  })
-                });
-                break;
-              }
-
-              case "createAppointment": {
-                const result = await createAppointment(params);
-
-                toolOutputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({
-                    success: result.success,
-                    message: result.message
-                  })
-                });
-                break;
-              }
-
-              case "get_image_url": {
-                console.log("🖼️ Demande d'URL image reçue:", params);
-                const imageUrl = await getImageUrl(params.imageCode);
-
-                toolOutputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({ imageUrl })
-                });
-                break;
-              }
-
-              case "notificar_comerciante": {
-                console.log("📣 Function calling détectée : notificar_comerciante");
-                const { estado, numero_cliente } = params;
-                await enviarAlertaComerciante(estado, numero_cliente);
-                toolOutputs.push({
-                  tool_call_id: id,
-                  output: JSON.stringify({ success: true })
-                });
-                break;
-              }
-              default:
-                console.warn(`⚠️ Fonction inconnue (non gérée) : ${fn.name}`);
+            if (fn.name === "getAppointments") {
             }
+
+            else if (fn.name === "createAppointment") {
+              
+            }
+
           }
 
-          if (toolOutputs.length > 0) {
-            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, {
-              tool_outputs: toolOutputs
-            });
+          if (tool_outputs.length > 0) {
+            await openai.beta.threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
           }
 
-          setTimeout(checkRun, 500);
-          return;
+          // Reboucle rapidement après soumission
+          return setTimeout(checkRun, 500);
         }
 
+        // ⏳ Timeout de sécurité
         elapsedTime += interval;
         if (elapsedTime >= timeoutLimit) {
-          console.error("⏳ Timeout (80s), annulation du run...");
+          console.error("⏳ Timeout 80s → cancel run");
           await openai.beta.threads.runs.cancel(threadId, runId);
-          reject(new Error("Run annulé après 80s sans réponse."));
-          return;
+          return reject(new Error("Run timed out"));
         }
 
-        setTimeout(checkRun, interval);
+        // ↻ Continue de poller
+        return setTimeout(checkRun, interval);
 
-      } catch (error) {
-        console.error("Erreur dans pollForCompletion:", error);
-        reject(error);
+      } catch (err) {
+        console.error("❌ pollForCompletion error:", err);
+        return reject(err);
       }
     };
 
     checkRun();
   });
-}
-
-async function enviarAlertaComerciante(estado, numeroCliente) {
-  const numeroComerciante = "573009016472"; // numéro fixe
-  const apiUrl = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-  const headers = {
-    Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
-    "Content-Type": "application/json"
-  };
-
-  const messageData = {
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to: numeroComerciante,
-    type: "template",
-    template: {
-      name: "confirmacion",  // le modèle que tu as validé
-      language: {
-        policy: "deterministic",
-        code: "es"
-      },
-      components: [
-        {
-          type: "body",
-          parameters: [
-            { type: "text", text: estado },        // correspond à {{1}}
-            { type: "text", text: numeroCliente }  // correspond à {{2}}
-          ]
-        }
-      ]
-    }
-  };
-
-  try {
-    await axios.post(apiUrl, messageData, { headers });
-    console.log("✅ Alerta enviada al comerciante:", numeroComerciante);
-  } catch (err) {
-    console.error("❌ Error al enviar alerta al comerciante:", err.response?.data || err.message);
-  }
 }
 
 // Récupérer les messages d'un thread
@@ -733,23 +489,6 @@ async function fetchThreadMessages(threadId) {
   }
 }
 
-async function getImageUrl(imageCode) {
-  try {
-    const image = await db.collection("images").findOne({ _id: imageCode });
-
-    if (image && image.url) {
-      console.log(`✅ URL trouvée pour le code "${imageCode}" : ${image.url}`);
-    } else {
-      console.warn(`⚠️ Aucune URL trouvée pour le code "${imageCode}".`);
-    }
-
-    return image ? image.url : null;
-  } catch (error) {
-    console.error("❌ Erreur récupération URL image:", error);
-    return null;
-  }
-}
-
 async function sendResponseToWhatsApp(response, userNumber) {
   const { text, images } = response;
   console.log("📤 Envoi WhatsApp : texte =", text, "images =", images);
@@ -788,89 +527,6 @@ async function sendResponseToWhatsApp(response, userNumber) {
         await axios.post(apiUrl, payloadImage, { headers });
       }
     }
-  }
-}
-
-
-async function sendConsentRequest(userNumber) {
-  try {
-    const payload = {
-      messaging_product: "whatsapp",
-      to: userNumber,
-      type: "interactive",
-      interactive: {
-        type: "button",
-        body: {
-          text: "👋 ¡Hola! Antes de continuar, necesitamos tu autorización para procesar tus datos (como nombre, número y citas) a través de este canal WhatsApp API. Solo los usaremos para ayudarte.\n\nConsulta nuestra política: comercioai.site/politica-de-privacidad"
-        },
-        action: {
-          buttons: [
-            {
-              type: "reply",
-              reply: {
-                id: "consent_si",
-                title: "✅ Sí, acepto"
-              }
-            },
-            {
-              type: "reply",
-              reply: {
-                id: "consent_no",
-                title: "❌ No, gracias"
-              }
-            }
-          ]
-        }
-      }
-    };
-
-    console.log("📤 Envoi du message de consentement à :", userNumber);
-    console.log("📦 Payload envoyé :", JSON.stringify(payload, null, 2));
-
-    const response = await fetch(
-      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("❌ Erreur API WhatsApp :", response.status, data);
-    } else {
-      console.log("✅ Message de consentement envoyé avec succès :", data);
-
-      // 💾 Enregistrement assistantResponse dans MongoDB
-      await db.collection('threads').updateOne(
-        { userNumber },
-        {
-          $setOnInsert: {
-            threadId: 'na',
-            consent: false
-          },
-          $set: {
-            consentAskedAt: new Date()
-          },
-          $push: {
-            responses: {
-              assistantResponse: {
-                text: payload.interactive.body.text,
-                timestamp: new Date()
-              }
-            }
-          }
-        },
-        { upsert: true }
-      );
-    }
-  } catch (err) {
-    console.error("❌ Exception dans sendConsentRequest :", err);
   }
 }
 
@@ -927,25 +583,6 @@ function getErrorMessage(err) {
   }
   return err.message || 'Error interno del servidor.';
 }
-async function subscribeWabaToApp(wabaId, userAccessToken) {
-  try {
-    const r = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${userAccessToken}` }
-      // NB: pas besoin de body; certaines versions acceptent subscribed_fields=["messages"]
-    });
-    const j = await r.json();
-    if (!r.ok) {
-      console.error('subscribeWabaToApp failed', r.status, j);
-      return false;
-    }
-    console.log('WABA subscribed_apps =>', j);
-    return true;
-  } catch (e) {
-    console.error('subscribeWabaToApp error', e);
-    return false;
-  }
-}
 
 function maskTail(str, tail = 4) {
   if (!str) return '';
@@ -965,7 +602,7 @@ app.post('/whatsapp', async (req, res) => {
     const userNumber = message.from;
     const messageId = message.id;
 
-    // 🔄 Vérifier si le message a déjà été traité
+    // 🔄 Anti-doublon
     const alreadyProcessed = await db.collection('processedMessages').findOne({ messageId });
     if (alreadyProcessed) {
       console.log("⚠️ Message déjà traité, on ignore :", messageId);
@@ -973,52 +610,9 @@ app.post('/whatsapp', async (req, res) => {
     }
     await db.collection('processedMessages').insertOne({ messageId, createdAt: new Date() });
 
-    // 🧠 Cas 1 : Réponse à un bouton interactif (consentement)
-    if (message.type === 'interactive' && message.interactive?.type === 'button_reply') {
-      const payload = message.interactive.button_reply.id;
-      const title = message.interactive.button_reply.title;
-
-      console.log("🔘 Réponse bouton reçue - payload:", payload, "| titre:", title);
-
-      if (payload === 'consent_si' || payload === 'consent_no') {
-        // 💾 Enregistrer la réponse utilisateur dans MongoDB
-        await db.collection('threads').updateOne(
-          { userNumber },
-          {
-            $push: {
-              responses: {
-                userMessage: title,
-                timestamp: new Date()
-              }
-            }
-          }
-        );
-      
-        if (payload === 'consent_si') {
-          await db.collection('threads').updateOne(
-            { userNumber },
-            { $set: { consent: true, consentAt: new Date() } }
-          );
-          await sendResponseToWhatsApp(
-            { text: "✅ ¡Gracias por aceptar! Ahora puedes usar nuestro asistente." },
-            userNumber
-          );
-        }
-      
-        if (payload === 'consent_no') {
-          await sendResponseToWhatsApp(
-            { text: "Entendido 😊 No procesaremos tus datos. Escríbenos si cambias de opinión." },
-            userNumber
-          );
-        }
-      
-        return res.sendStatus(200);
-      }
-    }
-
-    // 🧠 Cas 2 : Message utilisateur standard
+    // 🧠 Construction du message utilisateur
     let userMessage = '';
-    if (message.type === 'text' && message.text.body) {
+    if (message.type === 'text' && message.text?.body) {
       userMessage = message.text.body.trim();
     } else if (message.type === 'image') {
       userMessage = "Cliente envió una imagen.";
@@ -1032,14 +626,11 @@ app.post('/whatsapp', async (req, res) => {
       return res.status(200).send('Message vide ou non géré.');
     }
 
-    // 🗃️ Enregistrement du message utilisateur
+    // 🗃️ Enregistrement du message utilisateur (sans champ 'consent')
     await db.collection('threads').updateOne(
       { userNumber },
       {
-        $setOnInsert: {
-          threadId: 'na',
-          consent: false
-        },
+        $setOnInsert: { threadId: 'na' },
         $push: {
           responses: {
             userMessage,
@@ -1051,19 +642,11 @@ app.post('/whatsapp', async (req, res) => {
     );
     console.log("🗃️ Message utilisateur enregistré pour", userNumber);
 
-    // 🔍 Vérifier le consentement
-    const thread = await db.collection('threads').findOne({ userNumber });
-    if (!thread.consent) {
-      await sendConsentRequest(userNumber);
-      return res.sendStatus(200);
-    }
-
-    // ✅ assistant_id défini en dur ici
+    // ✅ assistant_id défini en dur ici (à revoir plus tard en multi-tenant)
     const assistantId = "asst_CWMnVSuxZscjzCB2KngUXn5I";
 
-    // 🔎 Recherche du user correspondant à cet assistant_id
+    // 🔎 Vérifie si l'auto-reply est actif pour cet assistant
     const user = await db.collection('users').findOne({ assistant_id: assistantId });
-
     if (!user || user.autoReplyEnabled === false) {
       console.log("⏹️ Assistant désactivé pour ce compte.");
       return res.sendStatus(200);
@@ -1078,7 +661,6 @@ app.post('/whatsapp', async (req, res) => {
     res.sendStatus(500);
   }
 });
-
 
 app.post('/api/inscription', upload.single("archivo"), async (req, res) => {
     try {
