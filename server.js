@@ -874,19 +874,8 @@ async function sendConsentRequest(userNumber) {
   }
 }
 
-async function currentUser(req){
-  const t = req.cookies?.token; if(!t) throw new Error('No autenticado');
-  const d = jwt.verify(t, process.env.JWT_SECRET);
-  const u = await db.collection('users').findOne({ email: d.email });
-  if(!u) throw new Error('Usuario no encontrado'); return u;
-}
 function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
 
-function signState(payload){
-  const raw = JSON.stringify(payload);
-  const sig = crypto.createHmac('sha256', process.env.APP_SECRET).update(raw).digest('hex');
-  return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
-}
 async function verifyState(b64){
   const parsed = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
   const { raw, sig } = parsed || {};
