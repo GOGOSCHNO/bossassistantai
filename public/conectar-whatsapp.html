@@ -88,10 +88,13 @@
       btnEmbedded.addEventListener('click', async () => {
         try {
           const r = await fetch('/api/whatsapp/embedded/start', { credentials:'include' });
-          if (!r.ok) return alert('No se pudo iniciar ESU');
+          if (!r.ok) {
+            const msg = (await r.json().catch(()=>({})))?.error || `HTTP ${r.status}`;
+            return alert(`No se pudo iniciar ESU: ${msg}`);
+          }
           const { url } = await r.json();
           window.location.href = url;
-        } catch {
+        } catch (e) {
           alert('Error iniciando ESU');
         }
       });
@@ -128,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
 
