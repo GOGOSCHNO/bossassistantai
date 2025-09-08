@@ -794,7 +794,23 @@ function signState(obj) {
                     .digest('hex');
   return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
 }
+async function subscribeWabaToApp(wabaId, userToken) {
+  const apiVersion = "v20.0"; // ajuste à ta version Graph
+  const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
 
+  try {
+    const resp = await axios.post(
+      url,
+      {}, // pas de body nécessaire
+      { headers: { Authorization: `Bearer ${userToken}` } }
+    );
+    console.log("✅ WABA suscrita a la app:", resp.data);
+    return true;
+  } catch (err) {
+    console.error("❌ Error al suscribir WABA a la app:", err.response?.data || err.message);
+    throw err;
+  }
+}
 app.get('/whatsapp', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
