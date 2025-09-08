@@ -1032,23 +1032,23 @@ app.get('/auth/google',
 
 // 🔁 Route de retour (callback) depuis Google
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login.html' }),
+  passport.authenticate('google', { failureRedirect: '/signup.html' }), // ← cohérent avec la page d’entrée
   (req, res) => {
-    // Générer un token JWT et le stocker dans un cookie HTTP-only
     const token = jwt.sign(
-      { email: req.user.email, name: req.user.name }, // ajoute name ici
+      { email: req.user.email, name: req.user.name },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,      // ⚠️ à désactiver si tu testes en HTTP local
-      sameSite: 'None'
+      secure: true,      // garde true en prod HTTPS
+      sameSite: 'None'   // requis car retour cross-site depuis accounts.google.com
+      // PAS de "domain" ici : on veut que le cookie reste sur le host actuel
     });
 
-    // Rediriger vers la page privée
-    res.redirect("https://www.comercioai.site"); // à adapter selon ta page d’accueil après connexion
+    // Rediriger vers l’étape suivante du flux sur le MÊME domaine
+    return res.redirect('/crear-asistente.html'); // ✅
   }
 );
 app.get('/api/me', async (req, res) => {
