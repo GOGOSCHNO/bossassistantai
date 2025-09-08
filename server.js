@@ -787,6 +787,14 @@ function normalizeIncoming(raw) {
   return base;
 }
 
+function signState(obj) {
+  const raw = JSON.stringify(obj);
+  const sig = crypto.createHmac('sha256', process.env.APP_SECRET)
+                    .update(raw)
+                    .digest('hex');
+  return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
+}
+
 app.get('/whatsapp', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -1481,10 +1489,9 @@ app.post("/api/editar-cita", async (req, res) => {
 
 app.get('/api/whatsapp/embedded/start', async (req,res)=>{
   try{
-    const u = await currentUser(req); // helper que tu as déjà
+    const u = await currentUser(req);
     const state = signState({ email: u.email, ts: Date.now() });
 
-    // scopes minimaux pour ESU & gestion business/WABA (ajuste si Meta t’en demande d’autres)
     const scope = [
       'business_management',
       'whatsapp_business_management',
@@ -1501,7 +1508,11 @@ app.get('/api/whatsapp/embedded/start', async (req,res)=>{
 
     res.json({ url });
   }catch(e){
-    res.status(401).json({ error: 'No autenticado' });
+    console.error('ESU start error:', e?.stack || e?.message || e);
+    if (e?.message === 'No autenticado') {
+      return res.status(401).json({ error: 'No autenticado' });
+    }
+    return res.status(500).json({ error: 'ESU start failed' });
   }
 });
 
