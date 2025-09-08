@@ -633,7 +633,17 @@ async function sendResponseToWhatsApp(reply, toNumber, context) {
       await db.collection(context.threadsCollection).updateOne(
         { userNumber: toNumber },
         {
-          $setOnInsert: { threadId: context.currentThreadId || null },
+          // ⚠️ NE PAS re-set 'threadId' ici si on le met dans $setOnInsert
+          $set: {
+            updatedAt: new Date()
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
+            userNumber: toNumber,
+            threadId: context.currentThreadId || null,
+            status: "active",
+            labels: ["whatsapp"]
+          },
           $push: {
             responses: {
               assistantResponse: {
@@ -646,10 +656,6 @@ async function sendResponseToWhatsApp(reply, toNumber, context) {
                 timestamp: new Date()
               }
             }
-          },
-          $set: {
-            updatedAt: new Date(),
-            threadId: context.currentThreadId || null
           }
         },
         { upsert: true }
