@@ -115,8 +115,20 @@
     }
     document.addEventListener('DOMContentLoaded', refreshStatus);
   </script>
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("esu") === "ok") {
+    alert("✅ WhatsApp conectado con éxito. Redirigiendo al dashboard...");
+    window.location.href = "dashboard.html"; // ✅ dernière étape
+  } else if (params.get("esu") === "error") {
+    alert("❌ Error durante la conexión. Intenta de nuevo.");
+  }
+});
+</script>
 </body>
 </html>
+
 
 
 
