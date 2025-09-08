@@ -1479,51 +1479,6 @@ app.post("/api/editar-cita", async (req, res) => {
   }
 });
 
-// GET /api/whatsapp/number/draft
-app.get('/api/whatsapp/number/draft', async (req,res)=>{
-  try{
-    const u = await currentUser(req);
-    const draft = u.whatsappDraft || null;
-    res.json(draft || {});
-  }catch(e){
-    const code = e.message==='No autenticado'?401:500;
-    res.status(code).json({ error: e.message });
-  }
-});
-
-// POST /api/whatsapp/number/draft  { waNumber }
-app.post('/api/whatsapp/number/draft', async (req,res)=>{
-  try{
-    const u = await currentUser(req);
-    const waNumber = String(req.body?.waNumber||'').trim();
-    if(!isE164(waNumber)) return res.status(400).json({ error:'Formato E.164 inválido' });
-
-    const now = new Date();
-    await db.collection('users').updateOne(
-      { _id: u._id },
-      { $set: { 'whatsappDraft.waNumber': waNumber, 'whatsappDraft.updatedAt': now },
-        $setOnInsert: { 'whatsappDraft.createdAt': now } }
-    );
-    res.json({ ok:true, waNumber });
-  }catch(e){
-    const code = e.message==='No autenticado'?401:500;
-    res.status(code).json({ error: e.message });
-  }
-});
-
-// (Opcional) POST /api/whatsapp/number/clear
-app.post('/api/whatsapp/number/clear', async (req,res)=>{
-  try{
-    const u = await currentUser(req);
-    await db.collection('users').updateOne(
-      { _id: u._id }, { $unset: { whatsappDraft: '' } }
-    );
-    res.json({ ok:true });
-  }catch(e){
-    const code = e.message==='No autenticado'?401:500;
-    res.status(code).json({ error: e.message });
-  }
-});
 app.get('/api/whatsapp/embedded/start', async (req,res)=>{
   try{
     const u = await currentUser(req); // helper que tu as déjà
