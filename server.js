@@ -794,21 +794,20 @@ function signState(obj) {
                     .digest('hex');
   return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
 }
-async function subscribePhoneToApp(phoneNumberId, userToken) {
-  const apiVersion = "v23.0";
-  const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/subscribed_apps`;
+async function subscribeWabaToApp(wabaId, userToken) {
+  const apiVersion = "v20.0";
+  const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
 
   try {
-    const res = await axios.post(url, {}, {
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("✅ Phone number subscribed to app:", res.data);
-    return res.data;
+    const resp = await axios.post(
+      url,
+      {},
+      { headers: { Authorization: `Bearer ${userToken}` } }
+    );
+    console.log("✅ WABA suscrita a la app:", resp.data);
+    return true;
   } catch (err) {
-    console.error("❌ Error subscribing phone to app:", err?.response?.data || err.message);
+    console.error("❌ Error al suscribir WABA a la app:", err.response?.data || err.message);
     throw err;
   }
 }
@@ -1611,7 +1610,7 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
     const waNumber = phone.display_phone_number;
 
     // 4) Souscrire la WABA à l'app => nécessaire pour recevoir les webhooks sur /whatsapp
-    await subscribePhoneToApp(phoneNumberId, userToken);
+    await subscribeWabaToApp(wabaId, userToken);
 
     // 5) Sauvegarde en base (users.whatsapp)
     const u = await db.collection('users').findOne({ email: s.email });
