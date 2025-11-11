@@ -53,6 +53,54 @@
       </div>
     </section>
     
+    <!-- Panel de sélection post-ESU -->
+    <section id="wa-candidates" class="ca-card" style="display:none; margin-top:16px;">
+      <div class="ca-card-body">
+        <h3 class="ca-title">Selecciona el número para conectar</h3>
+        <p class="ca-muted" id="wa-candidates-desc">
+          Hemos recibido los datos de Meta. Confirma qué número quieres conectar a tu asistente.
+        </p>
+    
+        <div id="wa-candidates-loading" class="ca-loading" style="margin:12px 0; display:none;">
+          Cargando opciones…
+        </div>
+    
+        <div id="wa-candidates-error" class="ca-alert ca-alert-error" style="display:none;"></div>
+    
+        <div id="wa-candidates-list" class="ca-list" style="display:none;"></div>
+    
+        <div id="wa-candidates-empty" class="ca-alert ca-alert-info" style="display:none;">
+          No encontramos números disponibles con tu cuenta actual. Verifica permisos o vuelve a iniciar el ESU.
+          <div style="margin-top:8px;">
+            <button id="btn-retry-esu" class="ca-btn ca-btn-primary">Volver a iniciar ESU</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Panel éxito -->
+    <section id="wa-success" class="ca-card" style="display:none; margin-top:16px;">
+      <div class="ca-card-body">
+        <h3 class="ca-title">✅ Conectado correctamente</h3>
+        <p class="ca-muted" id="wa-success-desc"></p>
+        <div style="margin-top:8px;">
+          <a class="ca-btn" href="/agenda.html">Probar con un mensaje</a>
+          <a class="ca-btn ca-btn-ghost" href="/">Volver al inicio</a>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Panel error genérico -->
+    <section id="wa-generic-error" class="ca-card" style="display:none; margin-top:16px;">
+      <div class="ca-card-body">
+        <h3 class="ca-title">❌ Error durante la conexión</h3>
+        <p class="ca-muted">Intenta nuevamente o inicia de nuevo el Embedded Signup.</p>
+        <div style="margin-top:8px;">
+          <button id="btn-retry-esu-2" class="ca-btn ca-btn-primary">Volver a iniciar ESU</button>
+        </div>
+      </div>
+    </section>
+    
     <button id="btnEmbedded" class="ca-btn ca-btn-primary">Iniciar Embedded Signup</button>
   </main>
 
@@ -129,8 +177,198 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+<script>
+  (function() {
+    const qs = new URLSearchParams(location.search);
+  
+    // Elements
+    const elPanel      = document.getElementById('wa-candidates');
+    const elList       = document.getElementById('wa-candidates-list');
+    const elLoading    = document.getElementById('wa-candidates-loading');
+    const elEmpty      = document.getElementById('wa-candidates-empty');
+    const elErr        = document.getElementById('wa-candidates-error');
+    const elSuccess    = document.getElementById('wa-success');
+    const elSuccessTxt = document.getElementById('wa-success-desc');
+    const elGenericErr = document.getElementById('wa-generic-error');
+  
+    const btnRetry1    = document.getElementById('btn-retry-esu');
+    const btnRetry2    = document.getElementById('btn-retry-esu-2');
+  
+    const AUTO_CONNECT_SINGLE = false; // ← passe à true si tu veux auto-connecter quand il n’y a qu’un seul candidat
+  
+    function show(node) { node && (node.style.display = ''); }
+    function hide(node) { node && (node.style.display = 'none'); }
+    function htmlSafe(s) { return String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  
+    async function fetchStatus() {
+      const r = await fetch('/api/whatsapp/status', { credentials: 'include' });
+      if (!r.ok) throw new Error('STATUS_HTTP_' + r.status);
+      return r.json();
+    }
+  
+    async function fetchCandidates() {
+      const r = await fetch('/api/whatsapp/candidates', { credentials: 'include' });
+      if (!r.ok) throw new Error('CAND_HTTP_' + r.status);
+      return r.json();
+    }
+  
+    async function postConnect(body) {
+      const r = await fetch('/api/whatsapp/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) {
+        let errTxt = 'CONNECT_HTTP_' + r.status;
+        try { const j = await r.json(); if (j && j.error) errTxt = j.error; } catch {}
+        throw new Error(errTxt);
+      }
+      return r.json();
+    }
+  
+    function renderCandidates(list) {
+      elList.innerHTML = '';
+      list.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.className = 'ca-list-row';
+  
+        row.innerHTML = `
+          <div class="ca-list-col">
+            <div class="ca-kicker">${htmlSafe(c.businessName)} · ${htmlSafe(c.wabaName)}</div>
+            <div class="ca-strong">📞 ${htmlSafe(c.waNumber || '(sin número)')}</div>
+            <div class="ca-sub">WABA ID: ${htmlSafe(c.wabaId)} · Phone ID: ${htmlSafe(c.phoneNumberId)}</div>
+          </div>
+          <div class="ca-list-col-auto">
+            <button class="ca-btn" data-idx="${idx}">Conectar este número</button>
+          </div>
+        `;
+        elList.appendChild(row);
+      });
+  
+      // Bind buttons
+      elList.querySelectorAll('button[data-idx]').forEach(btn => {
+        btn.addEventListener('click', async (ev) => {
+          const i = Number(ev.currentTarget.getAttribute('data-idx'));
+          const chosen = list[i];
+          if (!chosen) return;
+  
+          btn.disabled = true; btn.textContent = 'Conectando…';
+          hide(elErr);
+  
+          try {
+            const resp = await postConnect({ wabaId: chosen.wabaId, phoneNumberId: chosen.phoneNumberId });
+            // success
+            hide(elPanel);
+            show(elSuccess);
+            elSuccessTxt.textContent = `Número ${chosen.waNumber} conectado (${chosen.wabaId}).`;
+          } catch (e) {
+            show(elErr);
+            elErr.textContent = 'No se pudo conectar: ' + (e.message || e);
+            btn.disabled = false; btn.textContent = 'Conectar este número';
+          }
+        });
+      });
+    }
+  
+    async function init() {
+      // si l’URL contient esu=success → afficher succès direct
+      if (qs.get('esu') === 'success') {
+        hide(elPanel); hide(elGenericErr);
+        show(elSuccess);
+        elSuccessTxt.textContent = 'Tu número fue conectado correctamente.';
+        return;
+      }
+  
+      // si l’URL contient esu=error → afficher erreur générique (mais on tente quand même un status)
+      if (qs.get('esu') === 'error') {
+        show(elGenericErr);
+      }
+  
+      // 1) Lire le statut
+      let status;
+      try {
+        status = await fetchStatus();
+      } catch (e) {
+        show(elGenericErr);
+        return;
+      }
+  
+      // Si déjà conectado → panneau succès
+      if (status?.connected) {
+        hide(elGenericErr);
+        show(elSuccess);
+        elSuccessTxt.textContent = status?.number
+          ? `Número ${status.number} conectado.`
+          : 'Número conectado.';
+        return;
+      }
+  
+      // Si en attente de sélection → on affiche le panel + on charge les candidats
+      if (status?.selectionPending) {
+        hide(elGenericErr);
+        show(elPanel);
+        hide(elEmpty); hide(elErr);
+        show(elLoading);
+  
+        try {
+          const cands = await fetchCandidates();
+          hide(elLoading);
+  
+          const list = Array.isArray(cands?.candidates) ? cands.candidates : [];
+  
+          if (!list.length) {
+            show(elEmpty);
+            return;
+          }
+  
+          // Auto-connect (optionnel)
+          if (AUTO_CONNECT_SINGLE && list.length === 1) {
+            renderCandidates(list); // pour afficher l’item
+            const chosen = list[0];
+            // auto-click logique
+            const btn = elList.querySelector('button[data-idx="0"]');
+            if (btn) btn.click();
+            return;
+          }
+  
+          show(elList);
+          renderCandidates(list);
+  
+        } catch (e) {
+          hide(elLoading);
+          show(elErr);
+          elErr.textContent = 'No se pudieron cargar los candidatos. Intenta nuevamente.';
+        }
+        return;
+      }
+  
+      // Sinon, ni conectado ni en espera → proposer de relancer ESU
+      show(elGenericErr);
+    }
+  
+    // Boutons "Reiniciar ESU"
+    function goStartESU() {
+      // On relance le start pour récupérer la nouvelle URL
+      fetch('/api/whatsapp/embedded/start', { credentials:'include' })
+        .then(r => r.json())
+        .then(j => {
+          if (j && j.url) location.href = j.url;
+          else alert('No se pudo iniciar ESU. Revisa tu sesión.');
+        })
+        .catch(() => alert('No se pudo iniciar ESU.'));
+    }
+  
+    btnRetry1 && btnRetry1.addEventListener('click', goStartESU);
+    btnRetry2 && btnRetry2.addEventListener('click', goStartESU);
+  
+    // Go
+    init();
+  })();
+  </script>
 </body>
 </html>
+
 
 
 
