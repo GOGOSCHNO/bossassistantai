@@ -671,12 +671,23 @@ async function sendResponseToWhatsApp(reply, toNumber, context) {
 
 function isE164(s){ return /^\+[1-9]\d{7,14}$/.test(String(s||'').trim()); }
 
-async function verifyState(b64){
-  const parsed = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
-  const { raw, sig } = parsed || {};
-  const exp = crypto.createHmac('sha256', process.env.APP_SECRET).update(raw).digest('hex');
-  if(sig !== exp) throw new Error('state inválido');
-  return JSON.parse(raw);
+function verifyState(stateB64) {
+  try {
+    const outer = JSON.parse(Buffer.from(String(stateB64 || ''), 'base64url').toString('utf8'));
+    // outer = { raw: "<json string>", sig: "<hex hmac>" }
+    if (!outer || typeof outer.raw !== 'string' || typeof outer.sig !== 'string') return null;
+
+    const expected = crypto.createHmac('sha256', process.env.APP_SECRET)
+                           .update(outer.raw)
+                           .digest('hex');
+    if (outer.sig !== expected) return null;
+
+    // ⚠️ le vrai payload (email, ts, etc.) est dans outer.raw
+    const payload = JSON.parse(outer.raw);
+    return payload && typeof payload === 'object' ? payload : null;
+  } catch (e) {
+    return null;
+  }
 }
 function encrypt(text) {
   const iv = crypto.randomBytes(ivLength);
@@ -1506,6 +1517,9 @@ app.post("/api/editar-cita", async (req, res) => {
 app.get('/api/whatsapp/embedded/start', async (req,res)=>{
   try{
     const u = await currentUser(req);
+    if (!u || !u.email) {
+      return res.status(401).json({ ok: false, error: 'NOT_AUTH', message: 'Debes iniciar sesión.' });
+    }
     const state = signState({ email: u.email, ts: Date.now() });
 
     const scope = [
