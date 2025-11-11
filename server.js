@@ -1568,20 +1568,25 @@ app.get('/api/whatsapp/embedded/start', async (req,res)=>{
 
 app.get('/api/whatsapp/status', async (req, res) => {
   try {
-    const u = await currentUser(req); // ton helper JWT
-    const w = u.whatsapp || {};
-    res.json({
-      connected: !!w.connected,
-      mode: w.mode || null,
-      phoneNumberIdMasked: w.phoneNumberId ? '••••' + String(w.phoneNumberId).slice(-6) : null,
-      wabaId: w.wabaId || null,
-      businessId: w.businessId || null,
-      waNumber: w.waNumber || null,
-      tokenMasked: w.accessToken ? '••••' + String(w.accessToken).slice(-4) : null,
-      connectedAt: w.connectedAt || null
+    const u = await currentUser(req);
+    if (!u || !u.email) return res.status(401).json({ ok:false, error:'NOT_AUTH' });
+
+    const user = await db.collection('users').findOne(
+      { _id: u._id },
+      { projection: { whatsapp:1, whatsappSelectionPending:1 } }
+    );
+
+    res.set('Cache-Control', 'no-store'); // important
+    return res.json({
+      ok: true,
+      connected: !!user?.whatsapp?.connected,
+      selectionPending: !!user?.whatsappSelectionPending,
+      number: user?.whatsapp?.waNumber || null,
     });
   } catch (e) {
-    res.status(401).json({ error: 'No autenticado' });
+    console.error('GET /api/whatsapp/status error:', e);
+    res.set('Cache-Control', 'no-store');
+    return res.status(500).json({ ok:false, error:'SERVER' });
   }
 });
 
