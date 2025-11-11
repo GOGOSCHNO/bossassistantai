@@ -271,81 +271,52 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   
+    // ...
     async function init() {
-      // si l’URL contient esu=success → afficher succès direct
-      if (qs.get('esu') === 'success') {
-        hide(elPanel); hide(elGenericErr);
-        show(elSuccess);
-        elSuccessTxt.textContent = 'Tu número fue conectado correctamente.';
-        return;
-      }
-  
-      // si l’URL contient esu=error → afficher erreur générique (mais on tente quand même un status)
-      if (qs.get('esu') === 'error') {
-        show(elGenericErr);
-      }
-  
-      // 1) Lire le statut
-      let status;
-      try {
-        status = await fetchStatus();
-      } catch (e) {
-        show(elGenericErr);
-        return;
-      }
-  
-      // Si déjà conectado → panneau succès
-      if (status?.connected) {
-        hide(elGenericErr);
-        show(elSuccess);
-        elSuccessTxt.textContent = status?.number
-          ? `Número ${status.number} conectado.`
-          : 'Número conectado.';
-        return;
-      }
-  
-      // Si en attente de sélection → on affiche le panel + on charge les candidats
-      if (status?.selectionPending) {
+      const esu = qs.get('esu');
+    
+      // si esu=success -> panneau succès
+      if (esu === 'success') { /* ... */ return; }
+    
+      // si esu=confirm -> on force le panneau et on charge la liste
+      if (esu === 'confirm') {
         hide(elGenericErr);
         show(elPanel);
-        hide(elEmpty); hide(elErr);
         show(elLoading);
-  
         try {
-          const cands = await fetchCandidates();
+          const cands = await fetchCandidates(); // GET /api/whatsapp/candidates
           hide(elLoading);
-  
           const list = Array.isArray(cands?.candidates) ? cands.candidates : [];
-  
-          if (!list.length) {
-            show(elEmpty);
-            return;
-          }
-  
-          // Auto-connect (optionnel)
-          if (AUTO_CONNECT_SINGLE && list.length === 1) {
-            renderCandidates(list); // pour afficher l’item
-            const chosen = list[0];
-            // auto-click logique
-            const btn = elList.querySelector('button[data-idx="0"]');
-            if (btn) btn.click();
-            return;
-          }
-  
+          if (!list.length) { show(elEmpty); return; }
           show(elList);
           renderCandidates(list);
-  
+          return;
         } catch (e) {
           hide(elLoading);
           show(elErr);
           elErr.textContent = 'No se pudieron cargar los candidatos. Intenta nuevamente.';
+          return;
         }
+      }
+    
+      // sinon: flow normal par /status
+      let status;
+      try { status = await fetchStatus(); } catch { show(elGenericErr); return; }
+      if (status?.connected) { /* show success ... */ return; }
+      if (status?.selectionPending) {
+        hide(elGenericErr); show(elPanel); show(elLoading);
+        try {
+          const cands = await fetchCandidates();
+          hide(elLoading);
+          const list = Array.isArray(cands?.candidates) ? cands.candidates : [];
+          if (!list.length) { show(elEmpty); return; }
+          show(elList); renderCandidates(list);
+        } catch { hide(elLoading); show(elErr); }
         return;
       }
-  
-      // Sinon, ni conectado ni en espera → proposer de relancer ESU
       show(elGenericErr);
     }
+
   
     // Boutons "Reiniciar ESU"
     function goStartESU() {
@@ -368,6 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
   </script>
 </body>
 </html>
+
 
 
 
