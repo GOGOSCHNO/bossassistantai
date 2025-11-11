@@ -1716,3 +1716,23 @@ app.post('/api/whatsapp/connect', async (req, res) => {
     return res.status(500).json({ ok:false, error:'SERVER' });
   }
 });
+app.get('/api/whatsapp/candidates', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    if (!u || !u.email) return res.status(401).json({ ok:false, error:'NOT_AUTH' });
+
+    const user = await db.collection('users').findOne({ _id: u._id }, { projection: {
+      whatsappCandidates: 1,
+      whatsappSelectionPending: 1
+    }});
+
+    return res.json({
+      ok: true,
+      selectionPending: !!user?.whatsappSelectionPending,
+      candidates: user?.whatsappCandidates || []
+    });
+  } catch (e) {
+    console.error('GET /api/whatsapp/candidates error:', e);
+    return res.status(500).json({ ok:false, error:'SERVER' });
+  }
+});
