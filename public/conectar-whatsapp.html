@@ -198,16 +198,19 @@ document.addEventListener("DOMContentLoaded", () => {
   
     function show(node) { node && (node.style.display = ''); }
     function hide(node) { node && (node.style.display = 'none'); }
-    function htmlSafe(s) { return String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function htmlSafe(s) {
+      return String(s || '').replace(/[&<>"]/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]
+      ));
+    }
   
     async function fetchStatus() {
-      const r = await fetch('/api/whatsapp/status', { credentials: 'include' });
+      const r = await fetch('/api/whatsapp/status', { credentials: 'include', cache: 'no-store' });
       if (!r.ok) throw new Error('STATUS_HTTP_' + r.status);
       return r.json();
     }
-  
     async function fetchCandidates() {
-      const r = await fetch('/api/whatsapp/candidates', { credentials: 'include' });
+      const r = await fetch('/api/whatsapp/candidates', { credentials: 'include', cache: 'no-store' });
       if (!r.ok) throw new Error('CAND_HTTP_' + r.status);
       return r.json();
     }
@@ -282,6 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (esu === 'confirm') {
         hide(elGenericErr);
         show(elPanel);
+        hide(elEmpty); hide(elErr);
         show(elLoading);
         try {
           const cands = await fetchCandidates(); // GET /api/whatsapp/candidates
@@ -290,13 +294,12 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!list.length) { show(elEmpty); return; }
           show(elList);
           renderCandidates(list);
-          return;
         } catch (e) {
           hide(elLoading);
           show(elErr);
           elErr.textContent = 'No se pudieron cargar los candidatos. Intenta nuevamente.';
-          return;
         }
+        return;
       }
     
       // sinon: flow normal par /status
@@ -339,6 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
   </script>
 </body>
 </html>
+
 
 
 
