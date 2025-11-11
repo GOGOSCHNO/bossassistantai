@@ -1555,70 +1555,79 @@ app.get('/api/whatsapp/status', async (req, res) => {
 app.get('/api/whatsapp/embedded/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
-    if (!code || !state) return res.status(400).send('Faltan parámetros');
+    const s = verifyState(state);
+    if (!s) {
+      console.error("❌ State inválido o manipulado");
+      return res.redirect('/conectar-whatsapp.html?esu=error');
+    }
 
-    // 0) Vérif de l’état (si tu stockes email dans state)
-    const s = await verifyState(state); // { email, ts, ... }
-    if (!s?.email) return res.status(400).send('Estado inválido');
-
-    // 1) Échange code -> access_token (token utilisateur)
-    const tokenRes = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?` +
-      new URLSearchParams({
+    // 1️⃣ Échange du code contre un access_token
+    const tokenResp = await axios.get('https://graph.facebook.com/v20.0/oauth/access_token', {
+      params: {
         client_id: process.env.APP_ID,
         client_secret: process.env.APP_SECRET,
-        redirect_uri: process.env.ESU_REDIRECT_URI, // doit matcher exactement
-        code
-      })
-    );
-    const tokenBody = await tokenRes.json();
-    if (!tokenRes.ok || !tokenBody?.access_token) {
-      console.error('Token exchange failed', tokenBody);
-      return res.redirect('/conectar-whatsapp.html?esu=error');
-    }
-    const userToken = tokenBody.access_token;
+        redirect_uri: process.env.ESU_REDIRECT_URI,
+        code,
+      },
+    });
 
-    // (option) log scopes pour diagnostiquer les permissions
-    // await debugTokenScopes(userToken);
+    const userToken = tokenResp.data.access_token;
+    console.log("✅ Token d'utilisateur reçu (tronqué):", userToken.slice(0, 12) + "...");
 
-    // 2) Lire les businesses de l'utilisateur puis les WABA + numéros
-    // On évite le me?fields=businesses (qui peut 100) et on fait 2 appels lisibles.
-    const bizRes = await fetch(`https://graph.facebook.com/v20.0/me/businesses?` + 
-      new URLSearchParams({
-        fields: 'id,name,owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}',
-        access_token: userToken
-      })
-    );
-    const bizBody = await bizRes.json();
-    if (!bizRes.ok) {
-      console.error('Graph /me/businesses failed:', bizBody);
-      return res.redirect('/conectar-whatsapp.html?esu=error');
-    }
-
-    // 3) Choix: premier business / premier WABA / premier numéro
-    const business = bizBody?.data?.[0] || null;
-    const waba = business?.owned_whatsapp_business_accounts?.data?.[0] || null;
-    const phone = waba?.phone_numbers?.data?.[0] || null;
-
-    if (!business || !waba || !phone) {
-      console.error('ESU: no business/waba/phone found', { business: !!business, waba: !!waba, phone: !!phone });
-      return res.redirect('/conectar-whatsapp.html?esu=error');
-    }
-
-    const businessId = business.id;
-    const wabaId = waba.id;
-    const phoneNumberId = phone.id;
-    const waNumber = phone.display_phone_number;
-
-    // 4) Souscrire la WABA à l'app => nécessaire pour recevoir les webhooks sur /whatsapp
-    await subscribeWabaToApp(wabaId, userToken);
-
-    // 5) Sauvegarde en base (users.whatsapp)
+    // 2️⃣ Récupération du compte utilisateur
     const u = await db.collection('users').findOne({ email: s.email });
     if (!u) {
-      console.error('Usuario no encontrado para', s.email);
+      console.error("❌ Utilisateur introuvable pour", s.email);
       return res.redirect('/conectar-whatsapp.html?esu=error');
     }
 
+    // 3️⃣ Récupération du brouillon du numéro que l'utilisateur veut connecter
+    const wanted = (u.whatsappDraft?.waNumber || '').replace(/\D/g, '');
+    if (!wanted) {
+      console.error("❌ Aucun numéro draft trouvé pour", s.email);
+      return res.redirect('/conectar-whatsapp.html?esu=error');
+    }
+    console.log("ℹ️ Numéro recherché:", wanted);
+
+    // 4️⃣ Appel à /me/businesses pour récupérer la hiérarchie complète
+    const bizResp = await axios.get(
+      'https://graph.facebook.com/v20.0/me/businesses?fields=id,name,owned_whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number}}',
+      { headers: { Authorization: `Bearer ${userToken}` } }
+    );
+
+    const businesses = bizResp.data.data || [];
+    let chosen = null;
+
+    for (const biz of businesses) {
+      for (const waba of (biz.owned_whatsapp_business_accounts?.data || [])) {
+        for (const phone of (waba.phone_numbers?.data || [])) {
+          const digits = (phone.display_phone_number || '').replace(/\D/g, '');
+          if (digits.endsWith(wanted)) {
+            chosen = {
+              businessId: biz.id,
+              wabaId: waba.id,
+              phoneNumberId: phone.id,
+              waNumber: phone.display_phone_number,
+            };
+            break;
+          }
+        }
+        if (chosen) break;
+      }
+      if (chosen) break;
+    }
+
+    if (!chosen) {
+      console.error("❌ Aucun numéro correspondant trouvé pour", wanted);
+      return res.redirect('/conectar-whatsapp.html?esu=error');
+    }
+
+    console.log("✅ Numéro sélectionné:", chosen);
+
+    // 5️⃣ Souscrire la WABA à l'application
+    await subscribeWabaToApp(chosen.wabaId, userToken);
+
+    // 6️⃣ Sauvegarde dans la base de données
     await db.collection('users').updateOne(
       { _id: u._id },
       {
@@ -1626,28 +1635,23 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
           whatsapp: {
             connected: true,
             mode: 'produccion',
-            businessId,
-            wabaId,
-            phoneNumberId,
-            waNumber,
-            accessToken: userToken, // ⚠️ en prod: chiffrer ce champ
-            connectedAt: new Date()
-          }
-        }
+            businessId: chosen.businessId,
+            wabaId: chosen.wabaId,
+            phoneNumberId: chosen.phoneNumberId,
+            waNumber: chosen.waNumber,
+            accessToken: userToken, // 🔒 (tu peux chiffrer ici si tu veux)
+            connectedAt: new Date(),
+          },
+        },
+        $unset: { whatsappDraft: "" },
       }
     );
 
-    console.log('ESU OK →', {
-      businessId,
-      wabaId,
-      phoneNumberId: maskTail(phoneNumberId),
-      waNumber
-    });
+    console.log("✅ Assistant connecté à WhatsApp:", chosen.waNumber);
+    return res.redirect('/conectar-whatsapp.html?esu=success');
 
-    // 6) Retour page avec succès
-    return res.redirect('/conectar-whatsapp.html?esu=ok');
-  } catch (e) {
-    console.error('ESU callback error', e);
+  } catch (err) {
+    console.error("❌ Erreur pendant le callback ESU:", err.response?.data || err.message);
     return res.redirect('/conectar-whatsapp.html?esu=error');
   }
 });
