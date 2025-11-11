@@ -1662,7 +1662,7 @@ app.post('/api/whatsapp/connect', async (req, res) => {
       return res.status(400).json({ ok:false, error:'BAD_INPUT' });
     }
 
-    const user = await db.collection('users').findOne({ _id: u._id });
+    const user = await db.collection('users').findOne({ email: u.email });
     const candidates = user?.whatsappCandidates || [];
     if (!Array.isArray(candidates) || !candidates.length) {
       return res.status(400).json({ ok:false, error:'NO_CANDIDATES' });
@@ -1721,7 +1721,7 @@ app.get('/api/whatsapp/candidates', async (req, res) => {
     const u = await currentUser(req);
     if (!u || !u.email) return res.status(401).json({ ok:false, error:'NOT_AUTH' });
 
-    const user = await db.collection('users').findOne({ _id: u._id }, { projection: {
+    const user = await db.collection('users').findOne({ email: u.email }, { projection: {
       whatsappCandidates: 1,
       whatsappSelectionPending: 1
     }});
