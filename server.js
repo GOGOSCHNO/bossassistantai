@@ -1744,6 +1744,19 @@ app.get('/api/whatsapp/candidates', async (req, res) => {
     return res.status(500).json({ ok:false, error:'SERVER' });
   }
 });
+app.get('/api/whatsapp/debug-waba-users/:wabaId', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    const user = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(user?.whatsappUserToken || '');
+    const r = await axios.get(`https://graph.facebook.com/v20.0/${req.params.wabaId}/assigned_users`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    res.json({ ok:true, assigned_users:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error: e.response?.data || e.message });
+  }
+});
 app.get('/api/whatsapp/debug-token', async (req, res) => {
   try {
     const u = await currentUser(req);
