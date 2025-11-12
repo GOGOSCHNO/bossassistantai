@@ -832,7 +832,7 @@ async function subscribeWabaToApp(wabaId, userToken) {
   try {
     // Some versions accept subscribed_fields (messages). It’s harmless to be explicit.
     const resp = await axios.post(url, { subscribed_fields: ['messages'] }, {
-      headers: { Authorization: `Bearer ${process.env.WHATSAPP_CLOUD_API_TOKEN}` }
+      headers: { Authorization: `Bearer ${userToken}` }
     });
     console.log("✅ WABA subscribed to app:", resp.data);
     return true;
