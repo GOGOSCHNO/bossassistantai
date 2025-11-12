@@ -1747,14 +1747,18 @@ app.get('/api/whatsapp/candidates', async (req, res) => {
 app.get('/api/whatsapp/debug-waba-users/:wabaId', async (req, res) => {
   try {
     const u = await currentUser(req);
-    const user = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
-    const token = decrypt(user?.whatsappUserToken || '');
-    const r = await axios.get(`https://graph.facebook.com/v20.0/${req.params.wabaId}/assigned_users`, {
+    const doc = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(doc?.whatsappUserToken || '');
+
+    const { wabaId } = req.params;
+    const { business } = req.query; // <-- IMPORTANT
+    const r = await axios.get(`https://graph.facebook.com/v20.0/${wabaId}/assigned_users`, {
+      params: { business },
       headers: { Authorization: `Bearer ${token}` }
     });
     res.json({ ok:true, assigned_users:r.data });
   } catch (e) {
-    res.status(500).json({ ok:false, error: e.response?.data || e.message });
+    res.status(500).json({ ok:false, error:e.response?.data || e.message });
   }
 });
 app.get('/api/whatsapp/debug-token', async (req, res) => {
@@ -1820,6 +1824,19 @@ app.get('/api/whatsapp/debug-business-wabas/:businessId', async (req, res) => {
       headers: { Authorization: `Bearer ${token}` }
     });
     res.json({ ok:true, wabas:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error:e.response?.data || e.message });
+  }
+});
+app.get('/api/whatsapp/debug-business-apps/:businessId', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    const doc = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(doc?.whatsappUserToken || '');
+    const r = await axios.get(`https://graph.facebook.com/v20.0/${req.params.businessId}/apps`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    res.json({ ok:true, apps:r.data });
   } catch (e) {
     res.status(500).json({ ok:false, error:e.response?.data || e.message });
   }
