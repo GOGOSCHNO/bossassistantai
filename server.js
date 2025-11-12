@@ -1790,3 +1790,37 @@ app.get('/api/whatsapp/debug-waba/:wabaId', async (req, res) => {
     res.status(500).json({ ok:false, error: e.response?.data || e.message });
   }
 });
+// 1) Voir les businesses du user et quelles WABA ils possèdent
+app.get('/api/whatsapp/debug-my-businesses', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    const doc = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(doc?.whatsappUserToken || '');
+
+    const fields = 'id,name,owned_whatsapp_business_accounts{id,name},client_whatsapp_business_accounts{id,name}';
+    const r = await axios.get('https://graph.facebook.com/v20.0/me/businesses', {
+      params: { fields },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    res.json({ ok:true, businesses:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error:e.response?.data || e.message });
+  }
+});
+
+// 2) Par sécurité: lister les WABA d’un business précis
+app.get('/api/whatsapp/debug-business-wabas/:businessId', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    const doc = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(doc?.whatsappUserToken || '');
+
+    const { businessId } = req.params;
+    const r = await axios.get(`https://graph.facebook.com/v20.0/${businessId}/owned_whatsapp_business_accounts`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    res.json({ ok:true, wabas:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error:e.response?.data || e.message });
+  }
+});
