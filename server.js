@@ -828,19 +828,24 @@ function signState(obj) {
 async function subscribeWabaToApp(wabaId, userToken) {
   const apiVersion = "v20.0";
   const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
+
   try {
-    const resp = await axios.post(url, {}, {
+    // Some versions accept subscribed_fields (messages). It’s harmless to be explicit.
+    const resp = await axios.post(url, { subscribed_fields: ['messages'] }, {
       headers: { Authorization: `Bearer ${userToken}` }
     });
-    console.log("✅ WABA suscrita a la app:", resp.data);
+    console.log("✅ WABA subscribed to app:", resp.data);
     return true;
   } catch (err) {
-    const data = err?.response?.data?.error || err?.message;
-    console.error("❌ Error al suscribir WABA a la app:", data);
+    const e = err?.response?.data?.error || err?.response?.data || err?.message;
+    console.error("❌ subscribe error:", e);
 
-    // Petit hint utile pour #200
-    if (err?.response?.status === 400 || err?.response?.status === 403) {
-      console.error("👉 Verifica: user=Admin del Business, app en Live, scopes (WBM/WBMgmt), webhook OK.");
+    if (err?.response?.status === 403 || err?.response?.status === 400) {
+      console.error(
+        "Hint: ensure the *user* is assigned to this WABA (People→Admin), " +
+        "the *app* is added to the Business and connected to this WABA, " +
+        "and the token carries whatsapp_business_management for the *owner business*."
+      );
     }
     throw err;
   }
@@ -1737,5 +1742,38 @@ app.get('/api/whatsapp/candidates', async (req, res) => {
   } catch (e) {
     console.error('GET /api/whatsapp/candidates error:', e);
     return res.status(500).json({ ok:false, error:'SERVER' });
+  }
+});
+app.get('/api/whatsapp/debug-token', async (req, res) => {
+  try {
+    const u = await currentUser(req);
+    const user = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(user?.whatsappUserToken || '');
+    if (!token) return res.status(400).json({ ok:false, error:'NO_TOKEN' });
+
+    const appToken = `${process.env.APP_ID}|${process.env.APP_SECRET}`;
+    const r = await axios.get('https://graph.facebook.com/v20.0/debug_token', {
+      params: { input_token: token, access_token: appToken }
+    });
+    res.json({ ok:true, debug:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error: e.response?.data || e.message });
+  }
+});
+app.get('/api/whatsapp/debug-waba/:wabaId', async (req, res) => {
+  try {
+    const { wabaId } = req.params;
+    const u = await currentUser(req);
+    const user = await db.collection('users').findOne({ email: u.email }, { projection: { whatsappUserToken:1 }});
+    const token = decrypt(user?.whatsappUserToken || '');
+
+    const fields = 'id,name,owner_business,subscribed_apps{id,name},phone_numbers{id,display_phone_number}';
+    const r = await axios.get(`https://graph.facebook.com/v20.0/${wabaId}`, {
+      params: { fields },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    res.json({ ok:true, waba:r.data });
+  } catch (e) {
+    res.status(500).json({ ok:false, error: e.response?.data || e.message });
   }
 });
