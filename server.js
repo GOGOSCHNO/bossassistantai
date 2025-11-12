@@ -828,17 +828,20 @@ function signState(obj) {
 async function subscribeWabaToApp(wabaId, userToken) {
   const apiVersion = "v20.0";
   const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
-
   try {
-    const resp = await axios.post(
-      url,
-      {},
-      { headers: { Authorization: `Bearer ${userToken}` } }
-    );
+    const resp = await axios.post(url, {}, {
+      headers: { Authorization: `Bearer ${userToken}` }
+    });
     console.log("✅ WABA suscrita a la app:", resp.data);
     return true;
   } catch (err) {
-    console.error("❌ Error al suscribir WABA a la app:", err.response?.data || err.message);
+    const data = err?.response?.data?.error || err?.message;
+    console.error("❌ Error al suscribir WABA a la app:", data);
+
+    // Petit hint utile pour #200
+    if (err?.response?.status === 400 || err?.response?.status === 403) {
+      console.error("👉 Verifica: user=Admin del Business, app en Live, scopes (WBM/WBMgmt), webhook OK.");
+    }
     throw err;
   }
 }
