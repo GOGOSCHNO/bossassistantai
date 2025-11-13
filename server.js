@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const multer = require("multer");
@@ -1663,116 +1664,31 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
 app.post('/api/whatsapp/connect', async (req, res) => {
   try {
     const u = await currentUser(req);
-    if (!u || !u.email) {
-      return res.status(401).json({ ok: false, error: 'NOT_AUTH' });
-    }
+    if (!u || !u.email) return res.status(401).json({ ok:false, error:'NOT_AUTH' });
 
     const { wabaId, phoneNumberId } = req.body || {};
     if (!wabaId || !phoneNumberId) {
-      return res.status(400).json({ ok: false, error: 'BAD_INPUT' });
+      return res.status(400).json({ ok:false, error:'BAD_INPUT' });
     }
 
     const user = await db.collection('users').findOne({ email: u.email });
     const candidates = user?.whatsappCandidates || [];
     if (!Array.isArray(candidates) || !candidates.length) {
-      return res.status(400).json({ ok: false, error: 'NO_CANDIDATES' });
+      return res.status(400).json({ ok:false, error:'NO_CANDIDATES' });
     }
 
-    const chosen = candidates.find(
-      (c) => c.wabaId === wabaId && c.phoneNumberId === phoneNumberId
-    );
+    const chosen = candidates.find(c => c.wabaId === wabaId && c.phoneNumberId === phoneNumberId);
     if (!chosen) {
-      return res.status(400).json({ ok: false, error: 'INVALID_CHOICE' });
+      return res.status(400).json({ ok:false, error:'INVALID_CHOICE' });
     }
 
-    const userToken = decrypt(user?.whatsappUserToken || '');
+    const userToken = decrypt(user?.whatsappUserToken || '');  // <= ICI : ta fonction
     if (!userToken) {
-      return res.status(400).json({ ok: false, error: 'NO_USER_TOKEN' });
+      return res.status(400).json({ ok:false, error:'NO_USER_TOKEN' });
     }
 
-    // --- Vérification du business propriétaire de la WABA ---
-    let owner = null;
-    try {
-      const infoResp = await axios.get(
-        `https://graph.facebook.com/v20.0/${wabaId}`,
-        {
-          params: { fields: 'id,name,owner_business{id,name}' },
-          headers: { Authorization: `Bearer ${userToken}` },
-        }
-      );
+    await subscribeWabaToApp(wabaId, userToken);
 
-      owner = infoResp.data.owner_business || null;
-      console.log('🔎 WABA owner_business:', owner);
-    } catch (err) {
-      console.error(
-        '❌ Error fetching WABA owner_business:',
-        err.response?.data || err.message
-      );
-      return res.status(500).json({
-        ok: false,
-        error: 'WABA_OWNER_CHECK_FAILED',
-        details: err.response?.data || err.message,
-      });
-    }
-
-    if (!owner || !owner.id) {
-      return res.status(500).json({
-        ok: false,
-        error: 'WABA_OWNER_UNKNOWN',
-        details: {
-          message:
-            'Impossible de déterminer le business propriétaire de cette WABA.',
-        },
-      });
-    }
-
-    // Si le business sélectionné dans l’ESU ≠ business propriétaire réel → on bloque
-    if (owner.id !== chosen.businessId) {
-      console.warn(
-        '⚠️ WABA_NOT_OWNED_BY_SELECTED_BUSINESS',
-        'selectedBusiness:',
-        chosen.businessId,
-        'ownerBusiness:',
-        owner.id
-      );
-
-      return res.status(409).json({
-        ok: false,
-        error: 'WABA_NOT_OWNED_BY_SELECTED_BUSINESS',
-        details: {
-          selectedBusiness: {
-            id: chosen.businessId,
-            name: chosen.businessName,
-          },
-          ownerBusiness: {
-            id: owner.id,
-            name: owner.name,
-          },
-          message:
-            `La WABA sélectionnée appartient au business "${owner.name}" (ID: ${owner.id}) ` +
-            `et non au business sélectionné dans l’ESU "${chosen.businessName}" (ID: ${chosen.businessId}). ` +
-            `Refaites l’Embedded Signup avec un administrateur du business propriétaire, ` +
-            `ou demandez à ce business d’ajouter l’app ComercioAI et de l’assigner à cette WABA.`,
-        },
-      });
-    }
-
-    // --- Si tout est OK niveau propriétaire, on peut abonner la WABA à l'app ---
-    try {
-      await subscribeWabaToApp(wabaId, userToken);
-    } catch (err) {
-      console.error(
-        '❌ subscribeWabaToApp error:',
-        err.response?.data || err.message
-      );
-      return res.status(500).json({
-        ok: false,
-        error: 'SUBSCRIBE_FAILED',
-        details: err.response?.data || err.message,
-      });
-    }
-
-    // --- Sauvegarde en base de la configuration WhatsApp connectée ---
     await db.collection('users').updateOne(
       { _id: user._id },
       {
@@ -1784,7 +1700,7 @@ app.post('/api/whatsapp/connect', async (req, res) => {
             wabaId: chosen.wabaId,
             phoneNumberId: chosen.phoneNumberId,
             waNumber: chosen.waNumber,
-            accessToken: encrypt(userToken),
+            accessToken: encrypt(userToken),            // <= ICI : ta fonction
             connectedAt: new Date(),
           },
         },
@@ -1798,24 +1714,17 @@ app.post('/api/whatsapp/connect', async (req, res) => {
       }
     );
 
-    return res.json({
-      ok: true,
-      connected: true,
-      whatsapp: {
-        wabaId: chosen.wabaId,
-        phoneNumberId: chosen.phoneNumberId,
-        waNumber: chosen.waNumber,
-      },
-    });
+    return res.json({ ok:true, connected: true, whatsapp: {
+      wabaId: chosen.wabaId,
+      phoneNumberId: chosen.phoneNumberId,
+      waNumber: chosen.waNumber,
+    }});
+
   } catch (e) {
-    console.error(
-      'POST /api/whatsapp/connect error:',
-      e.response?.data || e.message
-    );
-    return res.status(500).json({ ok: false, error: 'SERVER' });
+    console.error('POST /api/whatsapp/connect error:', e.response?.data || e.message);
+    return res.status(500).json({ ok:false, error:'SERVER' });
   }
 });
-
 app.get('/api/whatsapp/candidates', async (req, res) => {
   try {
     const u = await currentUser(req);
