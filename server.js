@@ -1619,7 +1619,12 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
       },
     });
     const userToken = tokenResp.data.access_token;
-    console.log("✅ Token d'utilisateur reçu (tronqué):", (userToken||'').slice(0, 12) + "...");
+    console.log(
+      "User token (début+fin):",
+      (userToken || '').slice(0, 6),
+      "...",
+      (userToken || '').slice(-6)
+    );
 
     // 2) Récupérer l'utilisateur
     const u = await db.collection('users').findOne({ email: s.email });
