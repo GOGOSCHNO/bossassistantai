@@ -826,28 +826,35 @@ function signState(obj) {
                     .digest('hex');
   return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
 }
-async function subscribeWabaToApp(wabaId, userToken) {
+async function subscribeWabaToApp(wabaId, tokenOverride) {
   const apiVersion = "v20.0";
   const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
 
+  // 1️⃣ On prend d'abord le token provider en env var
+  const providerToken = process.env.META_PROVIDER_TOKEN;
+
+  // 2️⃣ On garde un fallback (optionnel) si tu passes un token à la main
+  const token = tokenOverride || providerToken;
+
+  if (!token) {
+    console.error("❌ Aucun token disponible pour subscribeWabaToApp");
+    throw new Error("NO_SUBSCRIBE_TOKEN");
+  }
+
+  console.log("🟦 subscribeWabaToApp → wabaId:", wabaId);
+  console.log("🟦 Token utilisé (tronqué):", token.slice(0, 10) + "...");
+
   try {
-    // Some versions accept subscribed_fields (messages). It’s harmless to be explicit.
-    const resp = await axios.post(url, { subscribed_fields: ['messages'] }, {
-      headers: { Authorization: `Bearer ${userToken}` }
-    });
+    const resp = await axios.post(
+      url,
+      { subscribed_fields: ['messages'] },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     console.log("✅ WABA subscribed to app:", resp.data);
     return true;
   } catch (err) {
     const e = err?.response?.data?.error || err?.response?.data || err?.message;
     console.error("❌ subscribe error:", e);
-
-    if (err?.response?.status === 403 || err?.response?.status === 400) {
-      console.error(
-        "Hint: ensure the *user* is assigned to this WABA (People→Admin), " +
-        "the *app* is added to the Business and connected to this WABA, " +
-        "and the token carries whatsapp_business_management for the *owner business*."
-      );
-    }
     throw err;
   }
 }
@@ -1671,30 +1678,21 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
 app.post('/api/whatsapp/connect', async (req, res) => {
   try {
     const u = await currentUser(req);
-    if (!u || !u.email) return res.status(401).json({ ok:false, error:'NOT_AUTH' });
+    const { wabaId, phoneNumberId } = req.body;
 
-    const { wabaId, phoneNumberId } = req.body || {};
-    if (!wabaId || !phoneNumberId) {
-      return res.status(400).json({ ok:false, error:'BAD_INPUT' });
-    }
-
-    const user = await db.collection('users').findOne({ email: u.email });
+    const user = await db.collection('users').findOne({ _id: u._id });
     const candidates = user?.whatsappCandidates || [];
-    if (!Array.isArray(candidates) || !candidates.length) {
-      return res.status(400).json({ ok:false, error:'NO_CANDIDATES' });
-    }
-
     const chosen = candidates.find(c => c.wabaId === wabaId && c.phoneNumberId === phoneNumberId);
+
     if (!chosen) {
-      return res.status(400).json({ ok:false, error:'INVALID_CHOICE' });
+      return res.status(400).json({ ok:false, error:'CANDIDATE_NOT_FOUND' });
     }
 
-    const userToken = decrypt(user?.whatsappUserToken || '');  // <= ICI : ta fonction
-    if (!userToken) {
-      return res.status(400).json({ ok:false, error:'NO_USER_TOKEN' });
-    }
+    // 🔑 1) on utilise TON token provider (pas besoin du userToken du client ici)
+    await subscribeWabaToApp(wabaId);
 
-    await subscribeWabaToApp(wabaId, userToken);
+    // 🔑 2) on stocke le token provider comme accessToken pour cette config
+    const providerToken = process.env.META_PROVIDER_TOKEN || '';
 
     await db.collection('users').updateOne(
       { _id: user._id },
@@ -1707,7 +1705,7 @@ app.post('/api/whatsapp/connect', async (req, res) => {
             wabaId: chosen.wabaId,
             phoneNumberId: chosen.phoneNumberId,
             waNumber: chosen.waNumber,
-            accessToken: encrypt(userToken),            // <= ICI : ta fonction
+            accessToken: encrypt(providerToken),
             connectedAt: new Date(),
           },
         },
@@ -1721,15 +1719,10 @@ app.post('/api/whatsapp/connect', async (req, res) => {
       }
     );
 
-    return res.json({ ok:true, connected: true, whatsapp: {
-      wabaId: chosen.wabaId,
-      phoneNumberId: chosen.phoneNumberId,
-      waNumber: chosen.waNumber,
-    }});
-
-  } catch (e) {
-    console.error('POST /api/whatsapp/connect error:', e.response?.data || e.message);
-    return res.status(500).json({ ok:false, error:'SERVER' });
+    return res.json({ ok:true, connected:true, whatsapp: { waNumber: chosen.waNumber } });
+  } catch (err) {
+    console.error("POST /api/whatsapp/connect error:", err?.response?.data || err.message);
+    return res.status(500).json({ ok:false, error:'INTERNAL_ERROR' });
   }
 });
 app.get('/api/whatsapp/candidates', async (req, res) => {
