@@ -826,30 +826,28 @@ function signState(obj) {
                     .digest('hex');
   return Buffer.from(JSON.stringify({ raw, sig })).toString('base64url');
 }
-async function subscribeWabaToApp(wabaId) {
+async function subscribeWabaToApp(wabaId, userToken) {
   const apiVersion = "v20.0";
   const url = `https://graph.facebook.com/${apiVersion}/${wabaId}/subscribed_apps`;
 
-  const providerToken = process.env.WHATSAPP_CLOUD_API_TOKEN;
-  if (!providerToken) {
-    console.error("❌ WHATSAPP_CLOUD_API_TOKEN manquant");
-    throw new Error("NO_PROVIDER_TOKEN");
-  }
-
-  console.log("🟦 subscribeWabaToApp → wabaId:", wabaId.slice(0, 10) + "...");
-  console.log("🟦 Using provider token (tronqué):", (providerToken || '').slice(0, 12) + "...");
-
   try {
-    const resp = await axios.post(
-      url,
-      { subscribed_fields: ['messages'] },
-      { headers: { Authorization: `Bearer ${providerToken}` } }
-    );
+    // Some versions accept subscribed_fields (messages). It’s harmless to be explicit.
+    const resp = await axios.post(url, { subscribed_fields: ['messages'] }, {
+      headers: { Authorization: `Bearer ${userToken}` }
+    });
     console.log("✅ WABA subscribed to app:", resp.data);
     return true;
   } catch (err) {
     const e = err?.response?.data?.error || err?.response?.data || err?.message;
     console.error("❌ subscribe error:", e);
+
+    if (err?.response?.status === 403 || err?.response?.status === 400) {
+      console.error(
+        "Hint: ensure the *user* is assigned to this WABA (People→Admin), " +
+        "the *app* is added to the Business and connected to this WABA, " +
+        "and the token carries whatsapp_business_management for the *owner business*."
+      );
+    }
     throw err;
   }
 }
@@ -1684,17 +1682,13 @@ app.post('/api/whatsapp/connect', async (req, res) => {
       return res.status(400).json({ ok:false, error:'INVALID_CHOICE' });
     }
 
-    const userToken = decrypt(user?.whatsappUserToken || '');
+    const userToken = decrypt(user?.whatsappUserToken || '');  // <= ICI : ta fonction
     if (!userToken) {
-      console.warn("⚠️ NO_USER_TOKEN (on continue quand même pour test provider token)");
+      return res.status(400).json({ ok:false, error:'NO_USER_TOKEN' });
     }
-    
-    // 1) Essayer d'abonner la WABA avec TON token provider
-    await subscribeWabaToApp(wabaId);
-    
-    // 2) Utiliser ton token provider comme accessToken pour cette WABA
-    const providerToken = process.env.WHATSAPP_CLOUD_API_TOKEN;
-    
+
+    await subscribeWabaToApp(wabaId, userToken);
+
     await db.collection('users').updateOne(
       { _id: user._id },
       {
@@ -1706,7 +1700,7 @@ app.post('/api/whatsapp/connect', async (req, res) => {
             wabaId: chosen.wabaId,
             phoneNumberId: chosen.phoneNumberId,
             waNumber: chosen.waNumber,
-            accessToken: encrypt(providerToken || ''),   // 🔁 CHANGEMENT ICI
+            accessToken: encrypt(userToken),            // <= ICI : ta fonction
             connectedAt: new Date(),
           },
         },
