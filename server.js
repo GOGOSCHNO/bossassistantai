@@ -1649,7 +1649,8 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
       {
         $set: {
           whatsappCandidates: candidates,
-          whatsappUserToken: encrypt(userToken),        // <= ICI : ta fonction
+          // ⚠️ temporairement SANS encrypt
+          whatsappUserToken: userToken,
           whatsappSelectionPending: candidates.length > 0,
           whatsappCandidatesSavedAt: new Date(),
         },
@@ -1666,6 +1667,7 @@ app.get('/api/whatsapp/embedded/callback', async (req, res) => {
     return res.redirect('/conectar-whatsapp.html?esu=error');
   }
 });
+
 app.post('/api/whatsapp/connect', async (req, res) => {
   try {
     const u = await currentUser(req);
